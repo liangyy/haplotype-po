@@ -1,0 +1,7 @@
+---
+title: "Home"
+---
+
+# Notes
+
+* [Initial thoughts](init_idea_outline.html)

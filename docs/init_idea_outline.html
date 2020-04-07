@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+
+
+<title>Initial ideas</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<link href="site_libs/font-awesome-5.1.0/css/all.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-5.1.0/css/v4-shims.css" rel="stylesheet" />
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+</style>
+
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 51px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h2 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h3 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h4 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h5 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h6 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #ffffff;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row-fluid">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Imputing parent of origin of haplotype</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="https://github.com/liangyy/haplotype-po">
+    <span class="fa fa-github"></span>
+     
+  </a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+<div class="btn-group pull-right">
+<button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">Initial ideas</h1>
+
+</div>
+
+
+<p><span class="math display">\[
+\newcommand{\E}{\text{E}}
+\]</span></p>
+<pre class="r"><code>library(ggplot2)
+library(dplyr)
+theme_set(theme_bw(base_size=15))
+set.seed(2020)
+
+# load some gists
+source(&#39;https://gist.githubusercontent.com/liangyy/4a5d201ac2f8b31aab77b29d5a9f2cc2/raw/e84668de1861785eb8c4e3f57bfe0e493c540c81/fast_gwas.R&#39;)
+source(&#39;https://gist.githubusercontent.com/liangyy/43912b3ecab5d10c89f9d4b2669871c9/raw/3ca651cfa53ffccb8422f432561138a46e93710f/my_ggplot_theme.R&#39;)</code></pre>
+<div id="problem-setup" class="section level1">
+<h1><span class="header-section-number">1</span> Problem setup</h1>
+<ul>
+<li><p><strong>Haplotype</strong>: For an individual, we have their haplotype information denoted as <span class="math inline">\(H^1\)</span> and <span class="math inline">\(H^2\)</span>. The haplotype information is obtained throught phasing which requires a external reference (haplotype) panel.</p></li>
+<li><p><strong>Phenotypes of parents</strong>: Besides, we have the phenotypes of their parents. Considering <span class="math inline">\(P\)</span> phenotypes, we have <span class="math inline">\(y_{i, p}^f, y_{i, p}^m\)</span>.</p></li>
+</ul>
+<p>The <strong>goal</strong> is to impute the origin of parent for each of the two haplotypes. We denote the origin as <span class="math inline">\(Z_i\)</span> which represents if <span class="math inline">\(H_i^1\)</span> comes from father.</p>
+</div>
+<div id="model" class="section level1">
+<h1><span class="header-section-number">2</span> Model</h1>
+<p>We consider a simple model as follow.</p>
+<p><span class="math display">\[\begin{aligned}
+  y_{i, p}^f &amp;= (H_i^{f,1} + H_i^{f,2}) \beta_p + \epsilon_{i, p}^f \\
+  y_{i, p}^m &amp;= (H_i^{m,1} + H_i^{m,2}) \beta_p + \epsilon_{i, p}^m
+\end{aligned}\]</span></p>
+<p>And we know that one of <span class="math inline">\(H_i^1\)</span> and <span class="math inline">\(H_i^2\)</span> comes from father and the other comes from mother. Suppose <span class="math inline">\(H_i^1\)</span> comes from father and <span class="math inline">\(H_i^2\)</span> comes from mother, then we can write the haplotype version of the above expressions as follow.</p>
+<p><span class="math display">\[\begin{aligned}
+  y_{i, p}^f &amp;= H_i^1 \beta_p + \epsilon_{i, p}^{f,\star} \\
+  y_{i, p}^m &amp;= H_i^2 \beta_p + \epsilon_{i, p}^{m,\star}
+\end{aligned}\]</span> where <span class="math inline">\(\epsilon_{i, p}^{\star}\)</span> contains two parts: 1) environmental noise; and 2) the genetic component of one haplotype. And let <span class="math inline">\(\epsilon_{i, p}^{\star} \sim N(0, \sigma^2)\)</span>.</p>
+<p>Essentially, we observe <span class="math inline">\(H_i^1, H_i^2\)</span> and <span class="math inline">\(y_{i, p}^f, y_{i, p}^m\)</span> and we’d like to infer <span class="math inline">\(Z_i\)</span>. If we know <span class="math inline">\(\beta_p\)</span>, we can let <span class="math inline">\(g_{i, p}^k = H_i^k \beta_p\)</span> and we can infer <span class="math inline">\(Z_i\)</span> by comparing how similar is <span class="math inline">\((y_{i, 1}^k, \cdots, y_{i, P}^k)\)</span> to <span class="math inline">\((y_{i, p}^f, \cdots, y_{i, P}^f)\)</span>. The uncertainty in estimating <span class="math inline">\(Z_i\)</span> is accounted for in estimating <span class="math inline">\(\Pr(Z_i = 1 | \text{data})\)</span>. To obtain this quantity, we need to estimate <span class="math inline">\(\sigma^2\)</span>.</p>
+<p>However, in practice, we do not observe <span class="math inline">\(\beta_p\)</span>. Instead, we use <span class="math inline">\(\hat\beta_p\)</span> estimated from GWAS, or more generally, we replace <span class="math inline">\(g_{i, p}^k\)</span> (the genetic component captured by a haplotype) with any other proxy to it,  polygenic risk score.</p>
+</div>
+<div id="simulation" class="section level1">
+<h1><span class="header-section-number">3</span> Simulation</h1>
+<p>Here we try a minimal simulation scheme. It contains the following steps:</p>
+<ol style="list-style-type: decimal">
+<li>Simulate haplotypes for the parents, <span class="math inline">\(H_i^{f, 1}, H_i^{f, 2}\)</span> and <span class="math inline">\(H_i^{m, 1}, H_i^{m, 2}\)</span>.</li>
+<li>Simulate haplotypes for the child, <span class="math inline">\(H_i^1, H_i^2\)</span>.</li>
+<li>Simulate phenotypes for the parents, <span class="math inline">\(y_{i, p}^f\)</span> and <span class="math inline">\(y_{i, p}^m\)</span>.</li>
+<li>Simulate extra cohort for building PRS, <span class="math inline">\(y_{i, p}\)</span> and <span class="math inline">\(X_{i, p}\)</span></li>
+</ol>
+<p>Some parameter settings:</p>
+<pre class="r"><code>sample_size = 10000
+sample_size_extra = 20000
+n_pheno = 30
+prior_causal = 0.1
+causal_sigma = 1
+n_snp = 1000
+heritabiltiy = 0.05
+maf_low = 0.05
+maf_high = 0.45</code></pre>
+<ul>
+<li>Sample size <span class="math inline">\(10^{4}\)</span>.</li>
+<li>Sample size for PRS <span class="math inline">\(2\times 10^{4}\)</span>.</li>
+<li>Number of phenotypes <span class="math inline">\(30\)</span>.</li>
+<li>Effect size <span class="math inline">\(\beta_{p, k} \sim \pi \delta_0 + (1 - \pi) N(0, \sigma)\)</span> where <span class="math inline">\(\pi = 0.9\)</span> and <span class="math inline">\(\sigma^2 = 1\)</span>.</li>
+<li>Allele frequency <span class="math inline">\(maf \sim Unif(0.05, 0.45)\)</span>.</li>
+<li>Number of SNPs <span class="math inline">\(1000\)</span>.</li>
+<li>Heritabillty <span class="math inline">\(h^2 = 0.05\)</span> for all phenotypes.</li>
+</ul>
+<p>Simulation.</p>
+<pre class="r"><code>get_maf = function(p, maf_low, maf_high) {
+  return(runif(p, min = maf_low, max = maf_high))
+}
+sim_hap = function(n, p, maf) {
+  hlist = list()
+  for(i in 1:2) {
+    hlist[[i]] = matrix(rbinom(p * n, 1, rep(maf, n)), byrow = TRUE, nrow = n, ncol = p)
+  }
+  return(hlist)
+}
+transmit_haplo = function(father, mother) {
+  out = list(
+    matrix(NA, nrow = nrow(father[[1]]), ncol = ncol(father[[1]])),
+    matrix(NA, nrow = nrow(father[[2]]), ncol = ncol(father[[2]]))
+  )
+  for(i in 1 : nrow(out[[1]])) {
+    f_idx = sample(1:2, 1)
+    m_idx = sample(1:2, 1)
+    out[[1]][i, ] = father[[f_idx]][i, ]
+    out[[2]][i, ] = mother[[m_idx]][i, ]
+  }
+  return(out)
+}
+spike_and_slab = function(n, pi_, sigma2) {
+  b = rnorm(n, sd = sqrt(sigma2))
+  b[runif(n) &lt;= pi_] = 0
+  return(b)
+}
+simulate_pheno = function(h, beta, h2, maf) {
+  n = nrow(h[[1]])
+  p = ncol(h[[1]])
+  k = ncol(beta)
+  var_snp = 2 * maf * (1 - maf)  # n x 1
+  var_genetics = t(beta ^ 2) %*% var_snp  # k x 1
+  var_e = (1 - h2) * var_genetics / h2  # k x 1
+  env_noise = matrix(rnorm(n * k, sd = sqrt(rep(var_e, n))), byrow = TRUE, ncol = k, nrow = n)  # n x k
+  pheno = h[[1]] %*% beta + h[[2]] %*% beta + env_noise
+  pheno
+}</code></pre>
+<pre class="r"><code>X = h_gwas[[1]] + h_gwas[[2]]
+y = y_gwas[, 1]
+o = run_gwas(X, y)</code></pre>
+<pre class="r"><code>maf = get_maf(n_snp, maf_low, maf_high)
+h_father = sim_hap(sample_size, n_snp, maf)
+h_mother = sim_hap(sample_size, n_snp, maf)
+h_gwas = sim_hap(sample_size_extra, n_snp, maf)
+h_child = transmit_haplo(h_father, h_mother)
+effect_size = matrix(spike_and_slab(n_snp * n_pheno, 1 - prior_causal, causal_sigma), nrow = n_snp, ncol = n_pheno)
+y_father = simulate_pheno(h_father, effect_size, heritabiltiy, maf)
+y_mother = simulate_pheno(h_mother, effect_size, heritabiltiy, maf)
+y_gwas = simulate_pheno(h_gwas, effect_size, heritabiltiy, maf)</code></pre>
+</div>
+<div id="em-algorithm" class="section level1">
+<h1><span class="header-section-number">4</span> EM algorithm</h1>
+<p><strong>Input</strong>:</p>
+<ul>
+<li><span class="math inline">\(y_{i, p}^f, y_{i, p}^m\)</span></li>
+<li><span class="math inline">\(g_{i, p}^1, g_{i, p}^2\)</span></li>
+</ul>
+<p><strong>Output</strong>:</p>
+<ul>
+<li><span class="math inline">\(\Pr(Z_i = 1 | y, g)\)</span></li>
+</ul>
+<p>Scketch the algorithm.</p>
+<p><span class="math display">\[\begin{aligned}
+  Q(\theta | \theta^{(t)}) &amp;= \E_{Z | y, g, \sigma^2}[ \log \Pr(y, g, Z; \sigma^2)] \\
+  &amp;= \sum_i \E_{Z_i | y_i, g_i, \sigma^2}[\log \Pr(y_i, g_i, Z_i; \sigma^2)] \\
+  &amp;= \sum_i \E_{Z_i | y_i, g_i, \sigma^2}[\log \Pr(Z_i) + \sum_p \log \Pr(y_{i, p}, g_{i, p}, | Z_i ; \sigma^2)]~\text{, assume iid phenotypes} \\
+  &amp;= const. + \sum_i \E_{Z_i | y_i, g_i, \sigma^2}[\sum_p \log \Pr(y_{i, p}, g_{i, p}, | Z_i ; \sigma^2)]
+\end{aligned}\]</span></p>
+<p>And <span class="math display">\[\begin{aligned}
+  \log \Pr(y_{i, p}, g_{i, p}, | Z_i ; \sigma^2) &amp;= Z_i F_1(y_{i, p}, g_{i, p}) + (1 - Z_i) F_2(y_{i, p}, g_{i, p}) \\
+  F_1(y, g) &amp;= l(y^f, g^1) + l(y^m, g^2) \\
+  F_2(y, g) &amp;= l(y^f, g^2) + l(y^m, g^1)
+\end{aligned}\]</span></p>
+<p>So, we have <span class="math display">\[\begin{aligned}
+  Q(\theta|\theta^{(t)}) &amp;= const. + \sum_i \E_{Z_i | y_i, g_i, \sigma^2}[\sum_p (Z_i F_1(y_{i, p}, g_{i, p}) + (1 - Z_i) F_2(y_{i, p}, g_{i, p}))]
+\end{aligned}\]</span></p>
+<p>Let <span class="math inline">\(\E_{Z_i | y_i, g_i, \sigma^2} [Z_i] = w_i\)</span>, we have the simplified version. <span class="math display">\[\begin{aligned}
+  Q(\theta|\theta^{(t)}) &amp;= const. + \sum_i \sum_p (w_i F_1(y_{i, p}, g_{i, p}) + (1 - w_i) F_2(y_{i, p}, g_{i, p})) \\
+  &amp;= const. + \sum_i w_i \sum_p F_1(y_{i, p}, g_{i, p}) + \sum_i (1 - w_i) \sum_p F_2(y_{i, p}, g_{i, p})
+\end{aligned}\]</span></p>
+<p>To obtain <span class="math inline">\(w_i\)</span>, Bayes rule is applied. <span class="math display">\[\begin{aligned}
+  \Pr(Z_i = k | y_i, g_i) &amp;= \frac{\Pr(y_i, g_i | Z_i = k) \Pr(Z_i = k)}{\sum_{k&#39; = 0, 1} \Pr(y_i, g_i | Z_i = k&#39;) \Pr(Z_i = k&#39;)} \\
+  \Pr(Z_i = k) ~&amp;~ \text{is based on prior} \\
+  \log \Pr(y_i, g_i | Z_i) &amp;= \begin{cases}
+    \sum_p  F_1(y_{i, p}, g_{i, p}), ~ Z_i = 1 \\
+    \sum_p F_2(y_{i, p}, g_{i, p}), ~ Z_i = 0
+    \end{cases}
+\end{aligned}\]</span></p>
+<p>So the calculation about <span class="math inline">\(w_i\)</span> concludes the E step. The M step is to update <span class="math inline">\(\sigma^2\)</span>.</p>
+<p><span class="math display">\[\begin{aligned}
+  \arg\max_{\sigma^2} Q(\theta | \theta^{(t)}) &amp;= \arg\max_{\sigma} \sum_i w_i \sum_p F_1(y_{i, p}, g_{i, p}) + \sum_i (1 - w_i) \sum_p F_2(y_{i, p}, g_{i, p}) 
+\end{aligned}\]</span></p>
+<p>Here we consider the simplest case in which phenotypes are independent but each phenotype has its own <span class="math inline">\(\sigma^2\)</span>. Essentially, for each phenotype and each individual, we have <span class="math display">\[\begin{aligned}
+  l(y, g) &amp;= -\frac{1}{2} \log \sigma^2 - \frac{(y - g)^2}{2 \sigma^2}
+\end{aligned}\]</span> The optimization stated above is simply a weighted version of sample variance. <span class="math display">\[\begin{aligned}
+  \sigma_p^2 \leftarrow \frac{1}{2N}\sum_i w_i [(y_{i, p}^f - y_i^1)^2 + y_{i, p}^m - y_i^2)^2] + (1 - w_i) [(y_{i, p}^m - y_i^1)^2 + (y_{i, p}^f - y_i^2)^2]
+\end{aligned}\]</span></p>
+</div>
+<div id="implementing-em-algorithm" class="section level1">
+<h1><span class="header-section-number">5</span> Implementing EM algorithm</h1>
+<pre class="r"><code>log_prob_y_g_given_z = function(yf, ym, g1, g2, sigma2_p, z) {
+  # message(&#39;dim = &#39;, dim(diff_y_g(yf, ym, g1, g2, z)))
+  o = - sweep(diff_y_g(yf, ym, g1, g2, z), 2, FUN = &#39;/&#39;,  2 * sigma2_p)
+  # message(&#39;length = &#39;, length(sigma2_p))
+  return(rowSums(o))
+}
+diff_y_g = function(yf, ym, g1, g2, z) {
+  if(z == 1) {
+    o = (yf - g1) ^ 2 + (ym - g2) ^ 2
+  } else if(z == 0) {
+    o = (ym - g1) ^ 2 + (yf - g2) ^ 2
+  } 
+  return(o)
+}
+em_algorithm = function(y_father, y_mother, g_1, g_2, maxiter = 15, prior_z = 0.5) {
+  n = nrow(y_father)  # sample size
+  p = ncol(y_father)  # number of phenotypes
+  # z_prob_n = rep(0.5, n)
+  sigma2_p = rep(1, p)
+  lld = c()
+  niter = 0
+  while(niter &lt; maxiter) {
+    
+    # E step
+    ## to handle potential over/underflow
+    lp1 = log_prob_y_g_given_z(y_father, y_mother, g_1, g_2, sigma2_p, 1)
+    lp0 = log_prob_y_g_given_z(y_father, y_mother, g_1, g_2, sigma2_p, 0)
+    # message(&#39;lp1 = &#39;, lp1[2], &#39;; lp0 = &#39;, lp0[2])
+    lp_max = pmax(lp1, lp0)
+    lp1 = lp1 - lp_max
+    lp0 = lp0 - lp_max
+    p1 = exp(lp1) * prior_z 
+    p0 = exp(lp0) * (1 - prior_z)
+    ## 
+    w = p1 / (p1 + p0)
+    lld = c(lld, sum(log((p1 + p0)) + lp_max))
+    # message(p1[1], &#39;;&#39;, p0[1], &#39; ;&#39;, w[1])
+    
+    # M step
+    sigma2_p = 1 / 2 / n * colSums(sweep(diff_y_g(y_father, y_mother, g_1, g_2, 1), 1, FUN = &#39;*&#39;, w)  + sweep(diff_y_g(y_father, y_mother, g_1, g_2, 0), 1, FUN = &#39;*&#39;, 1 - w))
+    # message(&#39;sigma2 = &#39;, paste(sigma2_p, collapse = &#39;; &#39;))
+    
+    # some others
+    niter = niter + 1
+  }
+  return(list(z_prob_n = w, sigma2_p = sigma2_p, lld = lld))
+}</code></pre>
+</div>
+<div id="some-settings" class="section level1">
+<h1><span class="header-section-number">6</span> Some settings</h1>
+<p>Here we consider two settings:</p>
+<ul>
+<li><strong>Perfect PRS</strong>: suppose we know the true effect sizes</li>
+<li><strong>Estimated PRS</strong>: suppose we use the PRS estimated from an held-out cohort</li>
+</ul>
+<p>We consider how the number of phenotypes could affect the result.</p>
+<div id="perfect-prs" class="section level2">
+<h2><span class="header-section-number">6.1</span> Perfect PRS</h2>
+<pre class="r"><code>g1 = h_child[[1]] %*% effect_size
+g2 = h_child[[2]] %*% effect_size
+collector = list()
+for(p in c(2, 5, 10, 15, 20)) {
+  o = em_algorithm(y_father[, 1:p], y_mother[, 1:p], g1[, 1:p], g2[, 1:p])
+  collector[[length(collector) + 1]] = data.frame(z = o$z_prob_n, num_pheno = p, idx = 1 : length(o$z_prob_n))
+}
+df_perfect = do.call(rbind, collector)</code></pre>
+</div>
+<div id="estimated-prs" class="section level2">
+<h2><span class="header-section-number">6.2</span> Estimated PRS</h2>
+<pre class="r"><code># build PRS
+build_prs = function(geno, pheno, prs_p_cutoff = 0.01) {
+  n_snp = ncol(geno)
+  n_pheno = ncol(pheno)
+  effect_size_prs = matrix(0, nrow = n_snp, ncol = n_pheno)
+  prs_p_cutoff = 0.01
+  prs_z_cutoff = abs(qnorm(prs_p_cutoff / 2))
+  for(pp in 1 : n_pheno) {
+    message(&#39;Building phenotype &#39;, pp)
+    gwas = run_gwas(geno, pheno[, pp])
+    pass_ind = abs(gwas$bhat / gwas$bhat_se) &gt; prs_z_cutoff
+    effect_size_prs[, pp][pass_ind] = gwas$bhat[pass_ind]
+  }
+  return(effect_size_prs)
+}
+Xgwas = h_gwas[[1]] + h_gwas[[2]]
+effect_size_prs = build_prs(Xgwas, y_gwas)</code></pre>
+<pre><code>## Building phenotype 1</code></pre>
+<pre><code>## Building phenotype 2</code></pre>
+<pre><code>## Building phenotype 3</code></pre>
+<pre><code>## Building phenotype 4</code></pre>
+<pre><code>## Building phenotype 5</code></pre>
+<pre><code>## Building phenotype 6</code></pre>
+<pre><code>## Building phenotype 7</code></pre>
+<pre><code>## Building phenotype 8</code></pre>
+<pre><code>## Building phenotype 9</code></pre>
+<pre><code>## Building phenotype 10</code></pre>
+<pre><code>## Building phenotype 11</code></pre>
+<pre><code>## Building phenotype 12</code></pre>
+<pre><code>## Building phenotype 13</code></pre>
+<pre><code>## Building phenotype 14</code></pre>
+<pre><code>## Building phenotype 15</code></pre>
+<pre><code>## Building phenotype 16</code></pre>
+<pre><code>## Building phenotype 17</code></pre>
+<pre><code>## Building phenotype 18</code></pre>
+<pre><code>## Building phenotype 19</code></pre>
+<pre><code>## Building phenotype 20</code></pre>
+<pre><code>## Building phenotype 21</code></pre>
+<pre><code>## Building phenotype 22</code></pre>
+<pre><code>## Building phenotype 23</code></pre>
+<pre><code>## Building phenotype 24</code></pre>
+<pre><code>## Building phenotype 25</code></pre>
+<pre><code>## Building phenotype 26</code></pre>
+<pre><code>## Building phenotype 27</code></pre>
+<pre><code>## Building phenotype 28</code></pre>
+<pre><code>## Building phenotype 29</code></pre>
+<pre><code>## Building phenotype 30</code></pre>
+<pre class="r"><code>g1 = h_child[[1]] %*% effect_size_prs
+g2 = h_child[[2]] %*% effect_size_prs
+collector = list()
+for(p in c(2, 5, 10, 15, 20)) {
+  o = em_algorithm(y_father[, 1:p], y_mother[, 1:p], g1[, 1:p], g2[, 1:p])
+  collector[[length(collector) + 1]] = data.frame(z = o$z_prob_n, num_pheno = p, idx = 1 : length(o$z_prob_n))
+}
+df_estimated = do.call(rbind, collector)</code></pre>
+<pre class="r"><code>tempo = rbind(
+  df_perfect %&gt;% mutate(type = &#39;exact PRS&#39;),
+  df_estimated %&gt;% mutate(type = &#39;estimated PRS&#39;)
+) 
+tempo %&gt;% 
+  ggplot() + geom_boxplot(aes(x = factor(num_pheno), y = z, fill = type)) + th</code></pre>
+<p><img src="init_idea_outline_files/figure-html/result-1.png" width="672" /></p>
+<pre class="r"><code>tempo %&gt;% ggplot() + geom_jitter(aes(x = num_pheno, y = z), width = 1, height = 0, alpha = 0.01) + facet_wrap(~type, nrow = 1) + th2</code></pre>
+<p><img src="init_idea_outline_files/figure-html/result-2.png" width="672" /></p>
+</div>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("hide" === "show");
+});
+</script>
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
