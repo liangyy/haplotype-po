@@ -1,5 +1,6 @@
 ---
 title: "Home"
+date: "`r paste0('Last update: ', format(Sys.time(), '%b %d, %Y'))`"    
 ---
 
 # Notes

@@ -17,4 +17,3 @@ output:
     highlight: textmate
     number_sections: true
     code_folding: "hide"
-date: "`r paste0('Last update: ', format(Sys.time(), '%b %d, %Y'))`"    
