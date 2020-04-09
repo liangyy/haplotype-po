@@ -56,10 +56,14 @@ run_gwas_pairwise = function(X, y, weights = NULL) {
   ypred = sweep(x_tilde, 2, FUN = '*', bhat) + sweep(x0, 2, FUN = '*', mu0)
   sigma2 = 1 / (nrow(x_tilde) - 2) * colSums((ypred - y_tilde) ^ 2)
   bhat_se = sqrt(sigma2 * n / denom)
-  print(denom)
+  # print(denom)
   bhat = bhat * a_y / b_x
   bhat_se = bhat_se * a_y / b_x
   return(list(bhat = bhat, bhat_se = bhat_se))
+}
+
+tval2pval = function(tval, df) {
+  exp(pt(abs(tval), df = df, lower.tail = FALSE, log.p = TRUE)) * 2
 }
 
 # # X: matrix n x p

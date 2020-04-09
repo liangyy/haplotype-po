@@ -390,13 +390,13 @@ div.tocify {
 <p><span class="math display">\[
 \newcommand{\E}{\text{E}}
 \]</span></p>
-<pre class="r"><code>library(ggplot2)
+<pre class="r"><code>rm(list = ls())
+library(ggplot2)
 library(dplyr)
 theme_set(theme_bw(base_size=15))
 set.seed(2020)
 
 # load some gists
-source(&#39;https://gist.githubusercontent.com/liangyy/4a5d201ac2f8b31aab77b29d5a9f2cc2/raw/e84668de1861785eb8c4e3f57bfe0e493c540c81/fast_gwas.R&#39;)
 source(&#39;https://gist.githubusercontent.com/liangyy/43912b3ecab5d10c89f9d4b2669871c9/raw/3ca651cfa53ffccb8422f432561138a46e93710f/my_ggplot_theme.R&#39;)</code></pre>
 <div id="problem-setup" class="section level1">
 <h1><span class="header-section-number">1</span> Problem setup</h1>
@@ -581,6 +581,7 @@ df_perfect = do.call(rbind, collector)</code></pre>
 <div id="estimated-prs" class="section level2">
 <h2><span class="header-section-number">6.2</span> Estimated PRS</h2>
 <pre class="r"><code># build PRS
+source(&#39;../code/rlib_gwas.R&#39;)
 build_prs = function(geno, pheno, prs_p_cutoff = 0.01) {
   n_snp = ncol(geno)
   n_pheno = ncol(pheno)

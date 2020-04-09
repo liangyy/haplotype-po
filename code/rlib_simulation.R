@@ -38,7 +38,7 @@ simulate_pheno = function(h, beta, h2, maf) {
   pheno
 }
 
-simulate_pheno_single_snp = function(h, beta, h2, maf) {
+simulate_pheno_single_snp = function(h, beta, h2, maf, null = FALSE) {
   # h: matrix n x p
   # beta: vector p x 1
   # h2: vector (or scalar) p x 1
@@ -47,8 +47,22 @@ simulate_pheno_single_snp = function(h, beta, h2, maf) {
   p = ncol(h[[1]])
   var_snp = 2 * maf * (1 - maf)  # p x 1
   var_genetics = beta ^ 2 * var_snp  # p x 1
-  var_e = (1 - h2) * var_genetics / h2  # p x 1
+  if(null == FALSE) {
+    var_e = (1 - h2) * var_genetics / h2  # p x 1
+  } else if(null == TRUE) {
+    var_e = rep(1, p)  # p x 1
+  }
+  # print(var_genetics[1])
+  # print(var_e[1])
+  # print(h2[1])
   env_noise = matrix(rnorm(n * p, sd = sqrt(rep(var_e, n))), byrow = TRUE, ncol = p, nrow = n)  # n x k
   pheno = h[[1]] %*% diag(beta) + h[[2]] %*% diag(beta) + env_noise
   pheno
+}
+
+rbeta_from_mean_and_sd = function(n, mean_, sd_) {
+  co = mean_ * (1 - mean_) / sd_ ^ 2 - 1
+  alpha = mean_ * co
+  beta = (1 - mean_) * co
+  rbeta(n, shape1 = alpha, shape2 = beta)
 }

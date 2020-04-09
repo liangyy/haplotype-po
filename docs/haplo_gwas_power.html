@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+
+
+<title>Power comparison of haplotype-based GWAS</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<link href="site_libs/font-awesome-5.1.0/css/all.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-5.1.0/css/v4-shims.css" rel="stylesheet" />
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+</style>
+
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 51px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h2 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h3 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h4 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h5 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h6 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #ffffff;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row-fluid">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Imputing parent of origin of haplotype</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="https://github.com/liangyy/haplotype-po">
+    <span class="fa fa-github"></span>
+     
+  </a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+<div class="btn-group pull-right">
+<button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">Power comparison of haplotype-based GWAS</h1>
+<h4 class="date">Last update: Apr 09, 2020</h4>
+
+</div>
+
+
+<p><span class="math display">\[
+\newcommand{\E}{\text{E}}
+\newcommand{\sd}{\text{sd}}
+\]</span></p>
+<pre class="r"><code>rm(list = ls())
+library(ggplot2)
+library(dplyr)
+theme_set(theme_bw(base_size=15))
+set.seed(2020)
+
+# load some gists
+source(&#39;https://gist.githubusercontent.com/liangyy/43912b3ecab5d10c89f9d4b2669871c9/raw/3ca651cfa53ffccb8422f432561138a46e93710f/my_ggplot_theme.R&#39;)
+source(&#39;https://gist.githubusercontent.com/liangyy/e580a36154586148cca7fd4cd973f502/raw/bad4364b1700662c7086fcdea191e42f530d0e2e/zval2pval.R&#39;)</code></pre>
+<div id="problem-setup" class="section level1">
+<h1><span class="header-section-number">1</span> Problem setup</h1>
+<p>Here we consider the case that we observe child’s genotype <span class="math inline">\(H^1\)</span> and <span class="math inline">\(H^2\)</span>, and parental phenotype <span class="math inline">\(y^f\)</span> and <span class="math inline">\(y^m\)</span>. Our goal is to perform GWAS using these informations.</p>
+<p>As a reference, I first state the approach taken in <span class="citation">(Marioni et al. 2018)</span>. Run GWAS:</p>
+<ul>
+<li><span class="math inline">\(y^f\)</span> against <span class="math inline">\(H^1 + H^2\)</span>.</li>
+<li><span class="math inline">\(y^m\)</span> against <span class="math inline">\(H^1 + H^2\)</span>.</li>
+</ul>
+<p>Then, I introduce the problem setup.</p>
+<p><span class="math display">\[\begin{aligned}
+  y^f &amp;= H^f \beta + H^{f,\star} \beta + \epsilon^f \\
+  y^m &amp;= H^m \beta + H^{m,\star} \beta + \epsilon^m \\
+  \epsilon &amp;\sim N(0, \sigma^2)
+\end{aligned}\]</span> where the haplotype that is not transmitted to the child is labeled with <span class="math inline">\(\star\)</span>.</p>
+<p>We can further treat <span class="math inline">\(H^\star\)</span> as random variable when we are looking across many individuals. So, we have <span class="math display">\[\begin{aligned}
+  y^f &amp;= H^f \beta + \epsilon_\star^f \\
+  y^m &amp;= H^m \beta + \epsilon_\star^m 
+\end{aligned}\]</span> where <span class="math inline">\(\epsilon_\star = \epsilon + H^\star \beta \sim N(0, \sigma^2 + \beta^2 f(1-f))\)</span> (roughly speaking).</p>
+<p>In practice, we observe <span class="math inline">\(H^1, H^2\)</span> and we know that either <span class="math inline">\(H^1 = H^f, ~H^2 = H^m\)</span> or the other way around. If we have prior belief on which haplotype between <span class="math inline">\(H^1\)</span> and <span class="math inline">\(H^2\)</span> is more likely to be <span class="math inline">\(H^f\)</span>, in principle, we can use this piece of information to increase our power.</p>
+<p>One way to incorperate this information is to replace <span class="math inline">\(H^f\)</span> with imputed <span class="math inline">\(H^f\)</span>. By imputation, we can do the following. <span class="math display">\[\begin{aligned}
+  \widetilde{H}^f &amp;= \Pr(Z_i = 1 | \text{Data}) H^1 + \Pr(Z_i = 0 | \text{Data}) H^2
+\end{aligned}\]</span> where <span class="math inline">\(Z_i\)</span> is defined as the indicator telling if <span class="math inline">\(H^1\)</span> is from father (the same definition as in <a href="init_idea_outline.html">initial idea</a>).</p>
+<p>Given <span class="math inline">\(Z_i\)</span>, the problem is reduced to linear regression. So, another approach is to weight the log likelihood of each scenario (<span class="math inline">\(Z_i = 0, 1\)</span>) with different weights.</p>
+<p>So that we’d like to run GWAS in the following manner.</p>
+<ul>
+<li><span class="math inline">\(y^f\)</span> against <span class="math inline">\(\widetilde{H}^f\)</span> jointly with <span class="math inline">\(y^m\)</span> against <span class="math inline">\(\widetilde{H}^m\)</span>.</li>
+<li><span class="math inline">\(y^f\)</span> against <span class="math inline">\(H^1\)</span>, <span class="math inline">\(y^m\)</span> against <span class="math inline">\(H^2\)</span> jointly with <span class="math inline">\(y^f\)</span> against <span class="math inline">\(H^2\)</span>, <span class="math inline">\(y^m\)</span> against <span class="math inline">\(H^1\)</span> with weights <span class="math inline">\(\Pr(Z_i = 1)\)</span> and <span class="math inline">\(\Pr(Z_i = 0)\)</span>.</li>
+</ul>
+</div>
+<div id="connection-to-previous-approach" class="section level1">
+<h1><span class="header-section-number">2</span> Connection to previous approach?</h1>
+<p><strong>OK, there are some questions remained</strong>:</p>
+<ul>
+<li>How is the previous approach connected to the setup we stated here?</li>
+<li>What is the difference between the previous approach and the one we proposed above?</li>
+</ul>
+<p>Suppose <span class="math inline">\(Z_i = 1\)</span>,  <span class="math inline">\(H^f = H^1\)</span>. We consider the GWAS estimate for <span class="math inline">\(y^f\)</span> against <span class="math inline">\(H^1 + H^2\)</span>. <span class="math display">\[\begin{aligned}
+  \hat\beta &amp;= \frac{(H^1 + H^2)&#39; y^f}{(H^1 + H^2)&#39;(H^1 + H^2)} \\
+  &amp;= \frac{(H^1 + H^2)&#39; (H^1 \beta + \epsilon^{f, \star})}{2 N f (1 - f)} \\
+  &amp;= \frac{N f (1-f) \beta + {H^2}&#39; H^1 \beta + (H^1 + H^2)&#39; \epsilon^{f, \star})}{2 N f (1 - f)} \\
+  &amp;= \frac{1}{2}\beta + \frac{0 \cdot \beta + (H^1 + H^2)&#39; \epsilon^{f, \star}}{2 N f (1 - f)} \\
+\end{aligned}\]</span> So, we have <span class="math inline">\(\E(\hat\beta) = \frac{1}{2} \beta\)</span>.</p>
+<p>How about the power? The standard deviation is just like a regular GWAS however the estimate is half of a regular GWAS. So, the test statistic is half of a regular GWAS. It suggests power loss and the scale depends on <span class="math inline">\(\beta\)</span>.</p>
+<p>Moreover, the previous approach can be re-parameterized by replacing <span class="math inline">\(H^1 + H^2\)</span> with <span class="math inline">\(\frac{H^1 + H^2}{2}\)</span>. Then <span class="math inline">\(\E(\hat\beta) = \beta\)</span> and the standard deviation is twice as big as a regular GWAS. From this parameterization, we can start to see that the previous approach is a special case of what we are proposing in approach 1 with <span class="math inline">\(\Pr(Z = 1 | \text{Data}) = 0.5\)</span>.</p>
+<p>And moreover, it is equivalent to having <span class="math inline">\(y^f\)</span> against <span class="math inline">\(H^1\)</span> and <span class="math inline">\(y^f\)</span> against <span class="math inline">\(H^2\)</span> be weighted equally.</p>
+</div>
+<div id="how-could-the-prior-belief-help" class="section level1">
+<h1><span class="header-section-number">3</span> How could the prior belief help?</h1>
+<p>There could be something to write down but let’s leave it for the future. In brief, the imputation based approach sounds less valid from my preliminary checking. The weighting based approach looks more reasonable. And interestingly, it is motivated through the EM routine in solving <span class="math inline">\(\Pr(y^f, y^m, H^1, H^2; \beta, \sigma^2)\)</span>. At this point, I don’t see necessity to have EM algorithm come in if there is an easier routine to start with. But we need to keep in mind that the estimate is biased with roughly <span class="math inline">\(\E(\beta) \approx \Pr(Z = 1)\beta\)</span>.</p>
+<!-- As we have established the connection between the previous approach and the one we proposed, we proceed to see how $\Pr(Z_i = 1 | \text{Data})$ affects the estimate. -->
+<!-- Let $\Pr(Z_i = 1 | \text{Data}) = \gamma_i$ and we still assume that $H^1$ comes from father. -->
+<!-- $$\begin{aligned} -->
+<!--   \hat\beta &= \frac{\gamma Nf(1-f)\beta + [\gamma H^1 + (1 - \gamma)H^2]' \epsilon^{f, \star}}{[\gamma^2 + (1 - \gamma)^2]Nf(1-f)} \\ -->
+<!--   &= \frac{\gamma}{\gamma^2 + (1 - \gamma)^2} \beta + \frac{[\gamma H^1 + (1 - \gamma)H^2]' \epsilon^{f, \star}}{[\gamma^2 + (1 - \gamma)^2]Nf(1-f)} -->
+<!-- \end{aligned}$$ -->
+</div>
+<div id="simulation" class="section level1">
+<h1><span class="header-section-number">4</span> Simulation</h1>
+<pre class="r"><code>sample_size = 10000
+nrepeat = 500
+maf_low = 0.05
+maf_high = 0.45
+heritability = 0.0001
+z_seq = 4 : 8 / 10
+sd_z = 0.2
+beta = 1</code></pre>
+<p>We consider the following simulation scheme.</p>
+<ol style="list-style-type: decimal">
+<li>Simulate haplotypes for the parents, <span class="math inline">\(H^{f, 1}, H^{f, 2}\)</span> and <span class="math inline">\(H^{m, 1}, H^{m, 2}\)</span>.</li>
+<li>Simulate phenotypes for the parents, <span class="math inline">\(y^f\)</span> and <span class="math inline">\(y^m\)</span>.</li>
+<li>Let <span class="math inline">\(H^1 = H^{f, 1}\)</span> and <span class="math inline">\(H^2 = H^{m, 1}\)</span>.</li>
+<li>Simulate <span class="math inline">\(\gamma_i := \Pr(Z_i = 1)\)</span> under various conditions:
+<ul>
+<li><span class="math inline">\(Z_i = 0.4, \cdots, 0.8\)</span>.</li>
+<li><span class="math inline">\(Z_i \sim \text{Beta}(\cdot)\)</span> with <span class="math inline">\(\E(Z_i) = 0.4, \cdots, 0.8\)</span> and <span class="math inline">\(\sd(Z_i) = 0.2\)</span>.</li>
+</ul></li>
+</ol>
+<p>Some parameters.</p>
+<ul>
+<li>Sample size <span class="math inline">\(10^{4}\)</span>.</li>
+<li>Number of replication <span class="math inline">\(500\)</span>.</li>
+<li>Monor allele frequency <span class="math inline">\(f \sim Unif(0.05, 0.45)\)</span>.</li>
+<li>Heritability (note that it is single SNP scenario) <span class="math inline">\(10^{-4}\)</span>.</li>
+<li>Effect size <span class="math inline">\(\beta = 1\)</span>.</li>
+</ul>
+<p>Perform simulation.</p>
+<pre class="r"><code>source(&#39;../code/rlib_simulation.R&#39;)
+maf = get_maf(nrepeat, maf_low, maf_high)
+h_father = sim_hap(sample_size, nrepeat, maf)
+h_mother = sim_hap(sample_size, nrepeat, maf)
+y_father = simulate_pheno_single_snp(h_father, rep(beta, nrepeat), heritability, maf)
+y_mother = simulate_pheno_single_snp(h_mother, rep(beta, nrepeat), heritability, maf)
+y_father_null = simulate_pheno_single_snp(h_father, rep(0, nrepeat), heritability, maf, null = TRUE)
+y_mother_null = simulate_pheno_single_snp(h_mother, rep(0, nrepeat), heritability, maf, null = TRUE)</code></pre>
+<p>Run GWAS. Here we consider three regressions.</p>
+<ol style="list-style-type: decimal">
+<li><span class="math inline">\(y^f + y^m\)</span> against <span class="math inline">\(H^1 + H^2\)</span>.</li>
+<li><span class="math inline">\(y^f\)</span> against <span class="math inline">\(\widetilde{H}^f\)</span> jointly with <span class="math inline">\(y^m\)</span> against <span class="math inline">\(\widetilde{H}^m\)</span>.</li>
+<li><span class="math inline">\(y^f\)</span> against <span class="math inline">\(H^1\)</span>, <span class="math inline">\(y^m\)</span> against <span class="math inline">\(H^2\)</span> with weight <span class="math inline">\(\gamma\)</span> and <span class="math inline">\(y^f\)</span> against <span class="math inline">\(H^2\)</span>, <span class="math inline">\(y^m\)</span> against <span class="math inline">\(H^1\)</span> with weight <span class="math inline">\(1 - \gamma\)</span>.</li>
+</ol>
+<p>Some data frame preparation.</p>
+<pre class="r"><code>source(&#39;../code/rlib_gwas.R&#39;)
+
+dm0 = list(
+  X = h_father[[1]] + h_mother[[1]], 
+  y = y_father + y_mother, 
+  ynull = y_father_null + y_mother_null
+)
+dm1 = function(z) {
+  list(
+    X = rbind(
+      h_father[[1]] * z + h_mother[[1]] * (1 - z),
+      h_father[[1]] * (1 - z) + h_mother[[2]] * z
+    ),
+    y = rbind(
+      y_father,
+      y_mother
+    ),
+    ynull = rbind(
+      y_father_null,
+      y_mother_null
+    )
+  )
+}
+dm2 = function(z) {
+  list(
+    X = rbind(
+      h_father[[1]],
+      h_mother[[1]],
+      h_mother[[1]],
+      h_father[[1]]
+    ),
+    y = rbind(
+      y_father,
+      y_mother,
+      y_father,
+      y_mother
+    ),
+    ynull = rbind(
+      y_father_null,
+      y_mother_null,
+      y_father_null,
+      y_mother_null
+    ),
+    w = rbind(
+      z,
+      z, 
+      (1 - z),
+      (1 - z)
+    )
+  )
+}</code></pre>
+<p>Actual GWAS run.</p>
+<pre class="r"><code>re = list()
+ys = c(&#39;y&#39;, &#39;ynull&#39;)
+types = c(&#39;beta = 1&#39;, &#39;beta = 0&#39;)
+
+# setting 1
+for(i in 1 : length(ys)) {
+  o = run_gwas_pairwise(dm0$X, dm0[[ys[i]]])
+  re[[length(re) + 1]] = data.frame(b = o$bhat, b_se = o$bhat_se, method = &#39;case1&#39;, z = 0.5, z_type = &#39;scalar&#39;, type = types[i])
+}
+
+# setting 2 &amp; 3
+for(z in z_seq) {
+  message(&#39;Working on scaler z = &#39;, z)
+  zmat = matrix(z, nrow = sample_size, ncol = nrepeat)
+  # setting 2
+  dm1_ = dm1(zmat)
+  for(i in 1 : length(ys)) {
+    o = run_gwas_pairwise(dm1_$X, dm1_[[ys[i]]])
+    re[[length(re) + 1]] = data.frame(b = o$bhat, b_se = o$bhat_se, method = &#39;case2&#39;, z = z, z_type = &#39;scalar&#39;, type = types[i])
+  }
+  # setting 3
+  dm2_ = dm2(zmat)
+  for(i in 1 : length(ys)) {
+    o = run_gwas_pairwise(dm2_$X, dm2_[[ys[i]]], weights = dm2_$w)
+    re[[length(re) + 1]] = data.frame(b = o$bhat, b_se = o$bhat_se, method = &#39;case3&#39;, z = z, z_type = &#39;scalar&#39;, type = types[i])
+  }
+  
+  
+  message(&#39;Working on beta z = &#39;, z)
+  zmat = matrix(rbeta_from_mean_and_sd(sample_size * nrepeat, mean = z, sd = sd_z), nrow = sample_size, ncol = nrepeat)
+  # setting 2
+  dm1_ = dm1(zmat)
+  for(i in 1 : length(ys)) {
+    o = run_gwas_pairwise(dm1_$X, dm1_[[ys[i]]])
+    re[[length(re) + 1]] = data.frame(b = o$bhat, b_se = o$bhat_se, method = &#39;case2&#39;, z = z, z_type = &#39;beta&#39;, type = types[i])
+  }
+  # setting 3
+  dm2_ = dm2(zmat)
+  for(i in 1 : length(ys)) {
+    o = run_gwas_pairwise(dm2_$X, dm2_[[ys[i]]], weights = dm2_$w)
+    re[[length(re) + 1]] = data.frame(b = o$bhat, b_se = o$bhat_se, method = &#39;case3&#39;, z = z, z_type = &#39;beta&#39;, type = types[i])
+  }
+}</code></pre>
+<pre><code>## Working on scaler z = 0.4</code></pre>
+<pre><code>## Working on beta z = 0.4</code></pre>
+<pre><code>## Working on scaler z = 0.5</code></pre>
+<pre><code>## Working on beta z = 0.5</code></pre>
+<pre><code>## Working on scaler z = 0.6</code></pre>
+<pre><code>## Working on beta z = 0.6</code></pre>
+<pre><code>## Working on scaler z = 0.7</code></pre>
+<pre><code>## Working on beta z = 0.7</code></pre>
+<pre><code>## Working on scaler z = 0.8</code></pre>
+<pre><code>## Working on beta z = 0.8</code></pre>
+<pre class="r"><code>df_re = do.call(rbind, re) %&gt;% mutate(stat = b / b_se)</code></pre>
+<pre class="r"><code>df_re %&gt;% filter(type == &#39;beta = 1&#39;) %&gt;% 
+  ggplot() + geom_boxplot(aes(x = z, group = z, y = stat)) + facet_grid(z_type~method) +
+  ggtitle(&#39;Test statistic: Under the alternative&#39;) + th2</code></pre>
+<p><img src="haplo_gwas_power_files/figure-html/stat-1.png" width="480" /></p>
+<pre class="r"><code>df_re %&gt;% filter(type == &#39;beta = 0&#39;) %&gt;% 
+  ggplot() + geom_boxplot(aes(x = z, group = z, y = stat)) + facet_grid(z_type~method) +
+  ggtitle(&#39;Test statistic: Under the null&#39;) + th2</code></pre>
+<p><img src="haplo_gwas_power_files/figure-html/stat-2.png" width="480" /></p>
+<pre class="r"><code>df_re = df_re %&gt;% mutate(pval = zval2pval(stat))  # , df = sample_size - 2
+df_re = df_re %&gt;% group_by(method, type, z_type, z) %&gt;% mutate(pval_exp = rank(pval) / (n() + 1)) %&gt;% ungroup()
+df_re %&gt;% filter(type == &#39;beta = 0&#39;) %&gt;% 
+  ggplot() + geom_point(aes(x = -log(pval_exp), y = -log(pval), color = z)) + facet_grid(z_type~method) +
+  ggtitle(&#39;Test statistic: Under the null&#39;) + th2 +
+  geom_abline(slope = 1, intercept = 0) + 
+  theme(legend.position = &#39;bottom&#39;)</code></pre>
+<p><img src="haplo_gwas_power_files/figure-html/qq-1.png" width="480" /></p>
+<p>The inflation on “case 3” is explained in this dicussion <a href="https://stats.stackexchange.com/questions/61469/weighted-least-squares-regression-on-random-data-giving-large-t-statistics-more">link</a>. In short, under the null, the weighting scheme results in the under-estimation of error term.</p>
+<!-- ```{r} -->
+<!-- plot(df_re %>% filter(type == 'case1') %>% pull(stat), df_re %>% filter(type == 'case3', z == 0.5) %>% pull(stat)) -->
+<!-- ``` -->
+</div>
+<div id="references" class="section level1 unnumbered">
+<h1>References</h1>
+<div id="refs" class="references">
+<div id="ref-marioni:2018">
+<p>Marioni, Riccardo E, Sarah E Harris, Qian Zhang, Allan F McRae, Saskia P Hagenaars, W David Hill, Gail Davies, et al. 2018. “GWAS on Family History of Alzheimer’s Disease.” <em>Translational Psychiatry</em> 8 (1). Nature Publishing Group: 1–7.</p>
+</div>
+</div>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("hide" === "show");
+});
+</script>
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

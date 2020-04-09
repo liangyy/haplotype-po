@@ -6,3 +6,4 @@ date: "`r paste0('Last update: ', format(Sys.time(), '%b %d, %Y'))`"
 # Notes
 
 * [Initial thoughts](init_idea_outline.html)
+* [Power comparison on haplotype-based GWAS](haplo_gwas_power.html)
