@@ -499,6 +499,7 @@ y_mother_null = simulate_pheno_single_snp(h_mother, rep(0, nrepeat), heritabilit
 <li><span class="math inline">\(y^f + y^m\)</span> against <span class="math inline">\(H^1 + H^2\)</span>.</li>
 <li><span class="math inline">\(y^f\)</span> against <span class="math inline">\(\widetilde{H}^f\)</span> jointly with <span class="math inline">\(y^m\)</span> against <span class="math inline">\(\widetilde{H}^m\)</span>.</li>
 <li><span class="math inline">\(y^f\)</span> against <span class="math inline">\(H^1\)</span>, <span class="math inline">\(y^m\)</span> against <span class="math inline">\(H^2\)</span> with weight <span class="math inline">\(\gamma\)</span> and <span class="math inline">\(y^f\)</span> against <span class="math inline">\(H^2\)</span>, <span class="math inline">\(y^m\)</span> against <span class="math inline">\(H^1\)</span> with weight <span class="math inline">\(1 - \gamma\)</span>.</li>
+<li>Best we can do: <span class="math inline">\(y^f\)</span> against <span class="math inline">\(H^1\)</span>, <span class="math inline">\(y^m\)</span> against <span class="math inline">\(H^2\)</span> jointly.</li>
 </ol>
 <p>Some data frame preparation.</p>
 <pre class="r"><code>source(&#39;../code/rlib_gwas.R&#39;)
@@ -512,7 +513,7 @@ dm1 = function(z) {
   list(
     X = rbind(
       h_father[[1]] * z + h_mother[[1]] * (1 - z),
-      h_father[[1]] * (1 - z) + h_mother[[2]] * z
+      h_father[[1]] * (1 - z) + h_mother[[1]] * z
     ),
     y = rbind(
       y_father,
@@ -551,7 +552,22 @@ dm2 = function(z) {
       (1 - z)
     )
   )
-}</code></pre>
+}
+
+dm3 = list(
+  X = rbind(
+    h_father[[1]],
+    h_mother[[1]]
+  ),
+  y = rbind(
+    y_father,
+    y_mother
+  ),
+  ynull = rbind(
+    y_father_null,
+    y_mother_null
+  )
+)</code></pre>
 <p>Actual GWAS run.</p>
 <pre class="r"><code>re = list()
 ys = c(&#39;y&#39;, &#39;ynull&#39;)
@@ -606,15 +622,23 @@ for(z in z_seq) {
 <pre><code>## Working on beta z = 0.7</code></pre>
 <pre><code>## Working on scaler z = 0.8</code></pre>
 <pre><code>## Working on beta z = 0.8</code></pre>
-<pre class="r"><code>df_re = do.call(rbind, re) %&gt;% mutate(stat = b / b_se)</code></pre>
+<pre class="r"><code># setting 4
+for(i in 1 : length(ys)) {
+  o = run_gwas_pairwise(dm3$X, dm3[[ys[i]]])
+  re[[length(re) + 1]] = data.frame(b = o$bhat, b_se = o$bhat_se, method = &#39;case4&#39;, z = 1, z_type = &#39;scalar&#39;, type = types[i])
+}
+
+df_re = do.call(rbind, re) %&gt;% mutate(stat = b / b_se)</code></pre>
 <pre class="r"><code>df_re %&gt;% filter(type == &#39;beta = 1&#39;) %&gt;% 
-  ggplot() + geom_boxplot(aes(x = z, group = z, y = stat)) + facet_grid(z_type~method) +
-  ggtitle(&#39;Test statistic: Under the alternative&#39;) + th2</code></pre>
-<p><img src="haplo_gwas_power_files/figure-html/stat-1.png" width="480" /></p>
+  ggplot() + geom_boxplot(aes(x = factor(z), color = method, y = stat)) + facet_wrap(~z_type) +
+  ggtitle(&#39;Test statistic: Under the alternative&#39;) + th2 +
+  theme(legend.position = &#39;bottom&#39;)</code></pre>
+<p><img src="haplo_gwas_power_files/figure-html/stat-1.png" width="672" /></p>
 <pre class="r"><code>df_re %&gt;% filter(type == &#39;beta = 0&#39;) %&gt;% 
-  ggplot() + geom_boxplot(aes(x = z, group = z, y = stat)) + facet_grid(z_type~method) +
-  ggtitle(&#39;Test statistic: Under the null&#39;) + th2</code></pre>
-<p><img src="haplo_gwas_power_files/figure-html/stat-2.png" width="480" /></p>
+  ggplot() + geom_boxplot(aes(x = factor(z), color = method, y = stat)) + facet_wrap(~z_type) +
+  ggtitle(&#39;Test statistic: Under the null&#39;) + th2 +
+  theme(legend.position = &#39;bottom&#39;)</code></pre>
+<p><img src="haplo_gwas_power_files/figure-html/stat-2.png" width="672" /></p>
 <pre class="r"><code>df_re = df_re %&gt;% mutate(pval = zval2pval(stat))  # , df = sample_size - 2
 df_re = df_re %&gt;% group_by(method, type, z_type, z) %&gt;% mutate(pval_exp = rank(pval) / (n() + 1)) %&gt;% ungroup()
 df_re %&gt;% filter(type == &#39;beta = 0&#39;) %&gt;% 
@@ -622,10 +646,23 @@ df_re %&gt;% filter(type == &#39;beta = 0&#39;) %&gt;%
   ggtitle(&#39;Test statistic: Under the null&#39;) + th2 +
   geom_abline(slope = 1, intercept = 0) + 
   theme(legend.position = &#39;bottom&#39;)</code></pre>
-<p><img src="haplo_gwas_power_files/figure-html/qq-1.png" width="480" /></p>
+<p><img src="haplo_gwas_power_files/figure-html/qq-1.png" width="672" /></p>
 <p>The inflation on “case 3” is explained in this dicussion <a href="https://stats.stackexchange.com/questions/61469/weighted-least-squares-regression-on-random-data-giving-large-t-statistics-more">link</a>. In short, under the null, the weighting scheme results in the under-estimation of error term.</p>
+<pre class="r"><code>df_re %&gt;% filter(type == &#39;beta = 1&#39;) %&gt;% 
+  ggplot() + geom_boxplot(aes(x = factor(z), color = method, y = b)) + facet_wrap(~z_type) +
+  ggtitle(&#39;Beta hat: Under the alternative&#39;) + th2 +
+  theme(legend.position = &#39;bottom&#39;) +
+  geom_hline(yintercept = 1)</code></pre>
+<p><img src="haplo_gwas_power_files/figure-html/bhat-1.png" width="672" /></p>
+<pre class="r"><code>df_re %&gt;% filter(type == &#39;beta = 0&#39;) %&gt;% 
+  ggplot() + geom_boxplot(aes(x = factor(z), color = method, y = b)) + facet_wrap(~z_type) +
+  ggtitle(&#39;Beta hat: Under the null&#39;) + th2 +
+  theme(legend.position = &#39;bottom&#39;) +
+  geom_hline(yintercept = 0)</code></pre>
+<p><img src="haplo_gwas_power_files/figure-html/bhat-2.png" width="672" /></p>
+<p>For case2, <span class="math inline">\(\E(\beta) = \frac{\gamma}{\gamma^2 + (1 - \gamma)^2}\beta\)</span> if <span class="math inline">\(\Pr(Z_i = 1) = \gamma,~\forall i\)</span>. But notice that in practice, <span class="math inline">\(\gamma\)</span> should correspond to the probability of imputing the haplotype origin correctly. We can always consider <span class="math inline">\(\gamma = \max(\Pr(Z), 1 - \Pr(Z))\)</span> as our best proxy. But it definitely has uncertainty especially when we messy <span class="math inline">\(\Pr(Z)\)</span>.</p>
 <!-- ```{r} -->
-<!-- plot(df_re %>% filter(type == 'case1') %>% pull(stat), df_re %>% filter(type == 'case3', z == 0.5) %>% pull(stat)) -->
+<!-- plot(df_re %>% filter(method == 'case1') %>% pull(stat), df_re %>% filter(method == 'case3', z == 0.5, z_type == 'scalar') %>% pull(stat)) -->
 <!-- ``` -->
 </div>
 <div id="references" class="section level1 unnumbered">

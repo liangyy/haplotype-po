@@ -7,3 +7,7 @@ date: "`r paste0('Last update: ', format(Sys.time(), '%b %d, %Y'))`"
 
 * [Initial thoughts](init_idea_outline.html)
 * [Power comparison on haplotype-based GWAS](haplo_gwas_power.html)
+
+# Real data analysis
+
+* [Initial look at parent illness in UK Biobank](parent_illness_init.html)

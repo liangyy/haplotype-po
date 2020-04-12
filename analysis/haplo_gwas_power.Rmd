@@ -160,6 +160,7 @@ Here we consider three regressions.
 1. $y^f + y^m$ against $H^1 + H^2$.
 2. $y^f$ against $\widetilde{H}^f$ jointly with $y^m$ against $\widetilde{H}^m$.
 3. $y^f$ against $H^1$, $y^m$ against $H^2$ with weight $\gamma$ and $y^f$ against $H^2$, $y^m$ against $H^1$ with weight $1 - \gamma$.
+4. Best we can do: $y^f$ against $H^1$, $y^m$ against $H^2$ jointly.
 
 Some data frame preparation.
 
@@ -175,7 +176,7 @@ dm1 = function(z) {
   list(
     X = rbind(
       h_father[[1]] * z + h_mother[[1]] * (1 - z),
-      h_father[[1]] * (1 - z) + h_mother[[2]] * z
+      h_father[[1]] * (1 - z) + h_mother[[1]] * z
     ),
     y = rbind(
       y_father,
@@ -215,6 +216,22 @@ dm2 = function(z) {
     )
   )
 }
+
+dm3 = list(
+  X = rbind(
+    h_father[[1]],
+    h_mother[[1]]
+  ),
+  y = rbind(
+    y_father,
+    y_mother
+  ),
+  ynull = rbind(
+    y_father_null,
+    y_mother_null
+  )
+)
+
 ```
 
 Actual GWAS run.
@@ -263,19 +280,28 @@ for(z in z_seq) {
     re[[length(re) + 1]] = data.frame(b = o$bhat, b_se = o$bhat_se, method = 'case3', z = z, z_type = 'beta', type = types[i])
   }
 }
+
+# setting 4
+for(i in 1 : length(ys)) {
+  o = run_gwas_pairwise(dm3$X, dm3[[ys[i]]])
+  re[[length(re) + 1]] = data.frame(b = o$bhat, b_se = o$bhat_se, method = 'case4', z = 1, z_type = 'scalar', type = types[i])
+}
+
 df_re = do.call(rbind, re) %>% mutate(stat = b / b_se)
 ```
 
-```{r stat, fig.width=5, fig.height=5}
+```{r stat, fig.width=7, fig.height=5}
 df_re %>% filter(type == 'beta = 1') %>% 
-  ggplot() + geom_boxplot(aes(x = z, group = z, y = stat)) + facet_grid(z_type~method) +
-  ggtitle('Test statistic: Under the alternative') + th2
+  ggplot() + geom_boxplot(aes(x = factor(z), color = method, y = stat)) + facet_wrap(~z_type) +
+  ggtitle('Test statistic: Under the alternative') + th2 +
+  theme(legend.position = 'bottom')
 df_re %>% filter(type == 'beta = 0') %>% 
-  ggplot() + geom_boxplot(aes(x = z, group = z, y = stat)) + facet_grid(z_type~method) +
-  ggtitle('Test statistic: Under the null') + th2
+  ggplot() + geom_boxplot(aes(x = factor(z), color = method, y = stat)) + facet_wrap(~z_type) +
+  ggtitle('Test statistic: Under the null') + th2 +
+  theme(legend.position = 'bottom')
 ```
 
-```{r qq, fig.width=5, fig.height=5}
+```{r qq, fig.width=7, fig.height=5}
 df_re = df_re %>% mutate(pval = zval2pval(stat))  # , df = sample_size - 2
 df_re = df_re %>% group_by(method, type, z_type, z) %>% mutate(pval_exp = rank(pval) / (n() + 1)) %>% ungroup()
 df_re %>% filter(type == 'beta = 0') %>% 
@@ -288,8 +314,29 @@ df_re %>% filter(type == 'beta = 0') %>%
 The inflation on "case 3" is explained in this dicussion [link](https://stats.stackexchange.com/questions/61469/weighted-least-squares-regression-on-random-data-giving-large-t-statistics-more). 
 In short, under the null, the weighting scheme results in the under-estimation of error term.
 
+
+```{r bhat, fig.width=7, fig.height=5}
+df_re %>% filter(type == 'beta = 1') %>% 
+  ggplot() + geom_boxplot(aes(x = factor(z), color = method, y = b)) + facet_wrap(~z_type) +
+  ggtitle('Beta hat: Under the alternative') + th2 +
+  theme(legend.position = 'bottom') +
+  geom_hline(yintercept = 1)
+df_re %>% filter(type == 'beta = 0') %>% 
+  ggplot() + geom_boxplot(aes(x = factor(z), color = method, y = b)) + facet_wrap(~z_type) +
+  ggtitle('Beta hat: Under the null') + th2 +
+  theme(legend.position = 'bottom') +
+  geom_hline(yintercept = 0)
+```
+
+For case2, $\E(\beta) = \frac{\gamma}{\gamma^2 + (1 - \gamma)^2}\beta$ if $\Pr(Z_i = 1) = \gamma,~\forall i$.
+But notice that in practice, $\gamma$ should correspond to the probability of imputing the haplotype origin correctly.
+We can always consider $\gamma = \max(\Pr(Z), 1 - \Pr(Z))$ as our best proxy. 
+But it definitely has uncertainty especially when we messy $\Pr(Z)$.
+
 <!-- ```{r} -->
-<!-- plot(df_re %>% filter(type == 'case1') %>% pull(stat), df_re %>% filter(type == 'case3', z == 0.5) %>% pull(stat)) -->
+<!-- plot(df_re %>% filter(method == 'case1') %>% pull(stat), df_re %>% filter(method == 'case3', z == 0.5, z_type == 'scalar') %>% pull(stat)) -->
 <!-- ``` -->
+
+
 
 # References
