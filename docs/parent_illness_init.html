@@ -382,7 +382,7 @@ div.tocify {
 
 
 <h1 class="title toc-ignore">Parant illness information in UK Biobank (initial analysis)</h1>
-<h4 class="date">Last update: Apr 11, 2020</h4>
+<h4 class="date">Last update: Apr 13, 2020</h4>
 
 </div>
 
@@ -452,7 +452,7 @@ df_pheno = fread(&#39;/Users/yanyul/Documents/repo/github/ptrs-ukb/output/query_
 
 # remove individuals with all columns being NA
 for(i in names(df)) {
-  df[[i]] = df[[i]][rowSums(!is.na(df[[i]])) &gt; 0, ]
+  df[[i]] = df[[i]][rowSums(!is.na(df[[i]][, -1])) &gt; 0, ]
 }
 
 # label with self reported ancestry
@@ -622,8 +622,8 @@ for(i in names(df_refine)) {
 <tr class="even">
 <td align="center">Heart disease (1)</td>
 <td align="center">control</td>
-<td align="center">325622</td>
-<td align="center">230427</td>
+<td align="center">310888</td>
+<td align="center">221211</td>
 <td align="center">NA</td>
 <td align="center">NA</td>
 </tr>
@@ -654,8 +654,8 @@ for(i in names(df_refine)) {
 <tr class="even">
 <td align="center">Stroke (1)</td>
 <td align="center">control</td>
-<td align="center">399465</td>
-<td align="center">284771</td>
+<td align="center">384731</td>
+<td align="center">275555</td>
 <td align="center">NA</td>
 <td align="center">NA</td>
 </tr>
@@ -686,8 +686,8 @@ for(i in names(df_refine)) {
 <tr class="even">
 <td align="center">High blood pressure (1)</td>
 <td align="center">control</td>
-<td align="center">367328</td>
-<td align="center">263166</td>
+<td align="center">352594</td>
+<td align="center">253950</td>
 <td align="center">NA</td>
 <td align="center">NA</td>
 </tr>
@@ -718,8 +718,8 @@ for(i in names(df_refine)) {
 <tr class="even">
 <td align="center">Diabetes (1)</td>
 <td align="center">control</td>
-<td align="center">422788</td>
-<td align="center">303508</td>
+<td align="center">408054</td>
+<td align="center">294292</td>
 <td align="center">NA</td>
 <td align="center">NA</td>
 </tr>
@@ -750,8 +750,8 @@ for(i in names(df_refine)) {
 <tr class="even">
 <td align="center">Chronic bronchitis/emphysema (1)</td>
 <td align="center">control</td>
-<td align="center">418782</td>
-<td align="center">297244</td>
+<td align="center">404048</td>
+<td align="center">288028</td>
 <td align="center">NA</td>
 <td align="center">NA</td>
 </tr>
@@ -782,8 +782,8 @@ for(i in names(df_refine)) {
 <tr class="even">
 <td align="center">Alzheimer’s disease/dementia (1)</td>
 <td align="center">control</td>
-<td align="center">446975</td>
-<td align="center">318359</td>
+<td align="center">432241</td>
+<td align="center">309143</td>
 <td align="center">NA</td>
 <td align="center">NA</td>
 </tr>
@@ -814,8 +814,8 @@ for(i in names(df_refine)) {
 <tr class="even">
 <td align="center">Parkinson’s disease (2)</td>
 <td align="center">control</td>
-<td align="center">449373</td>
-<td align="center">320857</td>
+<td align="center">434639</td>
+<td align="center">311641</td>
 <td align="center">NA</td>
 <td align="center">NA</td>
 </tr>
@@ -846,8 +846,8 @@ for(i in names(df_refine)) {
 <tr class="even">
 <td align="center">Severe depression (2)</td>
 <td align="center">control</td>
-<td align="center">443719</td>
-<td align="center">316961</td>
+<td align="center">428985</td>
+<td align="center">307745</td>
 <td align="center">NA</td>
 <td align="center">NA</td>
 </tr>
@@ -878,8 +878,8 @@ for(i in names(df_refine)) {
 <tr class="even">
 <td align="center">Lung cancer (2)</td>
 <td align="center">control</td>
-<td align="center">420804</td>
-<td align="center">299665</td>
+<td align="center">406070</td>
+<td align="center">290449</td>
 <td align="center">NA</td>
 <td align="center">NA</td>
 </tr>
@@ -910,8 +910,8 @@ for(i in names(df_refine)) {
 <tr class="even">
 <td align="center">Bowel cancer (2)</td>
 <td align="center">control</td>
-<td align="center">434979</td>
-<td align="center">310377</td>
+<td align="center">420245</td>
+<td align="center">301161</td>
 <td align="center">NA</td>
 <td align="center">NA</td>
 </tr>
@@ -942,8 +942,8 @@ for(i in names(df_refine)) {
 <tr class="even">
 <td align="center">Prostate cancer (2)</td>
 <td align="center">control</td>
-<td align="center">426888</td>
-<td align="center">304869</td>
+<td align="center">412154</td>
+<td align="center">295653</td>
 <td align="center">NA</td>
 <td align="center">NA</td>
 </tr>
@@ -1000,8 +1000,8 @@ for(i in names(df_refine)) {
 <tr class="even">
 <td align="center">Heart disease (1)</td>
 <td align="center">control</td>
-<td align="center">390068</td>
-<td align="center">276935</td>
+<td align="center">380472</td>
+<td align="center">271217</td>
 <td align="center">NA</td>
 <td align="center">NA</td>
 </tr>
@@ -1032,8 +1032,8 @@ for(i in names(df_refine)) {
 <tr class="even">
 <td align="center">Stroke (1)</td>
 <td align="center">control</td>
-<td align="center">416159</td>
-<td align="center">295345</td>
+<td align="center">406563</td>
+<td align="center">289627</td>
 <td align="center">NA</td>
 <td align="center">NA</td>
 </tr>
@@ -1064,8 +1064,8 @@ for(i in names(df_refine)) {
 <tr class="even">
 <td align="center">High blood pressure (1)</td>
 <td align="center">control</td>
-<td align="center">336843</td>
-<td align="center">242222</td>
+<td align="center">327247</td>
+<td align="center">236504</td>
 <td align="center">NA</td>
 <td align="center">NA</td>
 </tr>
@@ -1096,8 +1096,8 @@ for(i in names(df_refine)) {
 <tr class="even">
 <td align="center">Diabetes (1)</td>
 <td align="center">control</td>
-<td align="center">434454</td>
-<td align="center">312037</td>
+<td align="center">424858</td>
+<td align="center">306319</td>
 <td align="center">NA</td>
 <td align="center">NA</td>
 </tr>
@@ -1128,8 +1128,8 @@ for(i in names(df_refine)) {
 <tr class="even">
 <td align="center">Chronic bronchitis/emphysema (1)</td>
 <td align="center">control</td>
-<td align="center">454777</td>
-<td align="center">323211</td>
+<td align="center">445181</td>
+<td align="center">317493</td>
 <td align="center">NA</td>
 <td align="center">NA</td>
 </tr>
@@ -1160,8 +1160,8 @@ for(i in names(df_refine)) {
 <tr class="even">
 <td align="center">Alzheimer’s disease/dementia (1)</td>
 <td align="center">control</td>
-<td align="center">443139</td>
-<td align="center">314257</td>
+<td align="center">433543</td>
+<td align="center">308539</td>
 <td align="center">NA</td>
 <td align="center">NA</td>
 </tr>
@@ -1192,8 +1192,8 @@ for(i in names(df_refine)) {
 <tr class="even">
 <td align="center">Parkinson’s disease (2)</td>
 <td align="center">control</td>
-<td align="center">468720</td>
-<td align="center">334295</td>
+<td align="center">459124</td>
+<td align="center">328577</td>
 <td align="center">NA</td>
 <td align="center">NA</td>
 </tr>
@@ -1224,8 +1224,8 @@ for(i in names(df_refine)) {
 <tr class="even">
 <td align="center">Severe depression (2)</td>
 <td align="center">control</td>
-<td align="center">445877</td>
-<td align="center">318024</td>
+<td align="center">436281</td>
+<td align="center">312306</td>
 <td align="center">NA</td>
 <td align="center">NA</td>
 </tr>
@@ -1256,8 +1256,8 @@ for(i in names(df_refine)) {
 <tr class="even">
 <td align="center">Lung cancer (2)</td>
 <td align="center">control</td>
-<td align="center">457732</td>
-<td align="center">326095</td>
+<td align="center">448136</td>
+<td align="center">320377</td>
 <td align="center">NA</td>
 <td align="center">NA</td>
 </tr>
@@ -1288,8 +1288,8 @@ for(i in names(df_refine)) {
 <tr class="even">
 <td align="center">Bowel cancer (2)</td>
 <td align="center">control</td>
-<td align="center">452930</td>
-<td align="center">322646</td>
+<td align="center">443334</td>
+<td align="center">316928</td>
 <td align="center">NA</td>
 <td align="center">NA</td>
 </tr>
@@ -1320,8 +1320,8 @@ for(i in names(df_refine)) {
 <tr class="even">
 <td align="center">Breast cancer (2)</td>
 <td align="center">control</td>
-<td align="center">439220</td>
-<td align="center">312312</td>
+<td align="center">429624</td>
+<td align="center">306594</td>
 <td align="center">NA</td>
 <td align="center">NA</td>
 </tr>

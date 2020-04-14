@@ -1,0 +1,344 @@
+---
+title: "Parant illness information in UK Biobank (2nd analysis)"
+date: "`r paste0('Last update: ', format(Sys.time(), '%b %d, %Y'))`"    
+---
+
+
+```{r setup}
+rm(list = ls())
+library(pander)
+panderOptions('table.split.table', Inf)
+library(ggplot2)
+library(dplyr)
+library(data.table)
+options(datatable.fread.datatable = FALSE)
+theme_set(theme_bw(base_size=15))
+set.seed(2020)
+
+# load some gists
+source('https://gist.githubusercontent.com/liangyy/43912b3ecab5d10c89f9d4b2669871c9/raw/3ca651cfa53ffccb8422f432561138a46e93710f/my_ggplot_theme.R')
+
+# load dependent scripts
+source('../code/rlib_misc.R')
+```
+
+# About
+
+Here we look into parent illness information in UK Biobank. 
+As designed, we limit our scope to **Europeans**.
+The parent illness phenotypes were queried by Owen and the data is at `/vol/bmd/meliao/data/2020-04-12_parent-illness.tar.gz`.
+We also load the self-reported ancestry (after QC) processed by script at [here](https://github.com/liangyy/ptrs-ukb/blob/master/scripts/construct_phenotype_table/construct_phenotype_table.sh) and the resulting table is at `/vol/bmd/yanyul/GitHub/ptrs-ukb/output/query_phenotypes_cleaned_up.csv`.
+
+For more details on the parent illness in UK Biobank, please go to [here](parent_illness_init.html).
+Some the data.frame's being loaded here were generated in the above report as well.
+
+# Load digitalized phenotypes
+
+```{r load_init_df}
+list_init = readRDS('../analysis_output/parent_illness_init_phenotypes_clean_up.rds')
+code = list_init$code
+```
+
+# Load data
+
+```{r load}
+df = list()
+df[['father']] = fread('/Users/yanyul/Desktop/tmp/2020-04-12_parent-illness/father_ilness.csv', sep = ',')
+df[['mother']] = fread('/Users/yanyul/Desktop/tmp/2020-04-12_parent-illness/mother_illness.csv', sep = ',')
+df_pheno = fread('/Users/yanyul/Documents/repo/github/ptrs-ukb/output/query_phenotypes_cleaned_up.csv', sep = ',')
+instance_grp = list()
+for(i in names(df)) {
+  coln = colnames(df[[i]])
+  instance = unlist(lapply(strsplit(coln, '_'), function(x) {x[3]}))
+  tab = data.frame(instance = instance[-1], colname = coln[-1])
+  instance_grp[[i]] = tab
+  instance_grp[[i]]$instance = as.character(instance_grp[[i]]$instance)
+  instance_grp[[i]]$colname = as.character(instance_grp[[i]]$colname)
+}
+
+# remove individuals with all columns being NA (remove by instance)
+df_instance = list()
+for(i in names(df)) {
+  df_instance[[i]] = list()
+  for(nn in unique(instance_grp[[i]]$instance)) {
+    cols = instance_grp[[i]] %>% filter(instance == nn) %>% pull(colname)
+    df_instance[[i]][[nn]] = df[[i]][, c('eid', cols)][rowSums(!is.na(df[[i]][, cols])) > 0, ]
+  }
+}
+
+# label with self reported ancestry
+# only individuals passing ancestry QC and phenotype QC in ptrs-ukb are labeled
+ancestry_instance = list()
+for(i in names(df_instance)) {
+  ancestry_instance[[i]] = list()
+  for(nn in names(df_instance[[i]]))
+  ancestry_instance[[i]][[nn]] = df_instance[[i]][[nn]] %>% left_join(df_pheno %>% select(eid, meaning), by = 'eid') %>% pull(meaning)
+}
+```
+
+# Process the choice code into individual x phenotype table
+
+Each row is an individual. 
+The questionnaire is a multiple choice question so that there are N columns recording everthing being selected.
+To extract the information we want, we unfold the raw data frame into individual-by-choice where each entry indicates the number of occurrence of one choice in the row.
+In principle, the occurrence should be either 0 or 1. 
+This is true within each instance.
+Some individuals may be asked multiple times.
+So, we need to:
+
+1. Handle each instance separately.
+2. Combine results in some way.
+
+
+**Perform un-folding** within each instance.
+
+```{r unfold}
+df_unfold = list()
+for(i in names(df_instance)) {
+  df_unfold[[i]] = list()
+  for(nn in names(df_instance[[i]])) {
+    df_unfold[[i]][[nn]] = unfold_parent_illness_code(df_instance[[i]][[nn]][, -1], code[[i]]$code, code[[i]]$choice_w_grp)
+  }
+}
+```
+
+Sanity check: **Are occurrences all 0 or 1?**
+
+```{r check}
+for(i in names(df_unfold)) {
+  for(nn in names(df_unfold[[i]])) {
+    message('In ', i, ', Instance ', nn, ' illness, # entry (the occurrence) > 1 = ', sum(df_unfold[[i]][[nn]] > 1))
+  }
+}
+```
+
+Next, we need to refine the zero's in the table. 
+The zeros could be:
+
+* "no disease"
+* "don't know"
+* "prefer not to answer"
+
+This information should be added.
+First of all, let's check if the above three options are exclusive. 
+In other word, when they are set, other choices should not occur.
+
+```{r check2}
+for(i in names(df_unfold)) {
+  for(nn in names(df_unfold[[i]])) {
+    for(g in 1 : 2) {
+      group_pheno = code[[i]] %>% filter(grp == g, code > 0) %>% pull(choice_w_grp)
+      group_exclude = code[[i]] %>% filter(grp == g, code < 0) %>% pull(choice_w_grp)
+      message('In ', i, ', Instance ', nn, ' illness group', g, ': ', '# of more than one exclusive choices are selected = ', sum(rowSums(df_unfold[[i]][[nn]][, group_exclude]) > 1))
+      exclusive_selected = (rowSums(df_unfold[[i]][[nn]][, group_exclude]) > 1) > 0
+      num_pheno_selected_when_exclusive = sum(rowSums(df_unfold[[i]][[nn]][exclusive_selected, ][, group_pheno]) > 0)
+      message('In ', i, ', Instance ', nn, ' illness: ', '# of any phenotype choice is selected when exclusive choices are selected = ', num_pheno_selected_when_exclusive)
+    }
+  }
+}
+```
+
+We expect all zeros. 
+This means that:
+
+* Only one of the three exclusive choices are selected if they are selected.
+* No other choices are selected when any of the exclusive choices is selected.
+
+**Now that we proceed to refine zeros.**
+"None of the above" means true zero so that we take care of it manually.
+
+```{r refine}
+df_refine = df_unfold
+code_mapper = function(xx) {
+  # map 
+  #   -17, -27 to 0
+  #   -13, -23 to -3
+  #   -11, -21 to -1
+  if(xx == -17 | xx == -27) {
+    return(0)
+  } else if(xx == -13 | xx == -23) {
+    return(-3)
+  } else if(xx == -11 | xx == -21) {
+    return(-1)
+  }
+}
+for(i in names(df_unfold)) {
+  for(nn in names(df_unfold[[i]])) {
+    for(g in 1 : 2) {
+      group_pheno = code[[i]] %>% filter(grp == g, code > 0) %>% pull(choice_w_grp)
+      group_exclude = code[[i]] %>% filter(grp == g, code < 0)
+      for(p in group_pheno) {
+        for(e in 1 : nrow(group_exclude)) {
+          col_ = group_exclude$choice_w_grp[e]
+          code_ = code_mapper(group_exclude$code[e])
+          is_chosen = df_refine[[i]][[nn]][, col_] == 1
+          df_refine[[i]][[nn]][is_chosen, ][, p] = code_
+        }
+      }
+    }
+  }
+}
+```
+
+# Summarize
+
+Load Data summary in Data-Field page
+
+```{r load2}
+df_ukb = list()
+for(i in names(df_refine)) {
+  df_ukb[[i]] = read.csv(paste0('../external_data/', i, '_illness_data_table.csv')) # %>% pander(caption = paste0(i, ' illness summary page'))
+  df_ukb[[i]] = df_ukb[[i]] %>% mutate(type = 'case') %>% left_join(code[[i]], by = c('Category' = 'choice')) %>% select(choice_w_grp, type, Count) %>% rename(count_in_ukb_website_total = Count) %>% filter(!is.na(choice_w_grp))
+}
+df_ukb_instance = list()
+for(i in names(df_refine)) {
+  for(nn in names(df_refine[[i]])) {
+    df_ukb_instance[[i]][[nn]] = read.csv(paste0('../external_data/', i, '_illness_data_table_instance', nn, '.csv')) # %>% pander(caption = paste0(i, ' illness summary page'))
+    df_ukb_instance[[i]][[nn]] = df_ukb_instance[[i]][[nn]] %>% mutate(type = 'case') %>% left_join(code[[i]], by = c('Category' = 'choice')) %>% select(choice_w_grp, type, Count) %>% rename(count_in_ukb_website_instance = Count) %>% filter(!is.na(choice_w_grp))
+  }
+}
+```
+
+Count the number of cases, controls, and others for all parent illness phentypes.
+
+```{r summarize, results='asis'}
+code_translator = function(xx) {
+  # translator:
+  #   0 to control
+  #   1 to case
+  #   -1 to dont_know
+  #   -3 to prefer_not_to_answer
+  mm = data.frame(
+    x = c(0, 1, -1, -3),
+    y = c('control', 'case', 'dont_know', 'prefer_not_to_answer')
+  )
+  o = rep('NA', length(xx))
+  for(i in 1 : nrow(mm)) {
+    o[xx == mm$x[i]] = as.character(mm$y[i])
+  }
+  return(o)
+}
+for(i in names(df_refine)) {
+  for(nn in names(df_refine[[i]])) {
+    group_pheno = code[[i]] %>% filter(code > 0) %>% pull(choice_w_grp)
+    tmp = df_refine[[i]][[nn]][, group_pheno] 
+    tmp_eur = df_refine[[i]][[nn]][, group_pheno][!is.na(ancestry_instance[[i]][[nn]]) & ancestry_instance[[i]][[nn]] == 'British', ]
+    tmp = tmp %>% reshape2::melt() %>% mutate(category = code_translator(value)) %>% group_by(variable, category) %>% summarize(count = n()) %>% ungroup()
+    tmp_eur = tmp_eur %>% reshape2::melt() %>% mutate(category = code_translator(value)) %>% group_by(variable, category) %>% summarize(count_eur = n()) %>% ungroup()
+    tmp = left_join(tmp, tmp_eur, by = c('variable', 'category'))
+    tmp %>% 
+      left_join(df_ukb[[i]], by = c('variable' = 'choice_w_grp', 'category' = 'type')) %>% 
+      left_join(df_ukb_instance[[i]][[nn]], by = c('variable' = 'choice_w_grp', 'category' = 'type')) %>%
+      # select(variable, category, count, Count) %>% 
+      # rename(count_in_ukb = Count) %>% 
+      pander(caption = paste0('Summary of ', i, ' illness', ' Instance ', nn)) %>%
+      cat
+  }
+}
+```
+
+**Note**: Everything except for instance 2 group 1 matches (almost perfectly) to the number reported on UK Biobank website. 
+And indeed, the number of non missing individuals for instance 2 do not match the number of UK Biobank website. 
+But the weird thing is that the group 2 is not affected.
+
+# Combining results from multiple instances
+
+Lastly, we need to finalize the phenotype query. 
+To do so, we need to combine the results from mulitple instances for each individual.
+
+Here are some rules for combining multiple instances of a phenotype.
+
+1. Whenever they select the phenotype, we consider as case even though they may select "do not know", "prefer not to answer", or "none of the above" before or later.
+2. Whenever we can conclude that the parent is control for some phenotype (in the case that "none of the above" or select other phenotypes but not this one), we consider as control even though they may select "do not know", "prefer not to answer" before or later.
+
+Here we want to apply these rules to handle phenotype code collected from the above scripting (in `df_refine`) where phenotype codes are: 
+
+* 0: control
+* 1: case
+* -1: do not know
+* -3: prefer not to answer
+
+So, the rules can be translated to:
+
+1. Across instances, 1 overwrite everything else.
+2. Across instances, 0 overwrite everything besides 1.
+3. Across instances, -2 is set if there are only -1 and/or -3.
+
+```{r combine}
+combine_rule = function(inst_df) {
+  inst_df[is.na(inst_df)] = -100
+  o = rep(-2, nrow(inst_df))
+  has_1 = rowSums(inst_df == 1) > 0
+  has_0_but_not_1 = rowSums(inst_df == 0) > 0 & !has_1
+  o[has_0_but_not_1] = 0
+  o[has_1] = 1
+  return(o)
+}
+df_combine = list()
+for(i in names(df_refine)) {
+  df_combine[[i]] = list()
+  indivs = c()
+  for(nn in names(df_refine[[i]])) {
+    indivs = c(indivs, df_instance[[i]][[nn]]$eid)
+  }
+  eid = unique(indivs)
+  df_combine[[i]] = list()
+  df_combine[[i]][['eid']] = eid
+  for(pheno in code[[i]] %>% filter(code > 0) %>% pull(choice_w_grp)) {
+    tmp_ = data.frame(eid = eid)
+    for(nn in names(df_refine[[i]])) {
+      tmp_ = left_join(
+        tmp_, 
+        data.frame(
+          eid = df_instance[[i]][[nn]]$eid, 
+          pheno = df_refine[[i]][[nn]][, pheno]
+        ), 
+        by = 'eid', 
+        suffix = c('', paste0('_', nn))
+      )
+      combined_col = combine_rule(tmp_)
+      df_combine[[i]][[pheno]] = combined_col
+    }
+  }
+  df_combine[[i]] = do.call(cbind, df_combine[[i]])
+  df_combine[[i]] = as.data.frame(df_combine[[i]])
+}
+
+```
+
+Summarize what we have.
+
+```{r combine_summary, results='asis'}
+for(i in names(df_combine)) {
+  tmp_ = df_combine[[i]]
+  tmp_ = tmp_ %>% reshape2::melt(id.vars = 'eid') 
+  tmp_ = tmp_ %>% group_by(variable, value) %>% summarise(num_obs = n()) %>% ungroup() %>% reshape2::dcast(variable ~ value, value.var = 'num_obs') %>% mutate(total = `-2` + `0` + `1`) %>% left_join(df_ukb[[i]] %>% select(-type), by = c('variable' = 'choice_w_grp'))
+  cat(tmp_ %>% pander(caption = paste0('Summary of cleaned up data: ', i, ' illness')))
+}
+```
+
+They don't match perfectly. 
+I **suspect** that the UK Biobank Data-Field page has double counted individuals. 
+Or in other word, it is counting the occurrence of label regardless if the individual is duplicated or not.
+
+Summarize Eurpoeans only.
+
+```{r combine_summary_eur, results='asis'}
+for(i in names(df_combine)) {
+  tmp_ = df_combine[[i]] %>% left_join(df_pheno %>% select(eid, meaning), by = 'eid') %>% filter(!is.na(meaning) & meaning == 'British') %>% select(-meaning)
+  tmp_ = tmp_ %>% reshape2::melt(id.vars = 'eid') 
+  tmp_ = tmp_ %>% group_by(variable, value) %>% summarise(num_obs = n()) %>% ungroup() %>% reshape2::dcast(variable ~ value, value.var = 'num_obs') %>% mutate(total = `-2` + `0` + `1`)
+  cat(tmp_ %>% pander(caption = paste0('Summary of cleaned up data: ', i, ' illness - Limit to Europeans')))
+}
+```
+
+# Save
+
+```{r save}
+df_eur = list()
+for(i in names(df_combine)) {
+  df_eur[[i]] = df_combine[[i]] %>% left_join(df_pheno %>% select(eid, meaning), by = 'eid') %>% filter(!is.na(meaning) & meaning == 'British') %>% select(-meaning)
+}
+saveRDS(df_eur, '../analysis_output/parent_illness_2nd_european_phenotypes_clean_up.rds')
+```
+

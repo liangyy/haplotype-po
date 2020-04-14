@@ -86,7 +86,7 @@ df_pheno = fread('/Users/yanyul/Documents/repo/github/ptrs-ukb/output/query_phen
 
 # remove individuals with all columns being NA
 for(i in names(df)) {
-  df[[i]] = df[[i]][rowSums(!is.na(df[[i]])) > 0, ]
+  df[[i]] = df[[i]][rowSums(!is.na(df[[i]][, -1])) > 0, ]
 }
 
 # label with self reported ancestry

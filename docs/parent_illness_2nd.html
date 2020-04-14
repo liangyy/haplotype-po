@@ -1,0 +1,3473 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+
+
+<title>Parant illness information in UK Biobank (2nd analysis)</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<link href="site_libs/font-awesome-5.1.0/css/all.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-5.1.0/css/v4-shims.css" rel="stylesheet" />
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+</style>
+
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 51px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h2 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h3 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h4 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h5 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h6 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #ffffff;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row-fluid">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Imputing parent of origin of haplotype</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="https://github.com/liangyy/haplotype-po">
+    <span class="fa fa-github"></span>
+     
+  </a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+<div class="btn-group pull-right">
+<button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">Parant illness information in UK Biobank (2nd analysis)</h1>
+<h4 class="date">Last update: Apr 13, 2020</h4>
+
+</div>
+
+
+<pre class="r"><code>rm(list = ls())
+library(pander)
+panderOptions(&#39;table.split.table&#39;, Inf)
+library(ggplot2)
+library(dplyr)
+library(data.table)
+options(datatable.fread.datatable = FALSE)
+theme_set(theme_bw(base_size=15))
+set.seed(2020)
+
+# load some gists
+source(&#39;https://gist.githubusercontent.com/liangyy/43912b3ecab5d10c89f9d4b2669871c9/raw/3ca651cfa53ffccb8422f432561138a46e93710f/my_ggplot_theme.R&#39;)
+
+# load dependent scripts
+source(&#39;../code/rlib_misc.R&#39;)</code></pre>
+<div id="about" class="section level1">
+<h1><span class="header-section-number">1</span> About</h1>
+<p>Here we look into parent illness information in UK Biobank. As designed, we limit our scope to <strong>Europeans</strong>. The parent illness phenotypes were queried by Owen and the data is at <code>/vol/bmd/meliao/data/2020-04-12_parent-illness.tar.gz</code>. We also load the self-reported ancestry (after QC) processed by script at <a href="https://github.com/liangyy/ptrs-ukb/blob/master/scripts/construct_phenotype_table/construct_phenotype_table.sh">here</a> and the resulting table is at <code>/vol/bmd/yanyul/GitHub/ptrs-ukb/output/query_phenotypes_cleaned_up.csv</code>.</p>
+<p>For more details on the parent illness in UK Biobank, please go to <a href="parent_illness_init.html">here</a>. Some the data.frame’s being loaded here were generated in the above report as well.</p>
+</div>
+<div id="load-digitalized-phenotypes" class="section level1">
+<h1><span class="header-section-number">2</span> Load digitalized phenotypes</h1>
+<pre class="r"><code>list_init = readRDS(&#39;../analysis_output/parent_illness_init_phenotypes_clean_up.rds&#39;)
+code = list_init$code</code></pre>
+</div>
+<div id="load-data" class="section level1">
+<h1><span class="header-section-number">3</span> Load data</h1>
+<pre class="r"><code>df = list()
+df[[&#39;father&#39;]] = fread(&#39;/Users/yanyul/Desktop/tmp/2020-04-12_parent-illness/father_ilness.csv&#39;, sep = &#39;,&#39;)
+df[[&#39;mother&#39;]] = fread(&#39;/Users/yanyul/Desktop/tmp/2020-04-12_parent-illness/mother_illness.csv&#39;, sep = &#39;,&#39;)
+df_pheno = fread(&#39;/Users/yanyul/Documents/repo/github/ptrs-ukb/output/query_phenotypes_cleaned_up.csv&#39;, sep = &#39;,&#39;)
+instance_grp = list()
+for(i in names(df)) {
+  coln = colnames(df[[i]])
+  instance = unlist(lapply(strsplit(coln, &#39;_&#39;), function(x) {x[3]}))
+  tab = data.frame(instance = instance[-1], colname = coln[-1])
+  instance_grp[[i]] = tab
+  instance_grp[[i]]$instance = as.character(instance_grp[[i]]$instance)
+  instance_grp[[i]]$colname = as.character(instance_grp[[i]]$colname)
+}
+
+# remove individuals with all columns being NA (remove by instance)
+df_instance = list()
+for(i in names(df)) {
+  df_instance[[i]] = list()
+  for(nn in unique(instance_grp[[i]]$instance)) {
+    cols = instance_grp[[i]] %&gt;% filter(instance == nn) %&gt;% pull(colname)
+    df_instance[[i]][[nn]] = df[[i]][, c(&#39;eid&#39;, cols)][rowSums(!is.na(df[[i]][, cols])) &gt; 0, ]
+  }
+}
+
+# label with self reported ancestry
+# only individuals passing ancestry QC and phenotype QC in ptrs-ukb are labeled
+ancestry_instance = list()
+for(i in names(df_instance)) {
+  ancestry_instance[[i]] = list()
+  for(nn in names(df_instance[[i]]))
+  ancestry_instance[[i]][[nn]] = df_instance[[i]][[nn]] %&gt;% left_join(df_pheno %&gt;% select(eid, meaning), by = &#39;eid&#39;) %&gt;% pull(meaning)
+}</code></pre>
+</div>
+<div id="process-the-choice-code-into-individual-x-phenotype-table" class="section level1">
+<h1><span class="header-section-number">4</span> Process the choice code into individual x phenotype table</h1>
+<p>Each row is an individual. The questionnaire is a multiple choice question so that there are N columns recording everthing being selected. To extract the information we want, we unfold the raw data frame into individual-by-choice where each entry indicates the number of occurrence of one choice in the row. In principle, the occurrence should be either 0 or 1. This is true within each instance. Some individuals may be asked multiple times. So, we need to:</p>
+<ol style="list-style-type: decimal">
+<li>Handle each instance separately.</li>
+<li>Combine results in some way.</li>
+</ol>
+<p><strong>Perform un-folding</strong> within each instance.</p>
+<pre class="r"><code>df_unfold = list()
+for(i in names(df_instance)) {
+  df_unfold[[i]] = list()
+  for(nn in names(df_instance[[i]])) {
+    df_unfold[[i]][[nn]] = unfold_parent_illness_code(df_instance[[i]][[nn]][, -1], code[[i]]$code, code[[i]]$choice_w_grp)
+  }
+}</code></pre>
+<p>Sanity check: <strong>Are occurrences all 0 or 1?</strong></p>
+<pre class="r"><code>for(i in names(df_unfold)) {
+  for(nn in names(df_unfold[[i]])) {
+    message(&#39;In &#39;, i, &#39;, Instance &#39;, nn, &#39; illness, # entry (the occurrence) &gt; 1 = &#39;, sum(df_unfold[[i]][[nn]] &gt; 1))
+  }
+}</code></pre>
+<pre><code>## In father, Instance 0 illness, # entry (the occurrence) &gt; 1 = 0</code></pre>
+<pre><code>## In father, Instance 1 illness, # entry (the occurrence) &gt; 1 = 0</code></pre>
+<pre><code>## In father, Instance 2 illness, # entry (the occurrence) &gt; 1 = 0</code></pre>
+<pre><code>## In mother, Instance 0 illness, # entry (the occurrence) &gt; 1 = 0</code></pre>
+<pre><code>## In mother, Instance 1 illness, # entry (the occurrence) &gt; 1 = 0</code></pre>
+<pre><code>## In mother, Instance 2 illness, # entry (the occurrence) &gt; 1 = 0</code></pre>
+<p>Next, we need to refine the zero’s in the table. The zeros could be:</p>
+<ul>
+<li>“no disease”</li>
+<li>“don’t know”</li>
+<li>“prefer not to answer”</li>
+</ul>
+<p>This information should be added. First of all, let’s check if the above three options are exclusive. In other word, when they are set, other choices should not occur.</p>
+<pre class="r"><code>for(i in names(df_unfold)) {
+  for(nn in names(df_unfold[[i]])) {
+    for(g in 1 : 2) {
+      group_pheno = code[[i]] %&gt;% filter(grp == g, code &gt; 0) %&gt;% pull(choice_w_grp)
+      group_exclude = code[[i]] %&gt;% filter(grp == g, code &lt; 0) %&gt;% pull(choice_w_grp)
+      message(&#39;In &#39;, i, &#39;, Instance &#39;, nn, &#39; illness group&#39;, g, &#39;: &#39;, &#39;# of more than one exclusive choices are selected = &#39;, sum(rowSums(df_unfold[[i]][[nn]][, group_exclude]) &gt; 1))
+      exclusive_selected = (rowSums(df_unfold[[i]][[nn]][, group_exclude]) &gt; 1) &gt; 0
+      num_pheno_selected_when_exclusive = sum(rowSums(df_unfold[[i]][[nn]][exclusive_selected, ][, group_pheno]) &gt; 0)
+      message(&#39;In &#39;, i, &#39;, Instance &#39;, nn, &#39; illness: &#39;, &#39;# of any phenotype choice is selected when exclusive choices are selected = &#39;, num_pheno_selected_when_exclusive)
+    }
+  }
+}</code></pre>
+<pre><code>## In father, Instance 0 illness group1: # of more than one exclusive choices are selected = 0</code></pre>
+<pre><code>## In father, Instance 0 illness: # of any phenotype choice is selected when exclusive choices are selected = 0</code></pre>
+<pre><code>## In father, Instance 0 illness group2: # of more than one exclusive choices are selected = 0</code></pre>
+<pre><code>## In father, Instance 0 illness: # of any phenotype choice is selected when exclusive choices are selected = 0</code></pre>
+<pre><code>## In father, Instance 1 illness group1: # of more than one exclusive choices are selected = 0</code></pre>
+<pre><code>## In father, Instance 1 illness: # of any phenotype choice is selected when exclusive choices are selected = 0</code></pre>
+<pre><code>## In father, Instance 1 illness group2: # of more than one exclusive choices are selected = 0</code></pre>
+<pre><code>## In father, Instance 1 illness: # of any phenotype choice is selected when exclusive choices are selected = 0</code></pre>
+<pre><code>## In father, Instance 2 illness group1: # of more than one exclusive choices are selected = 0</code></pre>
+<pre><code>## In father, Instance 2 illness: # of any phenotype choice is selected when exclusive choices are selected = 0</code></pre>
+<pre><code>## In father, Instance 2 illness group2: # of more than one exclusive choices are selected = 0</code></pre>
+<pre><code>## In father, Instance 2 illness: # of any phenotype choice is selected when exclusive choices are selected = 0</code></pre>
+<pre><code>## In mother, Instance 0 illness group1: # of more than one exclusive choices are selected = 0</code></pre>
+<pre><code>## In mother, Instance 0 illness: # of any phenotype choice is selected when exclusive choices are selected = 0</code></pre>
+<pre><code>## In mother, Instance 0 illness group2: # of more than one exclusive choices are selected = 0</code></pre>
+<pre><code>## In mother, Instance 0 illness: # of any phenotype choice is selected when exclusive choices are selected = 0</code></pre>
+<pre><code>## In mother, Instance 1 illness group1: # of more than one exclusive choices are selected = 0</code></pre>
+<pre><code>## In mother, Instance 1 illness: # of any phenotype choice is selected when exclusive choices are selected = 0</code></pre>
+<pre><code>## In mother, Instance 1 illness group2: # of more than one exclusive choices are selected = 0</code></pre>
+<pre><code>## In mother, Instance 1 illness: # of any phenotype choice is selected when exclusive choices are selected = 0</code></pre>
+<pre><code>## In mother, Instance 2 illness group1: # of more than one exclusive choices are selected = 0</code></pre>
+<pre><code>## In mother, Instance 2 illness: # of any phenotype choice is selected when exclusive choices are selected = 0</code></pre>
+<pre><code>## In mother, Instance 2 illness group2: # of more than one exclusive choices are selected = 0</code></pre>
+<pre><code>## In mother, Instance 2 illness: # of any phenotype choice is selected when exclusive choices are selected = 0</code></pre>
+<p>We expect all zeros. This means that:</p>
+<ul>
+<li>Only one of the three exclusive choices are selected if they are selected.</li>
+<li>No other choices are selected when any of the exclusive choices is selected.</li>
+</ul>
+<p><strong>Now that we proceed to refine zeros.</strong> “None of the above” means true zero so that we take care of it manually.</p>
+<pre class="r"><code>df_refine = df_unfold
+code_mapper = function(xx) {
+  # map 
+  #   -17, -27 to 0
+  #   -13, -23 to -3
+  #   -11, -21 to -1
+  if(xx == -17 | xx == -27) {
+    return(0)
+  } else if(xx == -13 | xx == -23) {
+    return(-3)
+  } else if(xx == -11 | xx == -21) {
+    return(-1)
+  }
+}
+for(i in names(df_unfold)) {
+  for(nn in names(df_unfold[[i]])) {
+    for(g in 1 : 2) {
+      group_pheno = code[[i]] %&gt;% filter(grp == g, code &gt; 0) %&gt;% pull(choice_w_grp)
+      group_exclude = code[[i]] %&gt;% filter(grp == g, code &lt; 0)
+      for(p in group_pheno) {
+        for(e in 1 : nrow(group_exclude)) {
+          col_ = group_exclude$choice_w_grp[e]
+          code_ = code_mapper(group_exclude$code[e])
+          is_chosen = df_refine[[i]][[nn]][, col_] == 1
+          df_refine[[i]][[nn]][is_chosen, ][, p] = code_
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+<div id="summarize" class="section level1">
+<h1><span class="header-section-number">5</span> Summarize</h1>
+<p>Load Data summary in Data-Field page</p>
+<pre class="r"><code>df_ukb = list()
+for(i in names(df_refine)) {
+  df_ukb[[i]] = read.csv(paste0(&#39;../external_data/&#39;, i, &#39;_illness_data_table.csv&#39;)) # %&gt;% pander(caption = paste0(i, &#39; illness summary page&#39;))
+  df_ukb[[i]] = df_ukb[[i]] %&gt;% mutate(type = &#39;case&#39;) %&gt;% left_join(code[[i]], by = c(&#39;Category&#39; = &#39;choice&#39;)) %&gt;% select(choice_w_grp, type, Count) %&gt;% rename(count_in_ukb_website_total = Count) %&gt;% filter(!is.na(choice_w_grp))
+}</code></pre>
+<pre><code>## Warning: Column `Category`/`choice` joining factors with different levels, coercing to character vector
+
+## Warning: Column `Category`/`choice` joining factors with different levels, coercing to character vector</code></pre>
+<pre class="r"><code>df_ukb_instance = list()
+for(i in names(df_refine)) {
+  for(nn in names(df_refine[[i]])) {
+    df_ukb_instance[[i]][[nn]] = read.csv(paste0(&#39;../external_data/&#39;, i, &#39;_illness_data_table_instance&#39;, nn, &#39;.csv&#39;)) # %&gt;% pander(caption = paste0(i, &#39; illness summary page&#39;))
+    df_ukb_instance[[i]][[nn]] = df_ukb_instance[[i]][[nn]] %&gt;% mutate(type = &#39;case&#39;) %&gt;% left_join(code[[i]], by = c(&#39;Category&#39; = &#39;choice&#39;)) %&gt;% select(choice_w_grp, type, Count) %&gt;% rename(count_in_ukb_website_instance = Count) %&gt;% filter(!is.na(choice_w_grp))
+  }
+}</code></pre>
+<pre><code>## Warning: Column `Category`/`choice` joining factors with different levels, coercing to character vector
+
+## Warning: Column `Category`/`choice` joining factors with different levels, coercing to character vector
+
+## Warning: Column `Category`/`choice` joining factors with different levels, coercing to character vector
+
+## Warning: Column `Category`/`choice` joining factors with different levels, coercing to character vector
+
+## Warning: Column `Category`/`choice` joining factors with different levels, coercing to character vector
+
+## Warning: Column `Category`/`choice` joining factors with different levels, coercing to character vector</code></pre>
+<p>Count the number of cases, controls, and others for all parent illness phentypes.</p>
+<pre class="r"><code>code_translator = function(xx) {
+  # translator:
+  #   0 to control
+  #   1 to case
+  #   -1 to dont_know
+  #   -3 to prefer_not_to_answer
+  mm = data.frame(
+    x = c(0, 1, -1, -3),
+    y = c(&#39;control&#39;, &#39;case&#39;, &#39;dont_know&#39;, &#39;prefer_not_to_answer&#39;)
+  )
+  o = rep(&#39;NA&#39;, length(xx))
+  for(i in 1 : nrow(mm)) {
+    o[xx == mm$x[i]] = as.character(mm$y[i])
+  }
+  return(o)
+}
+for(i in names(df_refine)) {
+  for(nn in names(df_refine[[i]])) {
+    group_pheno = code[[i]] %&gt;% filter(code &gt; 0) %&gt;% pull(choice_w_grp)
+    tmp = df_refine[[i]][[nn]][, group_pheno] 
+    tmp_eur = df_refine[[i]][[nn]][, group_pheno][!is.na(ancestry_instance[[i]][[nn]]) &amp; ancestry_instance[[i]][[nn]] == &#39;British&#39;, ]
+    tmp = tmp %&gt;% reshape2::melt() %&gt;% mutate(category = code_translator(value)) %&gt;% group_by(variable, category) %&gt;% summarize(count = n()) %&gt;% ungroup()
+    tmp_eur = tmp_eur %&gt;% reshape2::melt() %&gt;% mutate(category = code_translator(value)) %&gt;% group_by(variable, category) %&gt;% summarize(count_eur = n()) %&gt;% ungroup()
+    tmp = left_join(tmp, tmp_eur, by = c(&#39;variable&#39;, &#39;category&#39;))
+    tmp %&gt;% 
+      left_join(df_ukb[[i]], by = c(&#39;variable&#39; = &#39;choice_w_grp&#39;, &#39;category&#39; = &#39;type&#39;)) %&gt;% 
+      left_join(df_ukb_instance[[i]][[nn]], by = c(&#39;variable&#39; = &#39;choice_w_grp&#39;, &#39;category&#39; = &#39;type&#39;)) %&gt;%
+      # select(variable, category, count, Count) %&gt;% 
+      # rename(count_in_ukb = Count) %&gt;% 
+      pander(caption = paste0(&#39;Summary of &#39;, i, &#39; illness&#39;, &#39; Instance &#39;, nn)) %&gt;%
+      cat
+  }
+}</code></pre>
+<pre><code>## No id variables; using all as measure variables
+## No id variables; using all as measure variables</code></pre>
+<pre><code>## Warning: Column `variable`/`choice_w_grp` joining factor and character vector, coercing into character vector</code></pre>
+<table>
+<caption>Summary of father illness Instance 0</caption>
+<colgroup>
+<col width="22%" />
+<col width="16%" />
+<col width="6%" />
+<col width="8%" />
+<col width="21%" />
+<col width="23%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center">variable</th>
+<th align="center">category</th>
+<th align="center">count</th>
+<th align="center">count_eur</th>
+<th align="center">count_in_ukb_website_total</th>
+<th align="center">count_in_ukb_website_instance</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">Heart disease (1)</td>
+<td align="center">case</td>
+<td align="center">141832</td>
+<td align="center">102946</td>
+<td align="center">164345</td>
+<td align="center">141831</td>
+</tr>
+<tr class="even">
+<td align="center">Heart disease (1)</td>
+<td align="center">control</td>
+<td align="center">310887</td>
+<td align="center">221211</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Heart disease (1)</td>
+<td align="center">dont_know</td>
+<td align="center">34413</td>
+<td align="center">22790</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Heart disease (1)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">640</td>
+<td align="center">301</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Stroke (1)</td>
+<td align="center">case</td>
+<td align="center">67988</td>
+<td align="center">48602</td>
+<td align="center">78249</td>
+<td align="center">67988</td>
+</tr>
+<tr class="even">
+<td align="center">Stroke (1)</td>
+<td align="center">control</td>
+<td align="center">384731</td>
+<td align="center">275555</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Stroke (1)</td>
+<td align="center">dont_know</td>
+<td align="center">34413</td>
+<td align="center">22790</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Stroke (1)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">640</td>
+<td align="center">301</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">High blood pressure (1)</td>
+<td align="center">case</td>
+<td align="center">100125</td>
+<td align="center">70207</td>
+<td align="center">114044</td>
+<td align="center">100125</td>
+</tr>
+<tr class="even">
+<td align="center">High blood pressure (1)</td>
+<td align="center">control</td>
+<td align="center">352594</td>
+<td align="center">253950</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">High blood pressure (1)</td>
+<td align="center">dont_know</td>
+<td align="center">34413</td>
+<td align="center">22790</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">High blood pressure (1)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">640</td>
+<td align="center">301</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Diabetes (1)</td>
+<td align="center">case</td>
+<td align="center">44665</td>
+<td align="center">29865</td>
+<td align="center">51152</td>
+<td align="center">44664</td>
+</tr>
+<tr class="even">
+<td align="center">Diabetes (1)</td>
+<td align="center">control</td>
+<td align="center">408054</td>
+<td align="center">294292</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Diabetes (1)</td>
+<td align="center">dont_know</td>
+<td align="center">34413</td>
+<td align="center">22790</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Diabetes (1)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">640</td>
+<td align="center">301</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Chronic bronchitis/emphysema (1)</td>
+<td align="center">case</td>
+<td align="center">48671</td>
+<td align="center">36129</td>
+<td align="center">55688</td>
+<td align="center">48671</td>
+</tr>
+<tr class="even">
+<td align="center">Chronic bronchitis/emphysema (1)</td>
+<td align="center">control</td>
+<td align="center">404048</td>
+<td align="center">288028</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Chronic bronchitis/emphysema (1)</td>
+<td align="center">dont_know</td>
+<td align="center">34413</td>
+<td align="center">22790</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Chronic bronchitis/emphysema (1)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">640</td>
+<td align="center">301</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Alzheimer’s disease/dementia (1)</td>
+<td align="center">case</td>
+<td align="center">20478</td>
+<td align="center">15014</td>
+<td align="center">26512</td>
+<td align="center">20477</td>
+</tr>
+<tr class="even">
+<td align="center">Alzheimer’s disease/dementia (1)</td>
+<td align="center">control</td>
+<td align="center">432241</td>
+<td align="center">309143</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Alzheimer’s disease/dementia (1)</td>
+<td align="center">dont_know</td>
+<td align="center">34413</td>
+<td align="center">22790</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Alzheimer’s disease/dementia (1)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">640</td>
+<td align="center">301</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Parkinson’s disease (2)</td>
+<td align="center">case</td>
+<td align="center">10706</td>
+<td align="center">7974</td>
+<td align="center">11471</td>
+<td align="center">10706</td>
+</tr>
+<tr class="even">
+<td align="center">Parkinson’s disease (2)</td>
+<td align="center">control</td>
+<td align="center">434639</td>
+<td align="center">311641</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Parkinson’s disease (2)</td>
+<td align="center">dont_know</td>
+<td align="center">41965</td>
+<td align="center">27408</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Parkinson’s disease (2)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">462</td>
+<td align="center">225</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Severe depression (2)</td>
+<td align="center">case</td>
+<td align="center">16360</td>
+<td align="center">11870</td>
+<td align="center">17459</td>
+<td align="center">16360</td>
+</tr>
+<tr class="even">
+<td align="center">Severe depression (2)</td>
+<td align="center">control</td>
+<td align="center">428985</td>
+<td align="center">307745</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Severe depression (2)</td>
+<td align="center">dont_know</td>
+<td align="center">41965</td>
+<td align="center">27408</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Severe depression (2)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">462</td>
+<td align="center">225</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Lung cancer (2)</td>
+<td align="center">case</td>
+<td align="center">39275</td>
+<td align="center">29166</td>
+<td align="center">41788</td>
+<td align="center">39275</td>
+</tr>
+<tr class="even">
+<td align="center">Lung cancer (2)</td>
+<td align="center">control</td>
+<td align="center">406070</td>
+<td align="center">290449</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Lung cancer (2)</td>
+<td align="center">dont_know</td>
+<td align="center">41965</td>
+<td align="center">27408</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Lung cancer (2)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">462</td>
+<td align="center">225</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Bowel cancer (2)</td>
+<td align="center">case</td>
+<td align="center">25100</td>
+<td align="center">18454</td>
+<td align="center">26931</td>
+<td align="center">25100</td>
+</tr>
+<tr class="even">
+<td align="center">Bowel cancer (2)</td>
+<td align="center">control</td>
+<td align="center">420245</td>
+<td align="center">301161</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Bowel cancer (2)</td>
+<td align="center">dont_know</td>
+<td align="center">41965</td>
+<td align="center">27408</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Bowel cancer (2)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">462</td>
+<td align="center">225</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Prostate cancer (2)</td>
+<td align="center">case</td>
+<td align="center">33191</td>
+<td align="center">23962</td>
+<td align="center">35721</td>
+<td align="center">33191</td>
+</tr>
+<tr class="even">
+<td align="center">Prostate cancer (2)</td>
+<td align="center">control</td>
+<td align="center">412154</td>
+<td align="center">295653</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Prostate cancer (2)</td>
+<td align="center">dont_know</td>
+<td align="center">41965</td>
+<td align="center">27408</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Prostate cancer (2)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">462</td>
+<td align="center">225</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+</tbody>
+</table>
+<pre><code>## No id variables; using all as measure variables
+## No id variables; using all as measure variables</code></pre>
+<pre><code>## Warning: Column `variable`/`choice_w_grp` joining factor and character vector, coercing into character vector</code></pre>
+<table>
+<caption>Summary of father illness Instance 1</caption>
+<colgroup>
+<col width="22%" />
+<col width="17%" />
+<col width="5%" />
+<col width="8%" />
+<col width="21%" />
+<col width="23%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center">variable</th>
+<th align="center">category</th>
+<th align="center">count</th>
+<th align="center">count_eur</th>
+<th align="center">count_in_ukb_website_total</th>
+<th align="center">count_in_ukb_website_instance</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">Heart disease (1)</td>
+<td align="center">case</td>
+<td align="center">6364</td>
+<td align="center">5306</td>
+<td align="center">164345</td>
+<td align="center">6364</td>
+</tr>
+<tr class="even">
+<td align="center">Heart disease (1)</td>
+<td align="center">control</td>
+<td align="center">12352</td>
+<td align="center">10324</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Heart disease (1)</td>
+<td align="center">dont_know</td>
+<td align="center">1161</td>
+<td align="center">940</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Heart disease (1)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">8</td>
+<td align="center">8</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Stroke (1)</td>
+<td align="center">case</td>
+<td align="center">2957</td>
+<td align="center">2446</td>
+<td align="center">78249</td>
+<td align="center">2957</td>
+</tr>
+<tr class="even">
+<td align="center">Stroke (1)</td>
+<td align="center">control</td>
+<td align="center">15759</td>
+<td align="center">13184</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Stroke (1)</td>
+<td align="center">dont_know</td>
+<td align="center">1161</td>
+<td align="center">940</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Stroke (1)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">8</td>
+<td align="center">8</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">High blood pressure (1)</td>
+<td align="center">case</td>
+<td align="center">3963</td>
+<td align="center">3254</td>
+<td align="center">114044</td>
+<td align="center">3963</td>
+</tr>
+<tr class="even">
+<td align="center">High blood pressure (1)</td>
+<td align="center">control</td>
+<td align="center">14753</td>
+<td align="center">12376</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">High blood pressure (1)</td>
+<td align="center">dont_know</td>
+<td align="center">1161</td>
+<td align="center">940</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">High blood pressure (1)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">8</td>
+<td align="center">8</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Diabetes (1)</td>
+<td align="center">case</td>
+<td align="center">1830</td>
+<td align="center">1483</td>
+<td align="center">51152</td>
+<td align="center">1830</td>
+</tr>
+<tr class="even">
+<td align="center">Diabetes (1)</td>
+<td align="center">control</td>
+<td align="center">16886</td>
+<td align="center">14147</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Diabetes (1)</td>
+<td align="center">dont_know</td>
+<td align="center">1161</td>
+<td align="center">940</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Diabetes (1)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">8</td>
+<td align="center">8</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Chronic bronchitis/emphysema (1)</td>
+<td align="center">case</td>
+<td align="center">1985</td>
+<td align="center">1679</td>
+<td align="center">55688</td>
+<td align="center">1985</td>
+</tr>
+<tr class="even">
+<td align="center">Chronic bronchitis/emphysema (1)</td>
+<td align="center">control</td>
+<td align="center">16731</td>
+<td align="center">13951</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Chronic bronchitis/emphysema (1)</td>
+<td align="center">dont_know</td>
+<td align="center">1161</td>
+<td align="center">940</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Chronic bronchitis/emphysema (1)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">8</td>
+<td align="center">8</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Alzheimer’s disease/dementia (1)</td>
+<td align="center">case</td>
+<td align="center">1487</td>
+<td align="center">1245</td>
+<td align="center">26512</td>
+<td align="center">1487</td>
+</tr>
+<tr class="even">
+<td align="center">Alzheimer’s disease/dementia (1)</td>
+<td align="center">control</td>
+<td align="center">17229</td>
+<td align="center">14385</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Alzheimer’s disease/dementia (1)</td>
+<td align="center">dont_know</td>
+<td align="center">1161</td>
+<td align="center">940</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Alzheimer’s disease/dementia (1)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">8</td>
+<td align="center">8</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Parkinson’s disease (2)</td>
+<td align="center">case</td>
+<td align="center">488</td>
+<td align="center">400</td>
+<td align="center">11471</td>
+<td align="center">488</td>
+</tr>
+<tr class="even">
+<td align="center">Parkinson’s disease (2)</td>
+<td align="center">control</td>
+<td align="center">17999</td>
+<td align="center">15064</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Parkinson’s disease (2)</td>
+<td align="center">dont_know</td>
+<td align="center">1390</td>
+<td align="center">1108</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Parkinson’s disease (2)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">8</td>
+<td align="center">6</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Severe depression (2)</td>
+<td align="center">case</td>
+<td align="center">664</td>
+<td align="center">552</td>
+<td align="center">17459</td>
+<td align="center">664</td>
+</tr>
+<tr class="even">
+<td align="center">Severe depression (2)</td>
+<td align="center">control</td>
+<td align="center">17823</td>
+<td align="center">14912</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Severe depression (2)</td>
+<td align="center">dont_know</td>
+<td align="center">1390</td>
+<td align="center">1108</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Severe depression (2)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">8</td>
+<td align="center">6</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Lung cancer (2)</td>
+<td align="center">case</td>
+<td align="center">1608</td>
+<td align="center">1384</td>
+<td align="center">41788</td>
+<td align="center">1608</td>
+</tr>
+<tr class="even">
+<td align="center">Lung cancer (2)</td>
+<td align="center">control</td>
+<td align="center">16879</td>
+<td align="center">14080</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Lung cancer (2)</td>
+<td align="center">dont_know</td>
+<td align="center">1390</td>
+<td align="center">1108</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Lung cancer (2)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">8</td>
+<td align="center">6</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Bowel cancer (2)</td>
+<td align="center">case</td>
+<td align="center">1129</td>
+<td align="center">936</td>
+<td align="center">26931</td>
+<td align="center">1129</td>
+</tr>
+<tr class="even">
+<td align="center">Bowel cancer (2)</td>
+<td align="center">control</td>
+<td align="center">17358</td>
+<td align="center">14528</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Bowel cancer (2)</td>
+<td align="center">dont_know</td>
+<td align="center">1390</td>
+<td align="center">1108</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Bowel cancer (2)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">8</td>
+<td align="center">6</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Prostate cancer (2)</td>
+<td align="center">case</td>
+<td align="center">1511</td>
+<td align="center">1241</td>
+<td align="center">35721</td>
+<td align="center">1511</td>
+</tr>
+<tr class="even">
+<td align="center">Prostate cancer (2)</td>
+<td align="center">control</td>
+<td align="center">16976</td>
+<td align="center">14223</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Prostate cancer (2)</td>
+<td align="center">dont_know</td>
+<td align="center">1390</td>
+<td align="center">1108</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Prostate cancer (2)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">8</td>
+<td align="center">6</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+</tbody>
+</table>
+<pre><code>## No id variables; using all as measure variables
+## No id variables; using all as measure variables</code></pre>
+<pre><code>## Warning: Column `variable`/`choice_w_grp` joining factor and character vector, coercing into character vector</code></pre>
+<table>
+<caption>Summary of father illness Instance 2</caption>
+<colgroup>
+<col width="22%" />
+<col width="17%" />
+<col width="5%" />
+<col width="8%" />
+<col width="21%" />
+<col width="23%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center">variable</th>
+<th align="center">category</th>
+<th align="center">count</th>
+<th align="center">count_eur</th>
+<th align="center">count_in_ukb_website_total</th>
+<th align="center">count_in_ukb_website_instance</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">Heart disease (1)</td>
+<td align="center">case</td>
+<td align="center">11257</td>
+<td align="center">8891</td>
+<td align="center">164345</td>
+<td align="center">15141</td>
+</tr>
+<tr class="even">
+<td align="center">Heart disease (1)</td>
+<td align="center">control</td>
+<td align="center">21629</td>
+<td align="center">16941</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Heart disease (1)</td>
+<td align="center">dont_know</td>
+<td align="center">2244</td>
+<td align="center">1688</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Heart disease (1)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">27</td>
+<td align="center">18</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Stroke (1)</td>
+<td align="center">case</td>
+<td align="center">5114</td>
+<td align="center">3981</td>
+<td align="center">78249</td>
+<td align="center">6857</td>
+</tr>
+<tr class="even">
+<td align="center">Stroke (1)</td>
+<td align="center">control</td>
+<td align="center">27772</td>
+<td align="center">21851</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Stroke (1)</td>
+<td align="center">dont_know</td>
+<td align="center">2244</td>
+<td align="center">1688</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Stroke (1)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">27</td>
+<td align="center">18</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">High blood pressure (1)</td>
+<td align="center">case</td>
+<td align="center">6994</td>
+<td align="center">5397</td>
+<td align="center">114044</td>
+<td align="center">9331</td>
+</tr>
+<tr class="even">
+<td align="center">High blood pressure (1)</td>
+<td align="center">control</td>
+<td align="center">25892</td>
+<td align="center">20435</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">High blood pressure (1)</td>
+<td align="center">dont_know</td>
+<td align="center">2244</td>
+<td align="center">1688</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">High blood pressure (1)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">27</td>
+<td align="center">18</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Diabetes (1)</td>
+<td align="center">case</td>
+<td align="center">3301</td>
+<td align="center">2510</td>
+<td align="center">51152</td>
+<td align="center">4385</td>
+</tr>
+<tr class="even">
+<td align="center">Diabetes (1)</td>
+<td align="center">control</td>
+<td align="center">29585</td>
+<td align="center">23322</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Diabetes (1)</td>
+<td align="center">dont_know</td>
+<td align="center">2244</td>
+<td align="center">1688</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Diabetes (1)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">27</td>
+<td align="center">18</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Chronic bronchitis/emphysema (1)</td>
+<td align="center">case</td>
+<td align="center">3588</td>
+<td align="center">2879</td>
+<td align="center">55688</td>
+<td align="center">4718</td>
+</tr>
+<tr class="even">
+<td align="center">Chronic bronchitis/emphysema (1)</td>
+<td align="center">control</td>
+<td align="center">29298</td>
+<td align="center">22953</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Chronic bronchitis/emphysema (1)</td>
+<td align="center">dont_know</td>
+<td align="center">2244</td>
+<td align="center">1688</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Chronic bronchitis/emphysema (1)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">27</td>
+<td align="center">18</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Alzheimer’s disease/dementia (1)</td>
+<td align="center">case</td>
+<td align="center">3139</td>
+<td align="center">2484</td>
+<td align="center">26512</td>
+<td align="center">4260</td>
+</tr>
+<tr class="even">
+<td align="center">Alzheimer’s disease/dementia (1)</td>
+<td align="center">control</td>
+<td align="center">29747</td>
+<td align="center">23348</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Alzheimer’s disease/dementia (1)</td>
+<td align="center">dont_know</td>
+<td align="center">2244</td>
+<td align="center">1688</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Alzheimer’s disease/dementia (1)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">27</td>
+<td align="center">18</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Parkinson’s disease (2)</td>
+<td align="center">case</td>
+<td align="center">277</td>
+<td align="center">227</td>
+<td align="center">11471</td>
+<td align="center">277</td>
+</tr>
+<tr class="even">
+<td align="center">Parkinson’s disease (2)</td>
+<td align="center">control</td>
+<td align="center">33989</td>
+<td align="center">26635</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Parkinson’s disease (2)</td>
+<td align="center">dont_know</td>
+<td align="center">885</td>
+<td align="center">671</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Parkinson’s disease (2)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">6</td>
+<td align="center">5</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Severe depression (2)</td>
+<td align="center">case</td>
+<td align="center">435</td>
+<td align="center">346</td>
+<td align="center">17459</td>
+<td align="center">435</td>
+</tr>
+<tr class="even">
+<td align="center">Severe depression (2)</td>
+<td align="center">control</td>
+<td align="center">33831</td>
+<td align="center">26516</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Severe depression (2)</td>
+<td align="center">dont_know</td>
+<td align="center">885</td>
+<td align="center">671</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Severe depression (2)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">6</td>
+<td align="center">5</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Lung cancer (2)</td>
+<td align="center">case</td>
+<td align="center">905</td>
+<td align="center">759</td>
+<td align="center">41788</td>
+<td align="center">905</td>
+</tr>
+<tr class="even">
+<td align="center">Lung cancer (2)</td>
+<td align="center">control</td>
+<td align="center">33361</td>
+<td align="center">26103</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Lung cancer (2)</td>
+<td align="center">dont_know</td>
+<td align="center">885</td>
+<td align="center">671</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Lung cancer (2)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">6</td>
+<td align="center">5</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Bowel cancer (2)</td>
+<td align="center">case</td>
+<td align="center">702</td>
+<td align="center">568</td>
+<td align="center">26931</td>
+<td align="center">702</td>
+</tr>
+<tr class="even">
+<td align="center">Bowel cancer (2)</td>
+<td align="center">control</td>
+<td align="center">33564</td>
+<td align="center">26294</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Bowel cancer (2)</td>
+<td align="center">dont_know</td>
+<td align="center">885</td>
+<td align="center">671</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Bowel cancer (2)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">6</td>
+<td align="center">5</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Prostate cancer (2)</td>
+<td align="center">case</td>
+<td align="center">1019</td>
+<td align="center">822</td>
+<td align="center">35721</td>
+<td align="center">1019</td>
+</tr>
+<tr class="even">
+<td align="center">Prostate cancer (2)</td>
+<td align="center">control</td>
+<td align="center">33247</td>
+<td align="center">26040</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Prostate cancer (2)</td>
+<td align="center">dont_know</td>
+<td align="center">885</td>
+<td align="center">671</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Prostate cancer (2)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">6</td>
+<td align="center">5</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+</tbody>
+</table>
+<pre><code>## No id variables; using all as measure variables
+## No id variables; using all as measure variables</code></pre>
+<pre><code>## Warning: Column `variable`/`choice_w_grp` joining factor and character vector, coercing into character vector</code></pre>
+<table>
+<caption>Summary of mother illness Instance 0</caption>
+<colgroup>
+<col width="22%" />
+<col width="16%" />
+<col width="6%" />
+<col width="8%" />
+<col width="21%" />
+<col width="23%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center">variable</th>
+<th align="center">category</th>
+<th align="center">count</th>
+<th align="center">count_eur</th>
+<th align="center">count_in_ukb_website_total</th>
+<th align="center">count_in_ukb_website_instance</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">Heart disease (1)</td>
+<td align="center">case</td>
+<td align="center">91434</td>
+<td align="center">65800</td>
+<td align="center">105893</td>
+<td align="center">91434</td>
+</tr>
+<tr class="even">
+<td align="center">Heart disease (1)</td>
+<td align="center">control</td>
+<td align="center">380471</td>
+<td align="center">271217</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Heart disease (1)</td>
+<td align="center">dont_know</td>
+<td align="center">20505</td>
+<td align="center">13503</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Heart disease (1)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">500</td>
+<td align="center">226</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Stroke (1)</td>
+<td align="center">case</td>
+<td align="center">65343</td>
+<td align="center">47390</td>
+<td align="center">75680</td>
+<td align="center">65343</td>
+</tr>
+<tr class="even">
+<td align="center">Stroke (1)</td>
+<td align="center">control</td>
+<td align="center">406562</td>
+<td align="center">289627</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Stroke (1)</td>
+<td align="center">dont_know</td>
+<td align="center">20505</td>
+<td align="center">13503</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Stroke (1)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">500</td>
+<td align="center">226</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">High blood pressure (1)</td>
+<td align="center">case</td>
+<td align="center">144658</td>
+<td align="center">100513</td>
+<td align="center">163964</td>
+<td align="center">144657</td>
+</tr>
+<tr class="even">
+<td align="center">High blood pressure (1)</td>
+<td align="center">control</td>
+<td align="center">327247</td>
+<td align="center">236504</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">High blood pressure (1)</td>
+<td align="center">dont_know</td>
+<td align="center">20505</td>
+<td align="center">13503</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">High blood pressure (1)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">500</td>
+<td align="center">226</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Diabetes (1)</td>
+<td align="center">case</td>
+<td align="center">47047</td>
+<td align="center">30698</td>
+<td align="center">53669</td>
+<td align="center">47047</td>
+</tr>
+<tr class="even">
+<td align="center">Diabetes (1)</td>
+<td align="center">control</td>
+<td align="center">424858</td>
+<td align="center">306319</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Diabetes (1)</td>
+<td align="center">dont_know</td>
+<td align="center">20505</td>
+<td align="center">13503</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Diabetes (1)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">500</td>
+<td align="center">226</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Chronic bronchitis/emphysema (1)</td>
+<td align="center">case</td>
+<td align="center">26724</td>
+<td align="center">19524</td>
+<td align="center">30807</td>
+<td align="center">26724</td>
+</tr>
+<tr class="even">
+<td align="center">Chronic bronchitis/emphysema (1)</td>
+<td align="center">control</td>
+<td align="center">445181</td>
+<td align="center">317493</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Chronic bronchitis/emphysema (1)</td>
+<td align="center">dont_know</td>
+<td align="center">20505</td>
+<td align="center">13503</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Chronic bronchitis/emphysema (1)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">500</td>
+<td align="center">226</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Alzheimer’s disease/dementia (1)</td>
+<td align="center">case</td>
+<td align="center">38362</td>
+<td align="center">28478</td>
+<td align="center">49895</td>
+<td align="center">38362</td>
+</tr>
+<tr class="even">
+<td align="center">Alzheimer’s disease/dementia (1)</td>
+<td align="center">control</td>
+<td align="center">433543</td>
+<td align="center">308539</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Alzheimer’s disease/dementia (1)</td>
+<td align="center">dont_know</td>
+<td align="center">20505</td>
+<td align="center">13503</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Alzheimer’s disease/dementia (1)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">500</td>
+<td align="center">226</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Parkinson’s disease (2)</td>
+<td align="center">case</td>
+<td align="center">7446</td>
+<td align="center">5373</td>
+<td align="center">7989</td>
+<td align="center">7446</td>
+</tr>
+<tr class="even">
+<td align="center">Parkinson’s disease (2)</td>
+<td align="center">control</td>
+<td align="center">459124</td>
+<td align="center">328577</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Parkinson’s disease (2)</td>
+<td align="center">dont_know</td>
+<td align="center">25899</td>
+<td align="center">16584</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Parkinson’s disease (2)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">441</td>
+<td align="center">212</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Severe depression (2)</td>
+<td align="center">case</td>
+<td align="center">30289</td>
+<td align="center">21644</td>
+<td align="center">32337</td>
+<td align="center">30288</td>
+</tr>
+<tr class="even">
+<td align="center">Severe depression (2)</td>
+<td align="center">control</td>
+<td align="center">436281</td>
+<td align="center">312306</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Severe depression (2)</td>
+<td align="center">dont_know</td>
+<td align="center">25899</td>
+<td align="center">16584</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Severe depression (2)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">441</td>
+<td align="center">212</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Lung cancer (2)</td>
+<td align="center">case</td>
+<td align="center">18434</td>
+<td align="center">13573</td>
+<td align="center">19657</td>
+<td align="center">18434</td>
+</tr>
+<tr class="even">
+<td align="center">Lung cancer (2)</td>
+<td align="center">control</td>
+<td align="center">448136</td>
+<td align="center">320377</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Lung cancer (2)</td>
+<td align="center">dont_know</td>
+<td align="center">25899</td>
+<td align="center">16584</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Lung cancer (2)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">441</td>
+<td align="center">212</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Bowel cancer (2)</td>
+<td align="center">case</td>
+<td align="center">23236</td>
+<td align="center">17022</td>
+<td align="center">24859</td>
+<td align="center">23236</td>
+</tr>
+<tr class="even">
+<td align="center">Bowel cancer (2)</td>
+<td align="center">control</td>
+<td align="center">443334</td>
+<td align="center">316928</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Bowel cancer (2)</td>
+<td align="center">dont_know</td>
+<td align="center">25899</td>
+<td align="center">16584</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Bowel cancer (2)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">441</td>
+<td align="center">212</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Breast cancer (2)</td>
+<td align="center">case</td>
+<td align="center">36946</td>
+<td align="center">27356</td>
+<td align="center">39579</td>
+<td align="center">36946</td>
+</tr>
+<tr class="even">
+<td align="center">Breast cancer (2)</td>
+<td align="center">control</td>
+<td align="center">429624</td>
+<td align="center">306594</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Breast cancer (2)</td>
+<td align="center">dont_know</td>
+<td align="center">25899</td>
+<td align="center">16584</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Breast cancer (2)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">441</td>
+<td align="center">212</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+</tbody>
+</table>
+<pre><code>## No id variables; using all as measure variables
+## No id variables; using all as measure variables</code></pre>
+<pre><code>## Warning: Column `variable`/`choice_w_grp` joining factor and character vector, coercing into character vector</code></pre>
+<table>
+<caption>Summary of mother illness Instance 1</caption>
+<colgroup>
+<col width="22%" />
+<col width="17%" />
+<col width="5%" />
+<col width="8%" />
+<col width="21%" />
+<col width="23%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center">variable</th>
+<th align="center">category</th>
+<th align="center">count</th>
+<th align="center">count_eur</th>
+<th align="center">count_in_ukb_website_total</th>
+<th align="center">count_in_ukb_website_instance</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">Heart disease (1)</td>
+<td align="center">case</td>
+<td align="center">4027</td>
+<td align="center">3389</td>
+<td align="center">105893</td>
+<td align="center">4027</td>
+</tr>
+<tr class="even">
+<td align="center">Heart disease (1)</td>
+<td align="center">control</td>
+<td align="center">15362</td>
+<td align="center">12805</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Heart disease (1)</td>
+<td align="center">dont_know</td>
+<td align="center">645</td>
+<td align="center">501</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Heart disease (1)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">6</td>
+<td align="center">5</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Stroke (1)</td>
+<td align="center">case</td>
+<td align="center">3028</td>
+<td align="center">2559</td>
+<td align="center">75680</td>
+<td align="center">3028</td>
+</tr>
+<tr class="even">
+<td align="center">Stroke (1)</td>
+<td align="center">control</td>
+<td align="center">16361</td>
+<td align="center">13635</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Stroke (1)</td>
+<td align="center">dont_know</td>
+<td align="center">645</td>
+<td align="center">501</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Stroke (1)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">6</td>
+<td align="center">5</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">High blood pressure (1)</td>
+<td align="center">case</td>
+<td align="center">5604</td>
+<td align="center">4610</td>
+<td align="center">163964</td>
+<td align="center">5604</td>
+</tr>
+<tr class="even">
+<td align="center">High blood pressure (1)</td>
+<td align="center">control</td>
+<td align="center">13785</td>
+<td align="center">11584</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">High blood pressure (1)</td>
+<td align="center">dont_know</td>
+<td align="center">645</td>
+<td align="center">501</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">High blood pressure (1)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">6</td>
+<td align="center">5</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Diabetes (1)</td>
+<td align="center">case</td>
+<td align="center">1909</td>
+<td align="center">1496</td>
+<td align="center">53669</td>
+<td align="center">1909</td>
+</tr>
+<tr class="even">
+<td align="center">Diabetes (1)</td>
+<td align="center">control</td>
+<td align="center">17480</td>
+<td align="center">14698</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Diabetes (1)</td>
+<td align="center">dont_know</td>
+<td align="center">645</td>
+<td align="center">501</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Diabetes (1)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">6</td>
+<td align="center">5</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Chronic bronchitis/emphysema (1)</td>
+<td align="center">case</td>
+<td align="center">1061</td>
+<td align="center">900</td>
+<td align="center">30807</td>
+<td align="center">1061</td>
+</tr>
+<tr class="even">
+<td align="center">Chronic bronchitis/emphysema (1)</td>
+<td align="center">control</td>
+<td align="center">18328</td>
+<td align="center">15294</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Chronic bronchitis/emphysema (1)</td>
+<td align="center">dont_know</td>
+<td align="center">645</td>
+<td align="center">501</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Chronic bronchitis/emphysema (1)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">6</td>
+<td align="center">5</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Alzheimer’s disease/dementia (1)</td>
+<td align="center">case</td>
+<td align="center">2915</td>
+<td align="center">2506</td>
+<td align="center">49895</td>
+<td align="center">2915</td>
+</tr>
+<tr class="even">
+<td align="center">Alzheimer’s disease/dementia (1)</td>
+<td align="center">control</td>
+<td align="center">16474</td>
+<td align="center">13688</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Alzheimer’s disease/dementia (1)</td>
+<td align="center">dont_know</td>
+<td align="center">645</td>
+<td align="center">501</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Alzheimer’s disease/dementia (1)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">6</td>
+<td align="center">5</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Parkinson’s disease (2)</td>
+<td align="center">case</td>
+<td align="center">346</td>
+<td align="center">291</td>
+<td align="center">7989</td>
+<td align="center">346</td>
+</tr>
+<tr class="even">
+<td align="center">Parkinson’s disease (2)</td>
+<td align="center">control</td>
+<td align="center">18878</td>
+<td align="center">15757</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Parkinson’s disease (2)</td>
+<td align="center">dont_know</td>
+<td align="center">812</td>
+<td align="center">648</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Parkinson’s disease (2)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">4</td>
+<td align="center">4</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Severe depression (2)</td>
+<td align="center">case</td>
+<td align="center">1240</td>
+<td align="center">1044</td>
+<td align="center">32337</td>
+<td align="center">1240</td>
+</tr>
+<tr class="even">
+<td align="center">Severe depression (2)</td>
+<td align="center">control</td>
+<td align="center">17984</td>
+<td align="center">15004</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Severe depression (2)</td>
+<td align="center">dont_know</td>
+<td align="center">812</td>
+<td align="center">648</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Severe depression (2)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">4</td>
+<td align="center">4</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Lung cancer (2)</td>
+<td align="center">case</td>
+<td align="center">722</td>
+<td align="center">591</td>
+<td align="center">19657</td>
+<td align="center">722</td>
+</tr>
+<tr class="even">
+<td align="center">Lung cancer (2)</td>
+<td align="center">control</td>
+<td align="center">18502</td>
+<td align="center">15457</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Lung cancer (2)</td>
+<td align="center">dont_know</td>
+<td align="center">812</td>
+<td align="center">648</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Lung cancer (2)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">4</td>
+<td align="center">4</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Bowel cancer (2)</td>
+<td align="center">case</td>
+<td align="center">1024</td>
+<td align="center">844</td>
+<td align="center">24859</td>
+<td align="center">1024</td>
+</tr>
+<tr class="even">
+<td align="center">Bowel cancer (2)</td>
+<td align="center">control</td>
+<td align="center">18200</td>
+<td align="center">15204</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Bowel cancer (2)</td>
+<td align="center">dont_know</td>
+<td align="center">812</td>
+<td align="center">648</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Bowel cancer (2)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">4</td>
+<td align="center">4</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Breast cancer (2)</td>
+<td align="center">case</td>
+<td align="center">1634</td>
+<td align="center">1351</td>
+<td align="center">39579</td>
+<td align="center">1634</td>
+</tr>
+<tr class="even">
+<td align="center">Breast cancer (2)</td>
+<td align="center">control</td>
+<td align="center">17590</td>
+<td align="center">14697</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Breast cancer (2)</td>
+<td align="center">dont_know</td>
+<td align="center">812</td>
+<td align="center">648</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Breast cancer (2)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">4</td>
+<td align="center">4</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+</tbody>
+</table>
+<pre><code>## No id variables; using all as measure variables
+## No id variables; using all as measure variables</code></pre>
+<pre><code>## Warning: Column `variable`/`choice_w_grp` joining factor and character vector, coercing into character vector</code></pre>
+<table>
+<caption>Summary of mother illness Instance 2</caption>
+<colgroup>
+<col width="22%" />
+<col width="17%" />
+<col width="5%" />
+<col width="8%" />
+<col width="21%" />
+<col width="23%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center">variable</th>
+<th align="center">category</th>
+<th align="center">count</th>
+<th align="center">count_eur</th>
+<th align="center">count_in_ukb_website_total</th>
+<th align="center">count_in_ukb_website_instance</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">Heart disease (1)</td>
+<td align="center">case</td>
+<td align="center">7329</td>
+<td align="center">5732</td>
+<td align="center">105893</td>
+<td align="center">9752</td>
+</tr>
+<tr class="even">
+<td align="center">Heart disease (1)</td>
+<td align="center">control</td>
+<td align="center">26803</td>
+<td align="center">21024</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Heart disease (1)</td>
+<td align="center">dont_know</td>
+<td align="center">1186</td>
+<td align="center">898</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Heart disease (1)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">13</td>
+<td align="center">8</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Stroke (1)</td>
+<td align="center">case</td>
+<td align="center">5038</td>
+<td align="center">3938</td>
+<td align="center">75680</td>
+<td align="center">6856</td>
+</tr>
+<tr class="even">
+<td align="center">Stroke (1)</td>
+<td align="center">control</td>
+<td align="center">29094</td>
+<td align="center">22818</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Stroke (1)</td>
+<td align="center">dont_know</td>
+<td align="center">1186</td>
+<td align="center">898</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Stroke (1)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">13</td>
+<td align="center">8</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">High blood pressure (1)</td>
+<td align="center">case</td>
+<td align="center">9787</td>
+<td align="center">7486</td>
+<td align="center">163964</td>
+<td align="center">12903</td>
+</tr>
+<tr class="even">
+<td align="center">High blood pressure (1)</td>
+<td align="center">control</td>
+<td align="center">24345</td>
+<td align="center">19270</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">High blood pressure (1)</td>
+<td align="center">dont_know</td>
+<td align="center">1186</td>
+<td align="center">898</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">High blood pressure (1)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">13</td>
+<td align="center">8</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Diabetes (1)</td>
+<td align="center">case</td>
+<td align="center">3347</td>
+<td align="center">2474</td>
+<td align="center">53669</td>
+<td align="center">4418</td>
+</tr>
+<tr class="even">
+<td align="center">Diabetes (1)</td>
+<td align="center">control</td>
+<td align="center">30785</td>
+<td align="center">24282</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Diabetes (1)</td>
+<td align="center">dont_know</td>
+<td align="center">1186</td>
+<td align="center">898</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Diabetes (1)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">13</td>
+<td align="center">8</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Chronic bronchitis/emphysema (1)</td>
+<td align="center">case</td>
+<td align="center">2138</td>
+<td align="center">1712</td>
+<td align="center">30807</td>
+<td align="center">2842</td>
+</tr>
+<tr class="even">
+<td align="center">Chronic bronchitis/emphysema (1)</td>
+<td align="center">control</td>
+<td align="center">31994</td>
+<td align="center">25044</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Chronic bronchitis/emphysema (1)</td>
+<td align="center">dont_know</td>
+<td align="center">1186</td>
+<td align="center">898</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Chronic bronchitis/emphysema (1)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">13</td>
+<td align="center">8</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Alzheimer’s disease/dementia (1)</td>
+<td align="center">case</td>
+<td align="center">5816</td>
+<td align="center">4637</td>
+<td align="center">49895</td>
+<td align="center">8068</td>
+</tr>
+<tr class="even">
+<td align="center">Alzheimer’s disease/dementia (1)</td>
+<td align="center">control</td>
+<td align="center">28316</td>
+<td align="center">22119</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Alzheimer’s disease/dementia (1)</td>
+<td align="center">dont_know</td>
+<td align="center">1186</td>
+<td align="center">898</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Alzheimer’s disease/dementia (1)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">13</td>
+<td align="center">8</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Parkinson’s disease (2)</td>
+<td align="center">case</td>
+<td align="center">197</td>
+<td align="center">161</td>
+<td align="center">7989</td>
+<td align="center">197</td>
+</tr>
+<tr class="even">
+<td align="center">Parkinson’s disease (2)</td>
+<td align="center">control</td>
+<td align="center">34622</td>
+<td align="center">27124</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Parkinson’s disease (2)</td>
+<td align="center">dont_know</td>
+<td align="center">504</td>
+<td align="center">370</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Parkinson’s disease (2)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">8</td>
+<td align="center">7</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Severe depression (2)</td>
+<td align="center">case</td>
+<td align="center">809</td>
+<td align="center">661</td>
+<td align="center">32337</td>
+<td align="center">809</td>
+</tr>
+<tr class="even">
+<td align="center">Severe depression (2)</td>
+<td align="center">control</td>
+<td align="center">34010</td>
+<td align="center">26624</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Severe depression (2)</td>
+<td align="center">dont_know</td>
+<td align="center">504</td>
+<td align="center">370</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Severe depression (2)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">8</td>
+<td align="center">7</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Lung cancer (2)</td>
+<td align="center">case</td>
+<td align="center">501</td>
+<td align="center">417</td>
+<td align="center">19657</td>
+<td align="center">501</td>
+</tr>
+<tr class="even">
+<td align="center">Lung cancer (2)</td>
+<td align="center">control</td>
+<td align="center">34318</td>
+<td align="center">26868</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Lung cancer (2)</td>
+<td align="center">dont_know</td>
+<td align="center">504</td>
+<td align="center">370</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Lung cancer (2)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">8</td>
+<td align="center">7</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Bowel cancer (2)</td>
+<td align="center">case</td>
+<td align="center">599</td>
+<td align="center">476</td>
+<td align="center">24859</td>
+<td align="center">599</td>
+</tr>
+<tr class="even">
+<td align="center">Bowel cancer (2)</td>
+<td align="center">control</td>
+<td align="center">34220</td>
+<td align="center">26809</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Bowel cancer (2)</td>
+<td align="center">dont_know</td>
+<td align="center">504</td>
+<td align="center">370</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Bowel cancer (2)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">8</td>
+<td align="center">7</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Breast cancer (2)</td>
+<td align="center">case</td>
+<td align="center">999</td>
+<td align="center">810</td>
+<td align="center">39579</td>
+<td align="center">999</td>
+</tr>
+<tr class="even">
+<td align="center">Breast cancer (2)</td>
+<td align="center">control</td>
+<td align="center">33820</td>
+<td align="center">26475</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="odd">
+<td align="center">Breast cancer (2)</td>
+<td align="center">dont_know</td>
+<td align="center">504</td>
+<td align="center">370</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+<tr class="even">
+<td align="center">Breast cancer (2)</td>
+<td align="center">prefer_not_to_answer</td>
+<td align="center">8</td>
+<td align="center">7</td>
+<td align="center">NA</td>
+<td align="center">NA</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Note</strong>: Everything except for instance 2 group 1 matches (almost perfectly) to the number reported on UK Biobank website. And indeed, the number of non missing individuals for instance 2 do not match the number of UK Biobank website. But the weird thing is that the group 2 is not affected.</p>
+</div>
+<div id="combining-results-from-multiple-instances" class="section level1">
+<h1><span class="header-section-number">6</span> Combining results from multiple instances</h1>
+<p>Lastly, we need to finalize the phenotype query. To do so, we need to combine the results from mulitple instances for each individual.</p>
+<p>Here are some rules for combining multiple instances of a phenotype.</p>
+<ol style="list-style-type: decimal">
+<li>Whenever they select the phenotype, we consider as case even though they may select “do not know”, “prefer not to answer”, or “none of the above” before or later.</li>
+<li>Whenever we can conclude that the parent is control for some phenotype (in the case that “none of the above” or select other phenotypes but not this one), we consider as control even though they may select “do not know”, “prefer not to answer” before or later.</li>
+</ol>
+<p>Here we want to apply these rules to handle phenotype code collected from the above scripting (in <code>df_refine</code>) where phenotype codes are:</p>
+<ul>
+<li>0: control</li>
+<li>1: case</li>
+<li>-1: do not know</li>
+<li>-3: prefer not to answer</li>
+</ul>
+<p>So, the rules can be translated to:</p>
+<ol style="list-style-type: decimal">
+<li>Across instances, 1 overwrite everything else.</li>
+<li>Across instances, 0 overwrite everything besides 1.</li>
+<li>Across instances, -2 is set if there are only -1 and/or -3.</li>
+</ol>
+<pre class="r"><code>combine_rule = function(inst_df) {
+  inst_df[is.na(inst_df)] = -100
+  o = rep(-2, nrow(inst_df))
+  has_1 = rowSums(inst_df == 1) &gt; 0
+  has_0_but_not_1 = rowSums(inst_df == 0) &gt; 0 &amp; !has_1
+  o[has_0_but_not_1] = 0
+  o[has_1] = 1
+  return(o)
+}
+df_combine = list()
+for(i in names(df_refine)) {
+  df_combine[[i]] = list()
+  indivs = c()
+  for(nn in names(df_refine[[i]])) {
+    indivs = c(indivs, df_instance[[i]][[nn]]$eid)
+  }
+  eid = unique(indivs)
+  df_combine[[i]] = list()
+  df_combine[[i]][[&#39;eid&#39;]] = eid
+  for(pheno in code[[i]] %&gt;% filter(code &gt; 0) %&gt;% pull(choice_w_grp)) {
+    tmp_ = data.frame(eid = eid)
+    for(nn in names(df_refine[[i]])) {
+      tmp_ = left_join(
+        tmp_, 
+        data.frame(
+          eid = df_instance[[i]][[nn]]$eid, 
+          pheno = df_refine[[i]][[nn]][, pheno]
+        ), 
+        by = &#39;eid&#39;, 
+        suffix = c(&#39;&#39;, paste0(&#39;_&#39;, nn))
+      )
+      combined_col = combine_rule(tmp_)
+      df_combine[[i]][[pheno]] = combined_col
+    }
+  }
+  df_combine[[i]] = do.call(cbind, df_combine[[i]])
+  df_combine[[i]] = as.data.frame(df_combine[[i]])
+}</code></pre>
+<p>Summarize what we have.</p>
+<pre class="r"><code>for(i in names(df_combine)) {
+  tmp_ = df_combine[[i]]
+  tmp_ = tmp_ %&gt;% reshape2::melt(id.vars = &#39;eid&#39;) 
+  tmp_ = tmp_ %&gt;% group_by(variable, value) %&gt;% summarise(num_obs = n()) %&gt;% ungroup() %&gt;% reshape2::dcast(variable ~ value, value.var = &#39;num_obs&#39;) %&gt;% mutate(total = `-2` + `0` + `1`) %&gt;% left_join(df_ukb[[i]] %&gt;% select(-type), by = c(&#39;variable&#39; = &#39;choice_w_grp&#39;))
+  cat(tmp_ %&gt;% pander(caption = paste0(&#39;Summary of cleaned up data: &#39;, i, &#39; illness&#39;)))
+}</code></pre>
+<pre><code>## Warning: Column `variable`/`choice_w_grp` joining factor and character vector, coercing into character vector</code></pre>
+<table>
+<caption>Summary of cleaned up data: father illness</caption>
+<colgroup>
+<col width="32%" />
+<col width="8%" />
+<col width="9%" />
+<col width="9%" />
+<col width="9%" />
+<col width="30%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center">variable</th>
+<th align="center">-2</th>
+<th align="center">0</th>
+<th align="center">1</th>
+<th align="center">total</th>
+<th align="center">count_in_ukb_website_total</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">Heart disease (1)</td>
+<td align="center">33934</td>
+<td align="center">309329</td>
+<td align="center">144763</td>
+<td align="center">488026</td>
+<td align="center">164345</td>
+</tr>
+<tr class="even">
+<td align="center">Stroke (1)</td>
+<td align="center">33934</td>
+<td align="center">384446</td>
+<td align="center">69646</td>
+<td align="center">488026</td>
+<td align="center">78249</td>
+</tr>
+<tr class="odd">
+<td align="center">High blood pressure (1)</td>
+<td align="center">33934</td>
+<td align="center">351370</td>
+<td align="center">102722</td>
+<td align="center">488026</td>
+<td align="center">114044</td>
+</tr>
+<tr class="even">
+<td align="center">Diabetes (1)</td>
+<td align="center">33934</td>
+<td align="center">408702</td>
+<td align="center">45390</td>
+<td align="center">488026</td>
+<td align="center">51152</td>
+</tr>
+<tr class="odd">
+<td align="center">Chronic bronchitis/emphysema (1)</td>
+<td align="center">33934</td>
+<td align="center">404057</td>
+<td align="center">50035</td>
+<td align="center">488026</td>
+<td align="center">55688</td>
+</tr>
+<tr class="even">
+<td align="center">Alzheimer’s disease/dementia (1)</td>
+<td align="center">33934</td>
+<td align="center">431396</td>
+<td align="center">22696</td>
+<td align="center">488026</td>
+<td align="center">26512</td>
+</tr>
+<tr class="odd">
+<td align="center">Parkinson’s disease (2)</td>
+<td align="center">40385</td>
+<td align="center">436812</td>
+<td align="center">10829</td>
+<td align="center">488026</td>
+<td align="center">11471</td>
+</tr>
+<tr class="even">
+<td align="center">Severe depression (2)</td>
+<td align="center">40385</td>
+<td align="center">430948</td>
+<td align="center">16693</td>
+<td align="center">488026</td>
+<td align="center">17459</td>
+</tr>
+<tr class="odd">
+<td align="center">Lung cancer (2)</td>
+<td align="center">40385</td>
+<td align="center">407987</td>
+<td align="center">39654</td>
+<td align="center">488026</td>
+<td align="center">41788</td>
+</tr>
+<tr class="even">
+<td align="center">Bowel cancer (2)</td>
+<td align="center">40385</td>
+<td align="center">422215</td>
+<td align="center">25426</td>
+<td align="center">488026</td>
+<td align="center">26931</td>
+</tr>
+<tr class="odd">
+<td align="center">Prostate cancer (2)</td>
+<td align="center">40385</td>
+<td align="center">413845</td>
+<td align="center">33796</td>
+<td align="center">488026</td>
+<td align="center">35721</td>
+</tr>
+</tbody>
+</table>
+<pre><code>## Warning: Column `variable`/`choice_w_grp` joining factor and character vector, coercing into character vector</code></pre>
+<table>
+<caption>Summary of cleaned up data: mother illness</caption>
+<colgroup>
+<col width="32%" />
+<col width="8%" />
+<col width="9%" />
+<col width="9%" />
+<col width="9%" />
+<col width="30%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center">variable</th>
+<th align="center">-2</th>
+<th align="center">0</th>
+<th align="center">1</th>
+<th align="center">total</th>
+<th align="center">count_in_ukb_website_total</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">Heart disease (1)</td>
+<td align="center">20085</td>
+<td align="center">378535</td>
+<td align="center">94360</td>
+<td align="center">492980</td>
+<td align="center">105893</td>
+</tr>
+<tr class="even">
+<td align="center">Stroke (1)</td>
+<td align="center">20085</td>
+<td align="center">405360</td>
+<td align="center">67535</td>
+<td align="center">492980</td>
+<td align="center">75680</td>
+</tr>
+<tr class="odd">
+<td align="center">High blood pressure (1)</td>
+<td align="center">20085</td>
+<td align="center">325136</td>
+<td align="center">147759</td>
+<td align="center">492980</td>
+<td align="center">163964</td>
+</tr>
+<tr class="even">
+<td align="center">Diabetes (1)</td>
+<td align="center">20085</td>
+<td align="center">424893</td>
+<td align="center">48002</td>
+<td align="center">492980</td>
+<td align="center">53669</td>
+</tr>
+<tr class="odd">
+<td align="center">Chronic bronchitis/emphysema (1)</td>
+<td align="center">20085</td>
+<td align="center">445084</td>
+<td align="center">27811</td>
+<td align="center">492980</td>
+<td align="center">30807</td>
+</tr>
+<tr class="even">
+<td align="center">Alzheimer’s disease/dementia (1)</td>
+<td align="center">20085</td>
+<td align="center">430176</td>
+<td align="center">42719</td>
+<td align="center">492980</td>
+<td align="center">49895</td>
+</tr>
+<tr class="odd">
+<td align="center">Parkinson’s disease (2)</td>
+<td align="center">24996</td>
+<td align="center">460451</td>
+<td align="center">7533</td>
+<td align="center">492980</td>
+<td align="center">7989</td>
+</tr>
+<tr class="even">
+<td align="center">Severe depression (2)</td>
+<td align="center">24996</td>
+<td align="center">437033</td>
+<td align="center">30951</td>
+<td align="center">492980</td>
+<td align="center">32337</td>
+</tr>
+<tr class="odd">
+<td align="center">Lung cancer (2)</td>
+<td align="center">24996</td>
+<td align="center">449261</td>
+<td align="center">18723</td>
+<td align="center">492980</td>
+<td align="center">19657</td>
+</tr>
+<tr class="even">
+<td align="center">Bowel cancer (2)</td>
+<td align="center">24996</td>
+<td align="center">444407</td>
+<td align="center">23577</td>
+<td align="center">492980</td>
+<td align="center">24859</td>
+</tr>
+<tr class="odd">
+<td align="center">Breast cancer (2)</td>
+<td align="center">24996</td>
+<td align="center">430728</td>
+<td align="center">37256</td>
+<td align="center">492980</td>
+<td align="center">39579</td>
+</tr>
+</tbody>
+</table>
+<p>They don’t match perfectly. I <strong>suspect</strong> that the UK Biobank Data-Field page has double counted individuals. Or in other word, it is counting the occurrence of label regardless if the individual is duplicated or not.</p>
+<p>Summarize Eurpoeans only.</p>
+<pre class="r"><code>for(i in names(df_combine)) {
+  tmp_ = df_combine[[i]] %&gt;% left_join(df_pheno %&gt;% select(eid, meaning), by = &#39;eid&#39;) %&gt;% filter(!is.na(meaning) &amp; meaning == &#39;British&#39;) %&gt;% select(-meaning)
+  tmp_ = tmp_ %&gt;% reshape2::melt(id.vars = &#39;eid&#39;) 
+  tmp_ = tmp_ %&gt;% group_by(variable, value) %&gt;% summarise(num_obs = n()) %&gt;% ungroup() %&gt;% reshape2::dcast(variable ~ value, value.var = &#39;num_obs&#39;) %&gt;% mutate(total = `-2` + `0` + `1`)
+  cat(tmp_ %&gt;% pander(caption = paste0(&#39;Summary of cleaned up data: &#39;, i, &#39; illness - Limit to Europeans&#39;)))
+}</code></pre>
+<table style="width:92%;">
+<caption>Summary of cleaned up data: father illness - Limit to Europeans</caption>
+<colgroup>
+<col width="43%" />
+<col width="11%" />
+<col width="12%" />
+<col width="12%" />
+<col width="12%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center">variable</th>
+<th align="center">-2</th>
+<th align="center">0</th>
+<th align="center">1</th>
+<th align="center">total</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">Heart disease (1)</td>
+<td align="center">22241</td>
+<td align="center">219930</td>
+<td align="center">105269</td>
+<td align="center">347440</td>
+</tr>
+<tr class="even">
+<td align="center">Stroke (1)</td>
+<td align="center">22241</td>
+<td align="center">275334</td>
+<td align="center">49865</td>
+<td align="center">347440</td>
+</tr>
+<tr class="odd">
+<td align="center">High blood pressure (1)</td>
+<td align="center">22241</td>
+<td align="center">252951</td>
+<td align="center">72248</td>
+<td align="center">347440</td>
+</tr>
+<tr class="even">
+<td align="center">Diabetes (1)</td>
+<td align="center">22241</td>
+<td align="center">294781</td>
+<td align="center">30418</td>
+<td align="center">347440</td>
+</tr>
+<tr class="odd">
+<td align="center">Chronic bronchitis/emphysema (1)</td>
+<td align="center">22241</td>
+<td align="center">287959</td>
+<td align="center">37240</td>
+<td align="center">347440</td>
+</tr>
+<tr class="even">
+<td align="center">Alzheimer’s disease/dementia (1)</td>
+<td align="center">22241</td>
+<td align="center">308434</td>
+<td align="center">16765</td>
+<td align="center">347440</td>
+</tr>
+<tr class="odd">
+<td align="center">Parkinson’s disease (2)</td>
+<td align="center">26067</td>
+<td align="center">313304</td>
+<td align="center">8069</td>
+<td align="center">347440</td>
+</tr>
+<tr class="even">
+<td align="center">Severe depression (2)</td>
+<td align="center">26067</td>
+<td align="center">309231</td>
+<td align="center">12142</td>
+<td align="center">347440</td>
+</tr>
+<tr class="odd">
+<td align="center">Lung cancer (2)</td>
+<td align="center">26067</td>
+<td align="center">291881</td>
+<td align="center">29492</td>
+<td align="center">347440</td>
+</tr>
+<tr class="even">
+<td align="center">Bowel cancer (2)</td>
+<td align="center">26067</td>
+<td align="center">302650</td>
+<td align="center">18723</td>
+<td align="center">347440</td>
+</tr>
+<tr class="odd">
+<td align="center">Prostate cancer (2)</td>
+<td align="center">26067</td>
+<td align="center">296934</td>
+<td align="center">24439</td>
+<td align="center">347440</td>
+</tr>
+</tbody>
+</table>
+<table style="width:92%;">
+<caption>Summary of cleaned up data: mother illness - Limit to Europeans</caption>
+<colgroup>
+<col width="43%" />
+<col width="11%" />
+<col width="12%" />
+<col width="12%" />
+<col width="12%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center">variable</th>
+<th align="center">-2</th>
+<th align="center">0</th>
+<th align="center">1</th>
+<th align="center">total</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">Heart disease (1)</td>
+<td align="center">13013</td>
+<td align="center">269677</td>
+<td align="center">68098</td>
+<td align="center">350788</td>
+</tr>
+<tr class="even">
+<td align="center">Stroke (1)</td>
+<td align="center">13013</td>
+<td align="center">288673</td>
+<td align="center">49102</td>
+<td align="center">350788</td>
+</tr>
+<tr class="odd">
+<td align="center">High blood pressure (1)</td>
+<td align="center">13013</td>
+<td align="center">234837</td>
+<td align="center">102938</td>
+<td align="center">350788</td>
+</tr>
+<tr class="even">
+<td align="center">Diabetes (1)</td>
+<td align="center">13013</td>
+<td align="center">306392</td>
+<td align="center">31383</td>
+<td align="center">350788</td>
+</tr>
+<tr class="odd">
+<td align="center">Chronic bronchitis/emphysema (1)</td>
+<td align="center">13013</td>
+<td align="center">317373</td>
+<td align="center">20402</td>
+<td align="center">350788</td>
+</tr>
+<tr class="even">
+<td align="center">Alzheimer’s disease/dementia (1)</td>
+<td align="center">13013</td>
+<td align="center">305769</td>
+<td align="center">32006</td>
+<td align="center">350788</td>
+</tr>
+<tr class="odd">
+<td align="center">Parkinson’s disease (2)</td>
+<td align="center">15785</td>
+<td align="center">329565</td>
+<td align="center">5438</td>
+<td align="center">350788</td>
+</tr>
+<tr class="even">
+<td align="center">Severe depression (2)</td>
+<td align="center">15785</td>
+<td align="center">312821</td>
+<td align="center">22182</td>
+<td align="center">350788</td>
+</tr>
+<tr class="odd">
+<td align="center">Lung cancer (2)</td>
+<td align="center">15785</td>
+<td align="center">321189</td>
+<td align="center">13814</td>
+<td align="center">350788</td>
+</tr>
+<tr class="even">
+<td align="center">Bowel cancer (2)</td>
+<td align="center">15785</td>
+<td align="center">317721</td>
+<td align="center">17282</td>
+<td align="center">350788</td>
+</tr>
+<tr class="odd">
+<td align="center">Breast cancer (2)</td>
+<td align="center">15785</td>
+<td align="center">307398</td>
+<td align="center">27605</td>
+<td align="center">350788</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="save" class="section level1">
+<h1><span class="header-section-number">7</span> Save</h1>
+<pre class="r"><code>df_eur = list()
+for(i in names(df_combine)) {
+  df_eur[[i]] = df_combine[[i]] %&gt;% left_join(df_pheno %&gt;% select(eid, meaning), by = &#39;eid&#39;) %&gt;% filter(!is.na(meaning) &amp; meaning == &#39;British&#39;) %&gt;% select(-meaning)
+}
+saveRDS(df_eur, &#39;../analysis_output/parent_illness_2nd_european_phenotypes_clean_up.rds&#39;)</code></pre>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("hide" === "show");
+});
+</script>
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

@@ -11,3 +11,4 @@ date: "`r paste0('Last update: ', format(Sys.time(), '%b %d, %Y'))`"
 # Real data analysis
 
 * [Initial look at parent illness in UK Biobank](parent_illness_init.html)
+* [Second try at querying illness in UK Biobank](parent_illness_2nd.html): Include instance 0, 1, and 2 (instance 3 is not on Bionimbus).
