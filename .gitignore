@@ -4,4 +4,8 @@
 .Ruserdata
 *.rds
 .DS_Store
+.ipynb_checkpoints/
+*.bgz
+*.gz
+*.parquet
 
