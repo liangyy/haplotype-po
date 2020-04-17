@@ -1,0 +1,20 @@
+#PBS -S /bin/bash
+#PBS -l walltime=24:00:00
+#PBS -l nodes=1:ppn=1
+#PBS -l mem=16gb
+#PBS -e logs/cleanup-chr${CHRNUM}.err
+#PBS -o logs/cleanup-chr${CHRNUM}.out
+
+source ~/.bash_profile
+source ~/.bashrc
+
+METAdir=/gpfs/data/im-lab/nas40t2/yanyul/GitHub/haplotype-po/scripts/ld_clump
+
+SNMKwd=/gpfs/data/im-lab/nas40t2/yanyul/GitHub/ptrs-ukb/pipeline/ld_clump
+conda activate parquet
+
+cd $SNMKwd
+mkdir -p $METAdir/logs
+
+snakemake -s cleanup.snmk --configfile $METAdir/config.cleanup.yaml all_chr --nolock --config chr_num=$CHRNUM > $METAdir/logs/cleanup-chr$CHRNUM.log 2>&1
+
