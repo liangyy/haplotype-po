@@ -14,7 +14,7 @@ SNMKwd=/gpfs/data/im-lab/nas40t2/yanyul/GitHub/ptrs-ukb/pipeline/ld_clump
 conda activate parquet
 
 cd $SNMKwd
-mkdir -p $METAdir/logs
+# mkdir -p $METAdir/logs
 
 snakemake -s cleanup.snmk --configfile $METAdir/config.cleanup.yaml all_chr --nolock --config chr_num=$CHRNUM > $METAdir/logs/cleanup-chr$CHRNUM.log 2>&1
 
