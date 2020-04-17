@@ -8,4 +8,6 @@
 *.bgz
 *.gz
 *.parquet
+__pycache__
+*.log 
 

@@ -50,8 +50,8 @@ for i in range(1, 23):
     logging.info(f'Processing chr{i}: Building variant ID candidates')
     variant['allele_1st'] = variant['allele_ids'].apply(lambda x: x.split(',')[0])
     variant['allele_2nd'] = variant['allele_ids'].apply(lambda x: x.split(',')[1])
-    variant['varid1'] = variant[['chrom', 'pos', 'allele_1st', 'allele_2nd']].apply(lambda x: make_id(x), axis=1)
-    variant['varid2'] = variant[['chrom', 'pos', 'allele_2nd', 'allele_1st']].apply(lambda x: make_id(x), axis=1)
+    variant['varid1'] = variant[['chrom', 'pos', 'allele_1st', 'allele_2nd']].apply(lambda x: helper.make_id(x), axis=1)
+    variant['varid2'] = variant[['chrom', 'pos', 'allele_2nd', 'allele_1st']].apply(lambda x: helper.make_id(x), axis=1)
     
     logging.info(f'Processing chr{i}: Running checker')
     variant_check = helper.join_with_varid(
@@ -65,5 +65,5 @@ for i in range(1, 23):
     
 # save 
 logging.info('Saving the results')
-map_table.to_csv(args.output, compression='gzip', sep='\t')
+map_table.to_csv(args.output, compression='gzip', sep='\t', index = None)
 
