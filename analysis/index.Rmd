@@ -5,10 +5,11 @@ date: "`r paste0('Last update: ', format(Sys.time(), '%b %d, %Y'))`"
 
 # Notes
 
-* [Initial thoughts](init_idea_outline.html)
-* [Power comparison on haplotype-based GWAS](haplo_gwas_power.html)
+* [Initial thoughts](init_idea_outline.html).
+* [Power comparison on haplotype-based GWAS](haplo_gwas_power.html).
 
 # Real data analysis
 
-* [Initial look at parent illness in UK Biobank](parent_illness_init.html)
+* [Initial look at parent illness in UK Biobank](parent_illness_init.html).
 * [Second try at querying illness in UK Biobank](parent_illness_2nd.html): Include instance 0, 1, and 2 (instance 3 is not on Bionimbus).
+* [What GWAS to use?: Neale's lab UK Biobank GWAS](gwas_neale_lab_ukb.html)
