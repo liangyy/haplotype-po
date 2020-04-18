@@ -1,0 +1,41 @@
+if 'outdir' not in config:
+    config['outdir'] = 'output'
+
+
+rule all:
+    input:
+        [ '{outdir}/renamed.chr{chr_num}.vcf.gz'.format(outdir = config['outdir'], chr_num = i) for i in range(1, 23) ]
+
+if 'chr_num' in config:
+    rule all_chr:
+        input:
+            '{outdir}/renamed.chr{chr_num}.vcf.gz'.format(outdir = config['outdir'], chr_num = config['chr_num'])
+
+rule bgen2vcf:
+    input:
+        config['bgen'],
+        config['sample']
+    params:
+        '{outdir}/cleaned.chr{chr_num}'
+    output:
+        temp('{outdir}/cleaned.chr{chr_num}.vcf.gz')
+    shell:
+        '{config[plink2_cmd]} \
+           --bgen {input[0]} ref-first \
+           --sample {input[1]} \
+           --rm-dup exclude-all \
+           --export vcf bgz vcf-dosage=DS-force \
+           --out {params[0]} \
+           --threads {config[plink_threads]} \
+           --memory {config[plink_memory_in_mb]}'
+ 
+rule vcf_rename_id:
+    input:
+        '{outdir}/cleaned.chr{chr_num}.vcf.gz'
+    output:
+        '{outdir}/renamed.chr{chr_num}.vcf.gz' 
+    shell:
+        "bcftools annotate \
+          --set-id '%CHROM:%POS:%REF:%ALT' \
+          {input[0]} | gzip > {output[0]}"
+

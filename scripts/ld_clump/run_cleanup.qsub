@@ -8,9 +8,12 @@
 source ~/.bash_profile
 source ~/.bashrc
 
+module load gcc/6.2.0
+module load bcftools/1.10.2
+
 METAdir=/gpfs/data/im-lab/nas40t2/yanyul/GitHub/haplotype-po/scripts/ld_clump
 
-SNMKwd=/gpfs/data/im-lab/nas40t2/yanyul/GitHub/ptrs-ukb/pipeline/ld_clump
+SNMKwd=$METAdir  # copy and modify the original script at /gpfs/data/im-lab/nas40t2/yanyul/GitHub/ptrs-ukb/pipeline/ld_clump
 conda activate parquet
 
 cd $SNMKwd
