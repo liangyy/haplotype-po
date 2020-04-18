@@ -12,6 +12,13 @@ Run on CRI to distribute the computation.
 
 # Neale's lab UK Biobank GWAS
 
+To build reference LD panel, I reuse pipeline build [here](https://github.com/liangyy/ptrs-ukb/tree/master/pipeline/subset_bgen)
+But I modified the snakemake so that it does not limit on variant.
+
+```
+screen -dmS subset_bgen bash run_subset_bgen.screen  
+```
+
 For Neale's lab UK Biobank GWAS, I reuse pipeline built [here](https://github.com/liangyy/ptrs-ukb/tree/master/pipeline/ld_clump). 
 But I copied and modified from the original to fix the missing `ref-first` so that we can get `chr:pos:ref:alt` which matches with Neale's lab variant ID.
 
