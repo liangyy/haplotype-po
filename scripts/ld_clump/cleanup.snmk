@@ -35,7 +35,7 @@ rule vcf_rename_id:
     output:
         '{outdir}/renamed.chr{chr_num}.vcf.gz' 
     shell:
-        "bcftools annotate \
+        "config[bcftools_cmd] annotate \
           --set-id '%CHROM:%POS:%REF:%ALT' \
           {input[0]} | gzip > {output[0]}"
 

@@ -12,6 +12,10 @@ Run on CRI to distribute the computation.
 
 # Neale's lab UK Biobank GWAS
 
+* Step 1: Subset GWAS
+
+* Step 2: Prepare LD panel
+
 To build reference LD panel, I reuse pipeline build [here](https://github.com/liangyy/ptrs-ukb/tree/master/pipeline/subset_bgen)
 But I modified the snakemake so that it does not limit on variant.
 
