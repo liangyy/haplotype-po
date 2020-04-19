@@ -61,7 +61,7 @@ for i in range(1, 23):
     )
     variant = pd.merge(variant, variant_check, left_on=['varid1', 'varid2'], right_on=['id1', 'id2'], how='left')
     
-    map_table = pd.concat([map_table, variant[['chrom', 'pos', 'allele_ids', 'id', 'rsid', 'assigned_id']]])
+    map_table = pd.concat([map_table, variant[['chrom', 'pos', 'allele_ids', 'id', 'rsid', 'assigned_id', 'assigned_sign']]])
     
 # save 
 logging.info('Saving the results')
