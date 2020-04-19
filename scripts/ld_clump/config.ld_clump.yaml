@@ -1,6 +1,7 @@
 gwas: 
   '/vol/bmd/yanyul/UKB/neale_lab_gwas/{gwas_name}.tsv.bgz'
   # '/scratch/t.cri.yliang/haplotype-po/neale_lab_gwas/{gwas_name}.tsv.bgz'  
+snp_map: '/vol/bmd/yanyul/UKB/haplotype_imputation/snp_map_for_neale_lab_gwas.tsv.gz'
 genotype:
   vcf: 
     '/vol/bmd/yanyul/UKB/haplotype_imputation/subset_britich_cleaned_up_vcf/renamed.chr{chr_num}.vcf.gz'

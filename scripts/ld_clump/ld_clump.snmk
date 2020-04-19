@@ -16,22 +16,23 @@ if 'chr_num' in config:
 
 rule subset_gwas:
     input:
-        gwas = config['gwas_full'],
+        gwas = config['gwas'],
         variant_map = config['snp_map']  
         # generated from ../prepare_snp_map/
         # so that we only consider variants that 
         # exist in our target genotype files
-    output
+    output:
         '{outdir}/tmp_{gwas_name}/gwas_subset_x_chr{chr_num}.tsv.gz'
     shell:
         'python subset_gwas.py \
             --gwas {input.gwas} \
             --snp-map {input.variant_map} \
+            --gwas-variant-col variant \
             --output {output[0]}'
             
 rule ld_clump:
     input:
-        gwas = config['gwas'],
+        gwas = '{outdir}/tmp_{gwas_name}/gwas_subset_x_chr{chr_num}.tsv.gz',
         vcf = config['genotype']['vcf']
     params:
         snp_field = config['snp_field'],

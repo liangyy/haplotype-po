@@ -4,6 +4,9 @@ then
 fi
 
 for i in `seq 1 22`
-do 
-  qsub -v CHRNUM=$i -N cleanup-$i run_cleanup.qsub
+do
+  export CHRNUM=$i
+  bash run_cleanup.screen
+  # qsub -v CHRNUM=$i -N cleanup-$i run_cleanup.qsub
+
 done

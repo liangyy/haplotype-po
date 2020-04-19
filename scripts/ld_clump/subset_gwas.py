@@ -27,6 +27,8 @@ logging.basicConfig(
     datefmt = '%Y-%m-%d %I:%M:%S %p'
 )
 
+import pandas as pd
+
 logging.info('Loading GWAS')
 gwas = pd.read_csv(
     args.gwas, 
@@ -36,7 +38,7 @@ gwas = pd.read_csv(
 )
 
 logging.info('Loading SNP map')
-map_table = pd.read_csv(
+snp_map = pd.read_csv(
     args.snp_map,
     sep='\t',
     header=0,

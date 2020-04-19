@@ -23,6 +23,31 @@ But I modified the snakemake so that it does not limit on variant.
 screen -dmS subset_bgen bash run_subset_bgen.screen  
 ```
 
-For Neale's lab UK Biobank GWAS, I reuse pipeline built [here](https://github.com/liangyy/ptrs-ukb/tree/master/pipeline/ld_clump). 
+Clean up test.
+
+```
+export CHRNUM=4
+screen -dmS cleanup_test bash run_cleanup.screen
+```
+
+Clean up run all chromosomes
+
+```
+screen -dmS cleanup_all bash submit_cleanup.sh
+```
+
+__Note__: For Neale's lab UK Biobank GWAS, I reuse pipeline built [here](https://github.com/liangyy/ptrs-ukb/tree/master/pipeline/ld_clump). 
 But I copied and modified from the original to fix the missing `ref-first` so that we can get `chr:pos:ref:alt` which matches with Neale's lab variant ID.
+
+
+* Step 3: LD clumping
+
+For illustration, I run on one chromosome for test. 
+Run on all Neale's lab GWASs and use chromosome 16.
+
+```
+screen -dmS ld_clump_chr bash -c "bash submit_ld_clump_one_chromosome.sh \
+  <(ls /vol/bmd/yanyul/UKB/neale_lab_gwas/|sed 's#.tsv.bgz##g') \
+  16" 
+```
 
