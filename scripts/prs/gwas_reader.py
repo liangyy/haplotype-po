@@ -1,18 +1,32 @@
-import yaml
+import yaml, re
 import pandas as pd
 
-def read_yaml(yaml):
-    with open(yaml) as file:
-        dict = yaml.load(file)
-    return dict
+def read_yaml(yamlfile):
+    with open(yamlfile) as f:
+        mydict = yaml.safe_load(f)
+    return mydict
+
 def read_snp_map(path):
     if path is None:
         return None
-    snp_map_df = pd.read_csv(snp_map)
+    snp_map_df = pd.read_csv(
+        path, 
+        compression='gzip', 
+        sep='\t', 
+        header=0,
+        dtype={3:'str'}
+    )
     if 'allele_ids' in snp_map_df.columns:
         snp_map_df['effect_allele'] = snp_map_df['allele_ids'].map(lambda x: x.split(',')[0])
         snp_map_df['non_effect_allele'] = snp_map_df['allele_ids'].map(lambda x: x.split(',')[1])
     return snp_map_df
+
+def _clean_tab(mydict):
+    for i in mydict.keys():
+        if isinstance(mydict[i], str) and '\\t' in mydict[i]:
+            mydict[i] = re.sub(mydict[i], '\\t', '\t')
+    return mydict
+
 def gwas_reader(yaml, snp_map=None, logger=None):
     gwas_dict = read_yaml(yaml)
     snp_map_df = read_snp_map(snp_map)
@@ -31,6 +45,12 @@ def gwas_reader(yaml, snp_map=None, logger=None):
         # END
         
         this_gwas = gwas_dict[i]
+        if 'param' not in this_gwas['gwas']:
+            this_gwas['gwas']['param'] = {}
+        else:
+            this_gwas['gwas']['param'] = _clean_tab(this_gwas['gwas']['param'])
+        
+        this_gwas['gwas']
         gwas_df = pd.read_csv(
             this_gwas['gwas']['path'], 
             usecols=[
@@ -38,13 +58,9 @@ def gwas_reader(yaml, snp_map=None, logger=None):
                 this_gwas['betacol'],
                 this_gwas['pvalcol']
             ],
-            names=[
-                'variant_id',
-                'effect_size',
-                'pvalue'
-            ]
             **this_gwas['gwas']['param']
         )
+        gwas_df.columns = ['variant_id', 'effect_size', 'pvalue']
         
         if 'ld_clump' in this_gwas:
             clump_df = pd.read_csv(

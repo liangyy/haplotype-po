@@ -1,6 +1,6 @@
 20001_1001.gwas.imputed_v3.male:
     gwas: 
-      path: '~/labshare/UKB/neale_lab_gwas/20001_1001.gwas.imputed_v3.male.tsv.gz'
+      path: '~/labshare/UKB/neale_lab_gwas/20001_1001.gwas.imputed_v3.male.tsv.bgz'
       param:
         compression: 'gzip'
         header: 0
@@ -12,7 +12,7 @@
     
 20001_1001.gwas.imputed_v3.both_sexes:
     gwas: 
-      path: '~/labshare/UKB/neale_lab_gwas/20001_1001.gwas.imputed_v3.both_sexes.tsv.gz'
+      path: '~/labshare/UKB/neale_lab_gwas/20001_1001.gwas.imputed_v3.both_sexes.tsv.bgz'
       param:
         compression: 'gzip'
         header: 0
