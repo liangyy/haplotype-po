@@ -102,20 +102,20 @@ class PRSmatrix:
         # traverse all gwas results and all p-value cutoffs
         ever_updated_counter = 0
         for i in self.gwas_index.keys():
-            tt1 = time.time(); print('anchor1')
+            # tt1 = time.time(); print('anchor1')
             pval = self._get_gwas_info_by_var_id(i, 'pvalue', dosage_row.my_var_id)
             if pval is None:
                 continue
             ever_updated_counter += 1
-            tt2 = time.time(); print('anchor2', tt2 - tt1)
+            # tt2 = time.time(); print('anchor2', tt2 - tt1)
             beta = self._get_gwas_info_by_var_id(i, 'effect_size', dosage_row.my_var_id)
             sign = self._get_gwas_info_by_var_id(i, 'assigned_sign', dosage_row.my_var_id)
             # effect_size = self._get_effect_size(beta, sign)
-            tt3 = time.time(); print('anchor3', tt3 - tt2)
+            # tt3 = time.time(); print('anchor3', tt3 - tt2)
             step_update_1 = self._per_variant_update(dosage_row.haplo_dosage_1, beta, sign)
             step_update_2 = self._per_variant_update(dosage_row.haplo_dosage_2, beta, sign)
             # print(step_update_1.shape)
-            tt4 = time.time(); print('anchor4', tt4 - tt3)
+            # tt4 = time.time(); print('anchor4', tt4 - tt3)
             gwas_idx = self.gwas_index[i]
             pdim_idx = np.where(self.pval_cutoffs > pval)[0]
             # if pdim_idx.shape[0] > 0:
@@ -127,7 +127,7 @@ class PRSmatrix:
                 self.ARRAY_prs[:, gwas_idx, pidx, 0] += step_update_1
                 self.ARRAY_prs[:, gwas_idx, pidx, 1] += step_update_2
                 # yield i, dosage_row
-            tt5 = time.time(); print('anchor5', tt5 - tt4)  
+            # tt5 = time.time(); print('anchor5', tt5 - tt4)  
     
     @staticmethod
     def _myprint(msg, logger):
