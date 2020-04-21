@@ -98,13 +98,14 @@ class PRSmatrix:
     def update(self, dosage_row):
         if self.ARRAY_prs is None:
             # sample x trait x cutoff x hap
-            self.ARRAY_prs = np.empty((self.nsample, self.ntrait, self.ncutoff, self.nhap)) 
+            self.ARRAY_prs = np.zeros((self.nsample, self.ntrait, self.ncutoff, self.nhap)) 
         # traverse all gwas results and all p-value cutoffs
         ever_updated_counter = 0
         for i in self.gwas_index.keys():
             # tt1 = time.time(); print('anchor1')
             pval = self._get_gwas_info_by_var_id(i, 'pvalue', dosage_row.my_var_id)
             if pval is None:
+                print('what')
                 continue
             ever_updated_counter += 1
             # tt2 = time.time(); print('anchor2', tt2 - tt1)
@@ -177,8 +178,7 @@ class PRSmatrix:
             gwas_dset[self.gwas_index[gwas_name]] = np.string_(str(gwas_name))
         
         # p-values
-        pval_dset = self.H5_file.create_dataset("pval_cutoffs", (self.ncutoff,), dtype='float32')
-        pval_dset = self.pval_cutoffs
+        self.H5_file.create_dataset("pval_cutoffs", data=self.pval_cutoffs, dtype='float32')
 
         self.H5_file.close()
 

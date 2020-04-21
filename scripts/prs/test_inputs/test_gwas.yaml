@@ -4,20 +4,20 @@ gwas1:
     param:
       header: 0
       sep: ' '
-    varcol: 'variant'
-    betacol: 'beta'
-    pvalcol: 'pval'
-    ld_clump: 'test_inputs/test_gwas1.clump'
+  varcol: 'variant'
+  betacol: 'beta'
+  pvalcol: 'pval'
+  ld_clump: 'test_inputs/test_gwas1.clump'
 gwas2:
   gwas: 
     path: 'test_inputs/test_gwas2.txt'
     param:
       header: 0
       sep: ' '
-    varcol: 'variant'
-    betacol: 'beta'
-    pvalcol: 'pval'
-    ld_clump: 'test_inputs/test_gwas2.clump'
+  varcol: 'variant'
+  betacol: 'beta'
+  pvalcol: 'pval'
+  ld_clump: 'test_inputs/test_gwas2.clump'
 
 
 

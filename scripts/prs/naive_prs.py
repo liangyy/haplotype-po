@@ -109,7 +109,8 @@ logging.info('Build BGEN reader')
 hap_reader = ukb_hap_reader.UKBhapReader(
     bgen_path=args.bgen, 
     bgen_bgi_path=args.bgi, 
-    sample_path=args.sample
+    sample_path=args.sample,
+    chromosome=args.chromosome
 )
 var_generator = hap_reader.retrieve_from_list(
     # NOTE
