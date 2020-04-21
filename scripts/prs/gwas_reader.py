@@ -1,4 +1,5 @@
-import yaml, re
+import yaml, re, os
+import pickle, gzip
 import pandas as pd
 
 def read_yaml(yamlfile):
@@ -33,7 +34,15 @@ def _clean_tab(mydict):
             mydict[i] = re.sub(mydict[i], '\\t', '\t')
     return mydict
 
-def gwas_reader(yaml, snp_map=None, logger=None):
+def gwas_reader(yaml, snp_map=None, logger=None, cache_path=None):
+    if cache_path is not None and os.path.exists(cache_path) and os.path.isfile(cache_path):
+        filename, file_extension = os.path.splitext(cache_path)
+        desired_ext = 'pgz'
+        if file_extension != desired_ext:
+            raise ValueError(f'cache_path should have {desired_ext} as extension.')
+        with gzip.open(cache_path, 'rb') as f:
+            out_dict  = pickle.load(f)
+        return out_dict
     gwas_dict = read_yaml(yaml)
     snp_map_df = read_snp_map(snp_map)
     out_dict = {}
@@ -94,6 +103,13 @@ def gwas_reader(yaml, snp_map=None, logger=None):
         )
         
         out_dict[i] = gwas_df
+    if cache_path is not None:
+        dirname = os.path.dirname(cache_path)
+        if not os.path.exists(dirname):
+            raise ValueError('Expect the directory to cache_path exists.')
+        else:
+            with gzip.open(cache_path, 'wb') as f:
+                pickle.dump(out_dict, f)
     return out_dict
             
 def build_var_df(gwas_dict, logger=None):

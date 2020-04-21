@@ -67,6 +67,9 @@ parser.add_argument('--max-sample-chunk-size', type=int, default=10000, help='''
 parser.add_argument('--max-trait-chunk-size', type=int, default=5, help='''
     Maximum size of chunk on trait axis. 
 ''')
+parser.add_argument('--cache-path-for-gwas-dict', default=None, help='''
+    Path to cache gwas dict
+''')
 args = parser.parse_args()
 
 import logging, time, sys
@@ -99,7 +102,8 @@ logging.info('Loading GWAS')
 gwas_dict = gwas_reader.gwas_reader(
     args.gwas_yaml, 
     snp_map=args.snp_map,
-    logger=logging
+    logger=logging,
+    cache_path=args.cache_path_for_gwas_dict
 )
 
 logging.info('Generating variant list')
