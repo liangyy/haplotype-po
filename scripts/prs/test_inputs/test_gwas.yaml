@@ -1,0 +1,47 @@
+gwas1:
+  gwas: 
+    path: 'test_inputs/test_gwas1.txt'
+    param:
+      header: 0
+      sep: ' '
+    varcol: 'variant'
+    betacol: 'beta'
+    pvalcol: 'pval'
+    ld_clump: 'test_inputs/test_gwas1.clump'
+gwas2:
+  gwas: 
+    path: 'test_inputs/test_gwas2.txt'
+    param:
+      header: 0
+      sep: ' '
+    varcol: 'variant'
+    betacol: 'beta'
+    pvalcol: 'pval'
+    ld_clump: 'test_inputs/test_gwas2.clump'
+
+
+
+# 20001_1001.gwas.imputed_v3.male:
+#     gwas: 
+#       path: '~/labshare/UKB/neale_lab_gwas/20001_1001.gwas.imputed_v3.male.tsv.bgz'
+#       param:
+#         compression: 'gzip'
+#         header: 0
+#         sep: '\t'
+#     varcol: 'variant'
+#     betacol: 'beta'
+#     pvalcol: 'pval'
+#     ld_clump: 'test-tmp_20001_1001.gwas.imputed_v3.male.gwas_clump_x_chr16.valid.snp'
+# 
+# 20001_1001.gwas.imputed_v3.both_sexes:
+#     gwas: 
+#       path: '~/labshare/UKB/neale_lab_gwas/20001_1001.gwas.imputed_v3.both_sexes.tsv.bgz'
+#       param:
+#         compression: 'gzip'
+#         header: 0
+#         sep: '\t'
+#     varcol: 'variant'
+#     betacol: 'beta'
+#     pvalcol: 'pval'
+#     ld_clump: 'test-tmp_20001_1001.gwas.imputed_v3.both_sexes.gwas_clump_x_chr16.valid.snp'
+# 

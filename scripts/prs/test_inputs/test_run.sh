@@ -1,6 +1,7 @@
+DATADIR=test_inputs
 CHR=16
 
-GWASYAML=test_gwas.yaml
+GWASYAML=$DATADIR/test_gwas.yaml
 SNPMAP=/vol/bmd/yanyul/UKB/haplotype_imputation/snp_map_for_neale_lab_gwas.tsv.gz
 BGEN=/vol/bmd/meliao/data/haplotype/hap/ukb_hap_chr$CHR\_v2.bgen
 BGI=/vol/bmd/meliao/data/haplotype/hap_bgi/ukb_hap_chr$CHR\_v2.bgen.bgi
@@ -13,8 +14,8 @@ python naive_prs.py \
   --bgen $BGEN \
   --bgi $BGI \
   --sample $SAMPLE \
-  --pval-cutoffs 0.01,0.5,1 \
+  --pval-cutoffs 1e-5,0.001,0.1,1 \
   --chromosome $CHR \
-  --output-hdf5 test_out.h5 \
+  --output-hdf5 $DATADIR/test_out.h5 \
   --snp-chunk-size 10 
   
