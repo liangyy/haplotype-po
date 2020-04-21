@@ -115,11 +115,15 @@ class UKBhapReader:
                 del cached_data
                 del cached_data_struct
                 gc.collect()
+            print(snp_list.chr[curr_pos_in_snp_list],snp_list.pos[curr_pos_in_snp_list],snp_list.pos[next_pos_in_snp_list - 1])
+
             cached_data = self.extract_variant_by_position(
                 chrom=snp_list.chr[curr_pos_in_snp_list], 
                 start=snp_list.pos[curr_pos_in_snp_list], 
                 end=snp_list.pos[next_pos_in_snp_list - 1]
             )
+            curr_pos_in_snp_list = next_pos_in_snp_list
+            # print(snp_list.chr[curr_pos_in_snp_list],snp_list.pos[curr_pos_in_snp_list],snp_list.pos[next_pos_in_snp_list - 1])
             all_variants = pandas2ri.ri2py(cached_data[0])
             if all_variants.shape[0] == 0:
                 return

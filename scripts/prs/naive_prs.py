@@ -78,6 +78,7 @@ logging.basicConfig(
     datefmt = '%Y-%m-%d %I:%M:%S %p'
 )
 
+from tqdm import tqdm
 import pandas as pd
 import gwas_reader
 import ukb_hap_reader
@@ -122,14 +123,14 @@ var_generator = hap_reader.retrieve_from_list(
 
 logging.info('Initialize PRS matrix')
 prs_mat = prs_matrix.PRSmatrix(
-    gwas_dict, args.bgen_sample, args,chromosome, pval_cutoffs, args.output_hdf5,
+    gwas_dict, args.sample, args.chromosome, pval_cutoffs, args.output_hdf5,
     cache_size=size_in_mb_to_cache_size(args.bgen_writing_cache_size), 
     max_sample_chunk_size=args.max_sample_chunk_size, 
     max_trait_chunk_size=args.max_trait_chunk_size
 )
 
 logging.info('Update PRS')
-for dosage_row in var_generator:
+for dosage_row in tqdm(var_generator, total=var_df.shape[0]):
     prs_mat.update(dosage_row)
 
 logging.info('Save PRS')

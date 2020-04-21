@@ -1,4 +1,4 @@
-CHR=22
+CHR=16
 
 GWASYAML=test_gwas.yaml
 SNPMAP=/vol/bmd/yanyul/UKB/haplotype_imputation/snp_map_for_neale_lab_gwas.tsv.gz
@@ -15,5 +15,6 @@ python naive_prs.py \
   --sample $SAMPLE \
   --pval-cutoffs 0.01,0.5,1 \
   --chromosome $CHR \
-  --output-hdf5 test_out.h5 
+  --output-hdf5 test_out.h5 \
+  --snp-chunk-size 10 
   

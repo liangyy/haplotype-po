@@ -7,7 +7,7 @@ class PRSmatrix:
         cache_size=int(50 * (1024 ** 2)), 
         max_sample_chunk_size=10000, # this has been optimized for UKB sample size
         max_trait_chunk_size=5):
-        self.H5MAT = None
+        self.H5_file = None
         self.gwas_dict = gwas_dict
         self.gwas_index = { k: i for i, k in enumerate(gwas_dict) }
         self.bgen_sample = bgen_sample
@@ -18,15 +18,16 @@ class PRSmatrix:
         self.max_trait_chunk_size = max_trait_chunk_size
         self.nsample = self._get_n_sample()
         self.pval_cutoffs = np.array(pval_cutoffs)
-        self.nhap = 2  # NOTE: assume diploid 
+        self.nhap = 2  # NOTE: assume diploid
+        self._index_variant()
     
-    def _index_variant(self, gwas_dict):
+    def _index_variant(self):
         if hasattr(self, 'gwas_variant_index'):
             return
         else:
             self.gwas_variant_index = {}
             for i in self.gwas_index.keys():
-                inner_dict = { gwas_dict[i].my_var_id[i_] : i_ for i_ in range(gwas_dict[i].shape[0]) }
+                inner_dict = { self.gwas_dict[i].my_var_id[i_] : i_ for i_ in range(self.gwas_dict[i].shape[0]) }
                 self.gwas_variant_index[i] = inner_dict
     
     @property
@@ -47,7 +48,7 @@ class PRSmatrix:
         If var_id not in gwas_name, return None
         '''
         if not self._var_in(gwas_name, var_id):
-            raise None
+            return None
         else:
             row_idx_of_var_id = self.gwas_variant_index[gwas_name]['var_id']
             return self.gwas_dict[gwas_name][info_col][row_idx_of_var_id]
@@ -79,16 +80,17 @@ class PRSmatrix:
             raise ValueError(f'sign = {sign} is not allowed.')
     
     def update(self, dosage_row):
-        if self.H5_prs is None:
+        if self.H5_file is None:
             self.H5_file = h5py.File(
                 self.output_h5, 'w', 
-                chunk_cache_mem_size=self.cache_size
+                # chunk_cache_mem_size=self.cache_size
+                rdcc_nbytes=self.cache_size
             )
             
-            if self.nsample != len(dosage_row):
+            if self.nsample != len(dosage_row.haplo_dosage_1):
                 raise ValueError('the length of sample file ({}) is different from the BGEN file ({})'.format(
                     self.nsample,
-                    len(dosage_row)
+                    len(dosage_row.haplo_dosage_1)
                 ))
             
             n_trait_chunk = np.min((self.ntrait, self.max_trait_chunk_size))
@@ -98,7 +100,7 @@ class PRSmatrix:
             self.H5_prs = self.H5_file.create_dataset(
                 "prs", 
                 shape=(self.nsample, self.ntrait, self.ncutoff, self.nhap), # sample x trait x cutoff x hap
-                chunks=(n_sample_chunk, n_sample_chunk, n_cutoff_chunk, n_hap_chunk),
+                chunks=(n_sample_chunk, n_trait_chunk, n_cutoff_chunk, n_hap_chunk),
                 dtype=np.dtype('float32'), 
                 scaleoffset=4, 
                 compression='gzip'
@@ -126,7 +128,7 @@ class PRSmatrix:
     def save(self, logger=None):
         
         # samples
-        sample_generator = self.get_samples()
+        sample_generator = self._get_samples()
         self.H5_sample = self.H5_file.create_dataset("samples", (self.nsample,), dtype='S25')
         for col in range(0, self.H5_prs.shape[1]):
             try:

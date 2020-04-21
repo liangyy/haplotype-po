@@ -8,7 +8,7 @@
     varcol: 'variant'
     betacol: 'beta'
     pvalcol: 'pval'
-    ld_clump: '/vol/bmd/yanyul/UKB/haplotype_imputation/ld_clump/tmp_20001_1001.gwas.imputed_v3.male/gwas_clump_x_chr16.valid.snp'
+    ld_clump: 'test-tmp_20001_1001.gwas.imputed_v3.male.gwas_clump_x_chr16.valid.snp'
     
 20001_1001.gwas.imputed_v3.both_sexes:
     gwas: 
@@ -20,5 +20,5 @@
     varcol: 'variant'
     betacol: 'beta'
     pvalcol: 'pval'
-    ld_clump: '/vol/bmd/yanyul/UKB/haplotype_imputation/ld_clump/tmp_20001_1001.gwas.imputed_v3.both_sexes/gwas_clump_x_chr16.valid.snp'
+    ld_clump: 'test-tmp_20001_1001.gwas.imputed_v3.both_sexes.gwas_clump_x_chr16.valid.snp'
     
