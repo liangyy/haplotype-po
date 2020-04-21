@@ -10,11 +10,13 @@ class UKBhapReader:
     '''
     Reader of BGEN for one chromosome of ukb_hap.
     '''
-    def __init__(self, bgen_path, bgen_bgi_path, sample_path):
-        self.rbgen = importr("rbgen")
-        self.bgen_path = bgen_path
-        self.bgi_path = bgen_bgi_path
-        self.sample_path = sample_path
+    def __init__(self, bgen_path, bgen_bgi_path, sample_path, chromosome=None, lazy_load=False):
+        if lazy_load is False:
+            self.rbgen = importr("rbgen")
+            self.bgen_path = bgen_path
+            self.bgi_path = bgen_bgi_path
+            self.sample_path = sample_path
+            self.chromosome = chromosome  # to fix the missing chromosome in ukb_hap_v2
         
     def extract_variant_by_position(self, chrom, start, end, max_entries_per_sample=4):
         '''
@@ -36,8 +38,9 @@ class UKBhapReader:
         )
         return cached_data
     
-    @staticmethod
-    def _get_varid(chrm, pos, a1, a2):
+    def _get_varid(self, chrm, pos, a1, a2):
+        if self.chromosome is not None and chrm == '':
+            chrm = self.chromosome
         return f'{chrm}:{pos}:{a1}:{a2}'
     
     @staticmethod

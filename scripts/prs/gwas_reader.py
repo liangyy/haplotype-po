@@ -6,6 +6,12 @@ def read_yaml(yamlfile):
         mydict = yaml.safe_load(f)
     return mydict
 
+def _log_print(msg, logger):
+    if logger is None:
+        print(msg)
+    else:
+        logger.info(msg)
+
 def read_snp_map(path):
     if path is None:
         return None
@@ -38,10 +44,7 @@ def gwas_reader(yaml, snp_map=None, logger=None):
         # print some log
         counter += 1
         message = f'gwas_reader: processing {i}, {counter}/{ntotal}'
-        if logger is not None:
-            logger.info(message)
-        else:
-            print(message)
+        _log_print(message, logger)
         # END
         
         this_gwas = gwas_dict[i]
@@ -83,8 +86,31 @@ def gwas_reader(yaml, snp_map=None, logger=None):
                 right_on=['assigned_id'],
                 suffixes=('_gwas', '_snp_map')
             )
+        
+        # add my_var_id in the format: chr:pos:ref:alt
+        gwas_df['my_var_id'] = gwas_df[['chrom', 'pos', 'effect_allele', 'non_effect_allele']].apply(
+            lambda x: '{}:{}:{}:{}'.format(x.chrom, x.pos, x.effect_allele, x.non_effect_allele),
+            axis=1
+        )
+        
         out_dict[i] = gwas_df
     return out_dict
             
+def build_var_df(gwas_dict, logger=None):
+    '''
+    aggregate all variants in one data.frame
+    '''    
+    # lazy load, not really using the reader 
+    var_df = pd.DataFrame()
+    for i in gwas_dict.keys():
         
+        # some log message
+        message = f'build_var_df: processing {i}'
+        _log_print(message, logger)
+        # END
+        
+        tmp_ = gwas_dict[i][['chrom', 'pos', 'effect_allele', 'non_effect_allele']]
+        var_df = pd.concat([var_df, tmp_], axis=0).drop_duplicates(keep='first').reset_index(drop=True)
+        
+    return var_df
         

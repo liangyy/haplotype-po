@@ -11,7 +11,7 @@ parser = argparse.ArgumentParser(prog='naive_prs.py', description='''
             2. K = number of GWASs;
             3. P = number of p-values.
 ''')
-parser.add_argument('--GWAS-yaml', help='''
+parser.add_argument('--gwas-yaml', help='''
     GWAS YAML:
         Each entry is a GWAS in the following struct:
         {
@@ -45,10 +45,27 @@ parser.add_argument('--sample', help='''
     BGEN SAMPLE file path
 ''')
 parser.add_argument('--pval-cutoffs', help='''
-    P-value cutoffs in naive PRS
+    P-value cutoffs in naive PRS.
+    Separated by ','
+''')
+parser.add_argument('--chromosome', type=str, help='''
+    The chromosome number we are working with
+    (account for the missing chromosome in ukb_hap_v2)
 ''')
 parser.add_argument('--output-hdf5', help='''
     HDF5 file name of output (if not exists, it will be created)
+''')
+parser.add_argument('--snp-chunk-size', type=int, default=100, help='''
+    Number of SNPs to process at a time
+''')
+parser.add_argument('--bgen-writing-cache-size', type=int, default=50, help='''
+    BGEN reading cache size in MB.
+''')
+parser.add_argument('--max-sample-chunk-size', type=int, default=10000, help='''
+    Maximum size of chunk on sample axis.
+''')
+parser.add_argument('--max-trait-chunk-size', type=int, default=5, help='''
+    Maximum size of chunk on trait axis. 
 ''')
 args = parser.parse_args()
 
@@ -61,43 +78,59 @@ logging.basicConfig(
     datefmt = '%Y-%m-%d %I:%M:%S %p'
 )
 
-import bgen_reader
 import pandas as pd
-import helper
+import gwas_reader
+import ukb_hap_reader
+
+def convert_pval_args_str(instr):
+    try:
+        return [ float(i) for i in instr.split(',') ]
+    except:
+        raise ValueError('Wrong pval-cutoffs: {instr}')
+
+def size_in_mb_to_cache_size(size):
+    return int(size * (1024 ** 2))    
+
+pval_cutoffs = convert_pval_args_str(args.pval_cutoffs)
 
 logging.info('Loading GWAS')
-gwas = pd.read_csv(args.gwas, header=0, sep= '\t', compression='gzip')
-map_table = pd.DataFrame()
-for i in range(1, 23):
-    i = str(i)
-    
-    logging.info(f'Processing chr{i}: Loading BGEN')
-    bgen = bgen_reader.read_bgen(
-        args.genotype_pattern.format(chr=i), 
-        samples_filepath = args.genotype_sample
-    )
-    
-    logging.info(f'Processing chr{i}: Loading variant table')
-    variant = bgen["variants"].compute()
-    variant['chrom'] = i
-    
-    logging.info(f'Processing chr{i}: Building variant ID candidates')
-    variant['allele_1st'] = variant['allele_ids'].apply(lambda x: x.split(',')[0])
-    variant['allele_2nd'] = variant['allele_ids'].apply(lambda x: x.split(',')[1])
-    variant['varid1'] = variant[['chrom', 'pos', 'allele_1st', 'allele_2nd']].apply(lambda x: helper.make_id(x), axis=1)
-    variant['varid2'] = variant[['chrom', 'pos', 'allele_2nd', 'allele_1st']].apply(lambda x: helper.make_id(x), axis=1)
-    
-    logging.info(f'Processing chr{i}: Running checker')
-    variant_check = helper.join_with_varid(
-        variant['varid1'], 
-        variant['varid2'], 
-        gwas['variant']
-    )
-    variant = pd.merge(variant, variant_check, left_on=['varid1', 'varid2'], right_on=['id1', 'id2'], how='left')
-    
-    map_table = pd.concat([map_table, variant[['chrom', 'pos', 'allele_ids', 'id', 'rsid', 'assigned_id', 'assigned_sign']]])
-    
-# save 
-logging.info('Saving the results')
-map_table.to_csv(args.output, compression='gzip', sep='\t', index = None)
+gwas_dict = gwas_reader.gwas_reader(
+    args.gwas_yaml, 
+    snp_map=args.snp_map,
+    logger=logging
+)
+
+logging.info('Generating variant list')
+var_df = build_var_df(gwas_dict, logger=logging)
+
+logging.info('Build BGEN reader')
+hap_reader = UKBhapReader(
+    bgen_path=args.bgen, 
+    bgen_bgi_path=args.bgi, 
+    sample_path=args.sample
+)
+var_generator = reader.retrieve_from_list(
+    # NOTE
+    # chrom is empty due to ukb_hap_v2 has missing chromosome
+    chrom=[ '' for i in range(var_df.shape[0]) ], 
+    pos=var_df.pos.tolist(), 
+    non_effect_allele=var_df.effect_allele.tolist(), 
+    effect_allele=var_df.non_effect_allele.tolist(),
+    n_var_cached=args.snp_chunk_size
+)
+
+logging.info('Initialize PRS matrix')
+prs_matrix = PRSmatrix(
+    gwas_dict, args.bgen_sample, args,chromosome, pval_cutoffs, args.output_hdf5,
+    cache_size=size_in_mb_to_cache_size(args.bgen_writing_cache_size), 
+    max_sample_chunk_size=args.max_sample_chunk_size, 
+    max_trait_chunk_size=args.max_trait_chunk_size
+)
+
+logging.info('Update PRS')
+for dosage_row in var_generator:
+    prs_matrix.update(dosage_row)
+
+logging.info('Save PRS')
+prs_matrix.save(logger=logging)
 
