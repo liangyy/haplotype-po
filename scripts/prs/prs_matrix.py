@@ -40,7 +40,7 @@ class PRSmatrix:
     def _var_in(self, gwas_name, my_var_id):
         if gwas_name not in self.gwas_variant_index:
             raise ValueError(f'{gwas_name} is not in gwas_variant_index/gwas_dict.')
-        return my_var_id in self.gwas_variant_index[gwas_name]:
+        return my_var_id in self.gwas_variant_index[gwas_name]
     
     def _get_gwas_info_by_var_id(self, gwas_name, info_col, var_id):
         '''
