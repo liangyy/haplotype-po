@@ -1,3 +1,6 @@
+import os
+import time
+import datetime
 import h5py
 import numpy as np
 
@@ -50,7 +53,7 @@ class PRSmatrix:
         if not self._var_in(gwas_name, var_id):
             return None
         else:
-            row_idx_of_var_id = self.gwas_variant_index[gwas_name]['var_id']
+            row_idx_of_var_id = self.gwas_variant_index[gwas_name][var_id]
             return self.gwas_dict[gwas_name][info_col][row_idx_of_var_id]
         
     def _get_n_sample(self):
@@ -79,6 +82,12 @@ class PRSmatrix:
         else:
             raise ValueError(f'sign = {sign} is not allowed.')
     
+    @staticmethod
+    def _per_variant_update(dosage, beta, sign):
+        if sign == '-':
+            dosage = 1 - dosage
+        return dosage * beta
+
     def update(self, dosage_row):
         if self.H5_file is None:
             self.H5_file = h5py.File(
@@ -93,30 +102,51 @@ class PRSmatrix:
                     len(dosage_row.haplo_dosage_1)
                 ))
             
-            n_trait_chunk = np.min((self.ntrait, self.max_trait_chunk_size))
-            n_sample_chunk = np.min((self.nsample, self.max_sample_chunk_size))
-            n_cutoff_chunk = self.ncutoff
-            n_hap_chunk = self.nhap
+            size_trait_chunk = np.min((self.ntrait, self.max_trait_chunk_size))
+            size_sample_chunk = np.min((self.nsample, self.max_sample_chunk_size))
+            size_cutoff_chunk = 1  # self.ncutoff
+            size_hap_chunk = 1  # self.nhap
             self.H5_prs = self.H5_file.create_dataset(
                 "prs", 
                 shape=(self.nsample, self.ntrait, self.ncutoff, self.nhap), # sample x trait x cutoff x hap
-                chunks=(n_sample_chunk, n_trait_chunk, n_cutoff_chunk, n_hap_chunk),
+                chunks=(size_sample_chunk, size_trait_chunk, size_cutoff_chunk, size_hap_chunk),
                 dtype=np.dtype('float32'), 
                 scaleoffset=4, 
                 compression='gzip'
             )
         # traverse all gwas results and all p-value cutoffs
+        ever_updated_counter = 0
         for i in self.gwas_index.keys():
+            tt1 = time.time(); print('anchor1')
             pval = self._get_gwas_info_by_var_id(i, 'pvalue', dosage_row.my_var_id)
             if pval is None:
                 continue
+            ever_updated_counter += 1
+            tt2 = time.time(); print('anchor2', tt2 - tt1)
             beta = self._get_gwas_info_by_var_id(i, 'effect_size', dosage_row.my_var_id)
             sign = self._get_gwas_info_by_var_id(i, 'assigned_sign', dosage_row.my_var_id)
-            effect_size = self._get_effect_size(beta, sign)
+            # effect_size = self._get_effect_size(beta, sign)
+            tt3 = time.time(); print('anchor3', tt3 - tt2)
+            step_update_1 = self._per_variant_update(dosage_row.haplo_dosage_1, beta, sign)
+            step_update_2 = self._per_variant_update(dosage_row.haplo_dosage_2, beta, sign)
+            # print(step_update_1.shape)
+            tt4 = time.time(); print('anchor4', tt4 - tt3)
             gwas_idx = self.gwas_index[i]
-            self.H5_prs[:, gwas_idx, pval < self.pval_cutoffs, 0] = dosage_row.haplo_dosage_1 * effect_size
-            self.H5_prs[:, gwas_idx, pval < self.pval_cutoffs, 1] = dosage_row.haplo_dosage_2 * effect_size
+            pdim_idx = np.where(self.pval_cutoffs > pval)[0]
+            # if pdim_idx.shape[0] > 0:
+                # print('sdsd')
+            #     self.H5_prs[:, gwas_idx, pdim_idx, 0] += np.broadcast_to(step_update_1, (pdim_idx.shape[0], step_update_1.shape[0])).transpose()
+            #     self.H5_prs[:, gwas_idx, pdim_idx, 1] += np.broadcast_to(step_update_2, (pdim_idx.shape[0], step_update_2.shape[0])).transpose()
+
+            for pidx in pdim_idx.tolist():
+                self.H5_prs[:, gwas_idx, pidx, 0] += step_update_1
+                self.H5_prs[:, gwas_idx, pidx, 1] += step_update_2
                 # yield i, dosage_row
+            tt5 = time.time(); print('anchor5', tt5 - tt4)
+
+
+        if ever_updated_counter == 0:
+            raise ValueError('The variant should be at least updated for one GWAS, but it is not true. Something wrong.')
     
     @staticmethod
     def _myprint(msg, logger):
@@ -130,7 +160,7 @@ class PRSmatrix:
         # samples
         sample_generator = self._get_samples()
         self.H5_sample = self.H5_file.create_dataset("samples", (self.nsample,), dtype='S25')
-        for col in range(0, self.H5_prs.shape[1]):
+        for col in range(0, self.H5_prs.shape[0]):
             try:
                 self.H5_sample[col] = np.string_(next(sample_generator)[0])
             except StopIteration:
@@ -145,7 +175,7 @@ class PRSmatrix:
         # gwas's
         gwas_dset = self.H5_file.create_dataset("traits", (self.ntrait,), dtype='S30')
         for gwas_name in self.gwas_index.keys():
-            gwas_dset[gwas_index[gwas_name]] = np.string_(str(gwas_name))
+            gwas_dset[self.gwas_index[gwas_name]] = np.string_(str(gwas_name))
         
         # p-values
         pval_dset = self.H5_file.create_dataset("pval_cutoffs", (self.ncutoff,), dtype='float32')
@@ -164,7 +194,7 @@ class PRSmatrix:
         else:
             self._myprint("ERROR: There are too many rows in your sample file!", logger)
             self._myprint(
-                "Make sure dosage files and sample files have the same number of individuals in the ame order.", 
+                "Make sure dosage files and sample files have the same number of individuals in the same order.", 
                 logger
             )
             if os.path.isfile(self.output_h5):

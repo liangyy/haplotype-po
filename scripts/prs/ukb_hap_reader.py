@@ -150,7 +150,7 @@ class UKBhapReader:
                 del cached_data
                 del cached_data_struct
                 gc.collect()
-            print(snp_list.chr[curr_pos_in_snp_list],snp_list.pos[curr_pos_in_snp_list],snp_list.pos[next_pos_in_snp_list - 1])
+            # print(snp_list.chr[curr_pos_in_snp_list],snp_list.pos[curr_pos_in_snp_list],snp_list.pos[next_pos_in_snp_list - 1])
 
             # cached_data = self.extract_variant_by_position(
             #     chrom=snp_list.chr[curr_pos_in_snp_list], 
@@ -160,8 +160,8 @@ class UKBhapReader:
             cached_data = self.extract_variant_by_id(
                 chrom=snp_list.chr[curr_pos_in_snp_list:next_pos_in_snp_list], 
                 pos=snp_list.pos[curr_pos_in_snp_list:next_pos_in_snp_list], 
-                nea=snp_list.non_effect_allele[curr_pos_in_snp_list:next_pos_in_snp_list], 
-                ea=snp_list.effect_allele[curr_pos_in_snp_list:next_pos_in_snp_list]
+                non_effect_allele=snp_list.non_effect_allele[curr_pos_in_snp_list:next_pos_in_snp_list], 
+                effect_allele=snp_list.effect_allele[curr_pos_in_snp_list:next_pos_in_snp_list]
             )
             
             curr_pos_in_snp_list = next_pos_in_snp_list
