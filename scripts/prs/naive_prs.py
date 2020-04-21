@@ -81,6 +81,7 @@ logging.basicConfig(
 import pandas as pd
 import gwas_reader
 import ukb_hap_reader
+import prs_matrix
 
 def convert_pval_args_str(instr):
     try:
@@ -101,15 +102,15 @@ gwas_dict = gwas_reader.gwas_reader(
 )
 
 logging.info('Generating variant list')
-var_df = build_var_df(gwas_dict, logger=logging)
+var_df = gwas_reader.build_var_df(gwas_dict, logger=logging)
 
 logging.info('Build BGEN reader')
-hap_reader = UKBhapReader(
+hap_reader = ukb_hap_reader.UKBhapReader(
     bgen_path=args.bgen, 
     bgen_bgi_path=args.bgi, 
     sample_path=args.sample
 )
-var_generator = reader.retrieve_from_list(
+var_generator = hap_reader.retrieve_from_list(
     # NOTE
     # chrom is empty due to ukb_hap_v2 has missing chromosome
     chrom=[ '' for i in range(var_df.shape[0]) ], 
@@ -120,7 +121,7 @@ var_generator = reader.retrieve_from_list(
 )
 
 logging.info('Initialize PRS matrix')
-prs_matrix = PRSmatrix(
+prs_mat = prs_matrix.PRSmatrix(
     gwas_dict, args.bgen_sample, args,chromosome, pval_cutoffs, args.output_hdf5,
     cache_size=size_in_mb_to_cache_size(args.bgen_writing_cache_size), 
     max_sample_chunk_size=args.max_sample_chunk_size, 
@@ -129,8 +130,8 @@ prs_matrix = PRSmatrix(
 
 logging.info('Update PRS')
 for dosage_row in var_generator:
-    prs_matrix.update(dosage_row)
+    prs_mat.update(dosage_row)
 
 logging.info('Save PRS')
-prs_matrix.save(logger=logging)
+prs_mat.save(logger=logging)
 
