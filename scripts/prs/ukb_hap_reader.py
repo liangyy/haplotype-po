@@ -1,6 +1,8 @@
 import gc
+import sqlite3
 import pandas as pd
 import numpy as np
+from rpy2.robjects.vectors import StrVector
 from rpy2.robjects.packages import importr
 from rpy2.robjects import pandas2ri
 pandas2ri.activate()
@@ -17,7 +19,20 @@ class UKBhapReader:
             self.bgi_path = bgen_bgi_path
             self.sample_path = sample_path
             self.chromosome = chromosome  # to fix the missing chromosome in ukb_hap_v2
-        
+            self._index_variant()
+    
+    def _index_variant(self):
+        if hasattr(self, 'variant_index'):
+            return
+        with sqlite3.connect(self.bgi_path) as conn:
+            variants = conn.execute('select * from Variant').fetchall()
+        self.variant_index = {}
+        for i_ in range(len(variants)):
+            i = variants[i_]
+            varid = i[2]
+            my_var_id = '{}:{}:{}:{}'.format(i[0], i[1], i[4], i[5])
+            self.variant_index[my_var_id] = varid
+            
     def extract_variant_by_position(self, chrom, start, end, max_entries_per_sample=4):
         '''
         max_entries_per_sample: number of entries per sample in BGEN
@@ -29,12 +44,32 @@ class UKBhapReader:
                 'end': [end]
             }
         )
-#         breakpoint()
+        
         cached_data = self.rbgen.bgen_load(
             self.bgen_path,
             index_filename=self.bgi_path,
             ranges=range_pd, 
-            max_entries_per_sample=4
+            max_entries_per_sample=max_entries_per_sample
+        )
+        return cached_data
+        
+    def extract_variant_by_id(self, chrom, pos, non_effect_allele, effect_allele, max_entries_per_sample=4):
+        '''
+        max_entries_per_sample: number of entries per sample in BGEN
+        '''
+        if len(chrom) != len(pos) or len(chrom) != len(non_effect_allele) or len(chrom) != len(effect_allele):
+            raise ValueError('The length of chrom, pos, non_effect_allele, effect_allele are not the same.')
+            
+        var_list = []
+        for c, p, n, e in zip(chrom, pos, non_effect_allele, effect_allele):
+            name = '{}:{}:{}:{}'.format(c, p, n, e)
+            var_list.append(self.variant_index[name])
+        
+        cached_data = self.rbgen.bgen_load(
+            self.bgen_path,
+            index_filename=self.bgi_path,
+            rsids=StrVector(var_list), 
+            max_entries_per_sample=max_entries_per_sample
         )
         return cached_data
     
@@ -117,11 +152,18 @@ class UKBhapReader:
                 gc.collect()
             print(snp_list.chr[curr_pos_in_snp_list],snp_list.pos[curr_pos_in_snp_list],snp_list.pos[next_pos_in_snp_list - 1])
 
-            cached_data = self.extract_variant_by_position(
-                chrom=snp_list.chr[curr_pos_in_snp_list], 
-                start=snp_list.pos[curr_pos_in_snp_list], 
-                end=snp_list.pos[next_pos_in_snp_list - 1]
+            # cached_data = self.extract_variant_by_position(
+            #     chrom=snp_list.chr[curr_pos_in_snp_list], 
+            #     start=snp_list.pos[curr_pos_in_snp_list], 
+            #     end=snp_list.pos[next_pos_in_snp_list - 1]
+            # )
+            cached_data = self.extract_variant_by_id(
+                chrom=snp_list.chr[curr_pos_in_snp_list:next_pos_in_snp_list], 
+                pos=snp_list.pos[curr_pos_in_snp_list:next_pos_in_snp_list], 
+                nea=snp_list.non_effect_allele[curr_pos_in_snp_list:next_pos_in_snp_list], 
+                ea=snp_list.effect_allele[curr_pos_in_snp_list:next_pos_in_snp_list]
             )
+            
             curr_pos_in_snp_list = next_pos_in_snp_list
             # print(snp_list.chr[curr_pos_in_snp_list],snp_list.pos[curr_pos_in_snp_list],snp_list.pos[next_pos_in_snp_list - 1])
             all_variants = pandas2ri.ri2py(cached_data[0])
