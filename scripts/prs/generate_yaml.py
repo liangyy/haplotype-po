@@ -26,6 +26,7 @@ logging.basicConfig(
     datefmt = '%Y-%m-%d %I:%M:%S %p'
 )
 
+import yaml, copy
 import gwas_reader
 
 
@@ -34,12 +35,17 @@ out_dict = {}
 template = gwas_reader.read_yaml(args.yaml_template)
 with open(args.gwas_list, 'r') as f:
     for gwas in f:
+        gwas = gwas.strip()
         logging.info(f'Adding on {gwas}')
-        out_dict[gwas] = template
+        out_dict[gwas] = copy.deepcopy(template)
         out_dict[gwas]['gwas']['path'] = out_dict[gwas]['gwas']['path'].format(gwas=gwas)
-        out_dict[gwas]['ld_clump'] = out_dict[gwas]['ld_clump'].format(gwas=gwas)
+        if args.chr_num is None:
+            out_dict[gwas]['ld_clump'] = out_dict[gwas]['ld_clump'].format(gwas=gwas)
         if args.chr_num is not None:
-            out_dict[gwas]['ld_clump'] = out_dict[gwas]['ld_clump'].format(chr_num=args.chr_num)
+            out_dict[gwas]['ld_clump'] = out_dict[gwas]['ld_clump'].format(gwas=gwas, chr_num=args.chr_num)
+        # print(out_dict)
 
 with open(args.out_yaml, 'w') as f:
     yaml.dump(out_dict, f)
+
+    

@@ -97,10 +97,15 @@ class PRSmatrix:
     
     def update(self, dosage_row):
         if self.ARRAY_prs is None:
-            # sample x trait x cutoff x hap
+            # sample x trait x cutoff x nhap
             self.ARRAY_prs = np.zeros((self.nsample, self.ntrait, self.ncutoff, self.nhap)) 
+
+            # self.ARRAY_prs_1 = np.zeros((self.nsample, self.ntrait, self.ncutoff)) 
+            # self.ARRAY_prs_2 = np.zeros((self.nsample, self.ntrait, self.ncutoff))
         # traverse all gwas results and all p-value cutoffs
         ever_updated_counter = 0
+        # Bmat = np.zeros((self.ntrait, self.ncutoff))  # matrix to save effect size (flip sign if allele flip)
+        # tt0 = time.time()
         for i in self.gwas_index.keys():
             # tt1 = time.time(); print('anchor1')
             pval = self._get_gwas_info_by_var_id(i, 'pvalue', dosage_row.my_var_id)
@@ -112,6 +117,7 @@ class PRSmatrix:
             beta = self._get_gwas_info_by_var_id(i, 'effect_size', dosage_row.my_var_id)
             sign = self._get_gwas_info_by_var_id(i, 'assigned_sign', dosage_row.my_var_id)
             # effect_size = self._get_effect_size(beta, sign)
+            
             # tt3 = time.time(); print('anchor3', tt3 - tt2)
             step_update_1 = self._per_variant_update(dosage_row.haplo_dosage_1, beta, sign)
             step_update_2 = self._per_variant_update(dosage_row.haplo_dosage_2, beta, sign)
@@ -119,17 +125,28 @@ class PRSmatrix:
             # tt4 = time.time(); print('anchor4', tt4 - tt3)
             gwas_idx = self.gwas_index[i]
             pdim_idx = np.where(self.pval_cutoffs > pval)[0]
+            # Bmat[gwas_idx, pdim_idx] = effect_size
             # if pdim_idx.shape[0] > 0:
                 # print('sdsd')
             #     self.H5_prs[:, gwas_idx, pdim_idx, 0] += np.broadcast_to(step_update_1, (pdim_idx.shape[0], step_update_1.shape[0])).transpose()
             #     self.H5_prs[:, gwas_idx, pdim_idx, 1] += np.broadcast_to(step_update_2, (pdim_idx.shape[0], step_update_2.shape[0])).transpose()
-    
+            # self.ARRAY_prs[:, gwas_idx, pdim_idx, 0] += step_update_1
+            # self.ARRAY_prs[:, gwas_idx, pdim_idx, 0] += step_update_1
+
             for pidx in pdim_idx.tolist():
                 self.ARRAY_prs[:, gwas_idx, pidx, 0] += step_update_1
                 self.ARRAY_prs[:, gwas_idx, pidx, 1] += step_update_2
                 # yield i, dosage_row
             # tt5 = time.time(); print('anchor5', tt5 - tt4)  
-    
+        # update ARRAY_prs at the end
+        # tt11 = time.time(); print('anchor einsum', tt11 - tt0)
+        # tmp = np.einsum('k,ij->kij', dosage_row.haplo_dosage_1, Bmat)
+        # tt12 = time.time(); print('einsum time', tt12 - tt11)
+        # self.ARRAY_prs_1 += np.einsum('k,ij->kij', dosage_row.haplo_dosage_1, Bmat)
+        # self.ARRAY_prs_2 += np.einsum('k,ij->kij', dosage_row.haplo_dosage_2, Bmat)
+
+        # tt0_ = time.time(); print('all = ', tt0_ - tt0)
+
     @staticmethod
     def _myprint(msg, logger):
         if logger is None:
