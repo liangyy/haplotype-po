@@ -37,9 +37,10 @@ def _clean_tab(mydict):
 def gwas_reader(yaml, snp_map=None, logger=None, cache_path=None):
     if cache_path is not None and os.path.exists(cache_path) and os.path.isfile(cache_path):
         filename, file_extension = os.path.splitext(cache_path)
-        desired_ext = 'pgz'
+        desired_ext = '.pgz'
         if file_extension != desired_ext:
             raise ValueError(f'cache_path should have {desired_ext} as extension.')
+        _log_print(f'Loading gwas_dict cached in {cache_path}', logger)
         with gzip.open(cache_path, 'rb') as f:
             out_dict  = pickle.load(f)
         return out_dict
@@ -108,6 +109,7 @@ def gwas_reader(yaml, snp_map=None, logger=None, cache_path=None):
         if not os.path.exists(dirname):
             raise ValueError('Expect the directory to cache_path exists.')
         else:
+            _log_print(f'Caching gwas_dict to {cache_path}', logger)
             with gzip.open(cache_path, 'wb') as f:
                 pickle.dump(out_dict, f)
     return out_dict

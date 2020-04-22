@@ -105,7 +105,7 @@ class PRSmatrix:
             # tt1 = time.time(); print('anchor1')
             pval = self._get_gwas_info_by_var_id(i, 'pvalue', dosage_row.my_var_id)
             if pval is None:
-                print('what')
+                # print('what')
                 continue
             ever_updated_counter += 1
             # tt2 = time.time(); print('anchor2', tt2 - tt1)

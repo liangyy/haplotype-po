@@ -1,4 +1,5 @@
 # environment setup
+conda activate haplotype_po
 source /vol/bmd/yanyul/miniconda3/etc/profile.d/conda.sh
 source /vol/bmd/yanyul/GitHub/ptrs-ukb/scripts/source_snakemake_on_nucleus.sh
 
