@@ -1,0 +1,10 @@
+gwas: 
+  path: '/vol/bmd/yanyul/UKB/neale_lab_gwas/{gwas}.tsv.bgz'
+  param:
+    compression: 'gzip'
+    header: 0
+    sep: '\t'
+varcol: 'variant'
+betacol: 'beta'
+pvalcol: 'pval'
+ld_clump: '/vol/bmd/yanyul/UKB/haplotype_imputation/ld_clump/tmp_{gwas}/gwas_clump_x_chr{chr_num}.valid.snp'
