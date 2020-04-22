@@ -2,10 +2,11 @@
 # ARGS2: GWAS YAML
 # ARGS3: pval cutoffs
 # ARGS4: outdir
+# ARGS5: name tag
 
-DATADIR=test_inputs
 CHR=$1
 OUTDIR=$4
+NAMETAG=$5
 
 GWASYAML=$2
 PVALS=$3  # "5e-8,1e-7,1e-6,1e-5,1e-4,1e-3,0.01,0.05,0.1,0.5,1"
@@ -24,7 +25,8 @@ python naive_prs.py \
   --sample $SAMPLE \
   --pval-cutoffs $PVALS \
   --chromosome $CHR \
-  --output-hdf5 $OUTDIR/prs_naive.chr$CHR.h5 \
+  --output-hdf5 $OUTDIR/prs_naive.$NAMETAG.chr$CHR.h5 \
   --snp-chunk-size 100 \
-  --cache-path-for-gwas-dict $OUTDIR/prs_naive.chr$CHR.pgz
+  --cache-path-for-gwas-dict $OUTDIR/prs_naive.chr$CHR.pgz \
+  > $OUTDIR/prs_naive.$NAMETAG.chr$CHR.log 2>&1
 

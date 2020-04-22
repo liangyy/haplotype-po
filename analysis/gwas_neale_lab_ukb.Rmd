@@ -369,3 +369,25 @@ write.csv(df_gwas_container, '../analysis_output/summary.gwas_neale_lab.csv')
 ```{r show}
 df_gwas_container %>% group_by(disease, Sex) %>% summarize(ngwas = n()) %>% pander
 ```
+
+# Grouping GWASs
+
+For efficient computation, I need to group the GWASs into batches.
+
+```{r group_gwas}
+get_partition = function(ngrp, ntotal) {
+  size = floor(ntotal / ngrp)
+  o = c()
+  for(i in 1 : ngrp) {
+    o = c(o, rep(i, size))
+  }
+  o = c(o, rep(ngrp, ntotal - (ngrp * size)))
+  return(o)
+}
+gwas_df = read.csv('../analysis_output/summary.gwas_neale_lab.csv')
+gwas_df$id = fread(cmd = "cat ../analysis_output/summary.gwas_neale_lab.csv |tail -n +2 | cut -d, -f 5|awk -F\"/\" '{print $6}'| awk -F\"?\" '{print $1}' | sed 's#.tsv.bgz##g'", header = FALSE, data.table = FALSE)$V1
+ngroup = 10
+gwas_df$groupid = paste0('_group', get_partition(ngroup, nrow(gwas_df)), '_')
+# save to text
+gwas_df %>% select(id, groupid) %>% write.table('../analysis_output/analysis_batch.gwas_neale_lab.txt', quote = F, row.names = F, col.names = F, sep = '\t')
+```

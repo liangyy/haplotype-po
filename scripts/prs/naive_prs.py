@@ -32,6 +32,10 @@ parser.add_argument('--gwas-yaml', help='''
             }
         }
 ''')
+parser.add_argument('--gwas-list', default=None, help='''
+    A list of GWAS (by gwas_name in GWAS YAML).
+    The runs limit to these GWASs.
+''')
 parser.add_argument('--snp-map', help='''
     SNP map
 ''')
@@ -96,6 +100,13 @@ def convert_pval_args_str(instr):
 def size_in_mb_to_cache_size(size):
     return int(size * (1024 ** 2))    
 
+def load_list(filename):
+    o = []
+    with open(filename, 'r') as f:
+        for i in f:
+            o.append(i.strip())
+    return o
+
 pval_cutoffs = convert_pval_args_str(args.pval_cutoffs)
 
 logging.info('Loading GWAS')
@@ -105,6 +116,21 @@ gwas_dict = gwas_reader.gwas_reader(
     logger=logging,
     cache_path=args.cache_path_for_gwas_dict
 )
+
+if args.gwas_list is not None:
+    logging.info('Subsetting GWAS')
+    gwas_list = load_list(args.gwas_list)
+    gwas_list = set(gwas_list)
+    ndelete = 0
+    nleft = 0
+    for i in gwas_dict:
+        if i not in gwas_list:
+            del gwas_dict[i] 
+            ndelete += 1
+        else:
+            nleft += 1
+    logging.info(f'{ndelete} GWAS gets deleted and {nleft} left.')
+            
 
 logging.info('Generating variant list')
 var_df = gwas_reader.build_var_df(gwas_dict, logger=logging)
