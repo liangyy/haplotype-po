@@ -382,7 +382,7 @@ div.tocify {
 
 
 <h1 class="title toc-ignore">What GWAS to use for PRS among Neale’s lab UK Biobank GWASs?</h1>
-<h4 class="date">Last update: Apr 17, 2020</h4>
+<h4 class="date">Last update: Apr 22, 2020</h4>
 
 </div>
 
@@ -980,6 +980,25 @@ df_gwas_container = df_gwas_container %&gt;% left_join(
 </tr>
 </tbody>
 </table>
+</div>
+<div id="grouping-gwass" class="section level1">
+<h1><span class="header-section-number">5</span> Grouping GWASs</h1>
+<p>For efficient computation, I need to group the GWASs into batches.</p>
+<pre class="r"><code>get_partition = function(ngrp, ntotal) {
+  size = floor(ntotal / ngrp)
+  o = c()
+  for(i in 1 : ngrp) {
+    o = c(o, rep(i, size))
+  }
+  o = c(o, rep(ngrp, ntotal - (ngrp * size)))
+  return(o)
+}
+gwas_df = read.csv(&#39;../analysis_output/summary.gwas_neale_lab.csv&#39;)
+gwas_df$id = fread(cmd = &quot;cat ../analysis_output/summary.gwas_neale_lab.csv |tail -n +2 | cut -d, -f 5|awk -F\&quot;/\&quot; &#39;{print $6}&#39;| awk -F\&quot;?\&quot; &#39;{print $1}&#39; | sed &#39;s#.tsv.bgz##g&#39;&quot;, header = FALSE, data.table = FALSE)$V1
+ngroup = 10
+gwas_df$groupid = paste0(&#39;_group&#39;, get_partition(ngroup, nrow(gwas_df)), &#39;_&#39;)
+# save to text
+gwas_df %&gt;% select(id, groupid) %&gt;% write.table(&#39;../analysis_output/analysis_batch.gwas_neale_lab.txt&#39;, quote = F, row.names = F, col.names = F, sep = &#39;\t&#39;)</code></pre>
 </div>
 
 
