@@ -1,10 +1,11 @@
 import h5py
+import time
 import numpy as np
 
 class GenotypeHDF5:
-    def __init__(list_sample, num_variants, output_h5, dict_variant_meta,
-        phased=True, dtype=int, chromosome=None, cache_size=int(50 * (1024 ** 2),
-        max_sample_chunk_size=10000, max_variant_chunk_size=100):
+    def __init__(self, list_sample, num_variants, output_h5, dict_variant_meta, phased=True, dtype=int, chromosome=None, 
+            cache_size=int(50 * (1024 ** 2)), 
+            max_sample_chunk_size=10000, max_variant_chunk_size=100):
         self.H5_file = None
         self.ARRAY_genotype = None
         self.list_sample = list_sample
@@ -17,7 +18,7 @@ class GenotypeHDF5:
         self.phased = phased
         self.dtype = dtype 
         self.n_filled_variants = 0 
-        self.dict_variant_meta = self._init_dict_variant_meta(dict_variant_meta)
+        self._init_dict_variant_meta(dict_variant_meta)
     
     def _init_dict_variant_meta(self, dict_variant_meta):
         meta_pool = ('position', 'chromosome', 'reference_allele', 'dosage_allele')
@@ -62,13 +63,15 @@ class GenotypeHDF5:
                 compression='gzip'
             )
         
-        # fill in genotype 
+        # fill in genotype
+        t0 = time.time()
         for hidx, geno_entry in enumerate(genotype_entries):
             if geno_entry not in dosage_row.keys():
                 raise ValueError(f'{geno_entry} in genotype_entries are not in dosage_row.')
             self.ARRAY_genotype[hidx, self.n_filled_variants, :] = dosage_row[geno_entry].astype(self.dtype)
-            self.n_filled_variants += 1
-        
+        self.n_filled_variants += 1
+        t1 = time.time(); print('fill in genotype takes ', t1 - t0)
+
         # fill in variant meta information
         for var_meta_entry, var_meta_list in self.dict_variant_meta.values():
             var_meta_list.append(dosage_row[var_meta_entry])
