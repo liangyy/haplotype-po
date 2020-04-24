@@ -97,8 +97,8 @@ class PRSmatrix:
     
     def update(self, dosage_row):
         if self.ARRAY_prs is None:
-            # sample x trait x cutoff x nhap
-            self.ARRAY_prs = np.zeros((self.nsample, self.ntrait, self.ncutoff, self.nhap)) 
+            # hap x trait x cutoff x sample
+            self.ARRAY_prs = np.zeros((self.nhap, self.ntrait, self.ncutoff, self.nsample)) 
 
             # self.ARRAY_prs_1 = np.zeros((self.nsample, self.ntrait, self.ncutoff)) 
             # self.ARRAY_prs_2 = np.zeros((self.nsample, self.ntrait, self.ncutoff))
@@ -134,8 +134,8 @@ class PRSmatrix:
             # self.ARRAY_prs[:, gwas_idx, pdim_idx, 0] += step_update_1
 
             for pidx in pdim_idx.tolist():
-                self.ARRAY_prs[:, gwas_idx, pidx, 0] += step_update_1
-                self.ARRAY_prs[:, gwas_idx, pidx, 1] += step_update_2
+                self.ARRAY_prs[0, gwas_idx, pidx, :] += step_update_1
+                self.ARRAY_prs[1, gwas_idx, pidx, :] += step_update_2
                 # yield i, dosage_row
             # tt5 = time.time(); print('anchor5', tt5 - tt4)  
         # update ARRAY_prs at the end
@@ -168,7 +168,7 @@ class PRSmatrix:
         self.H5_prs = self.H5_file.create_dataset(
             "prs",
             data=self.ARRAY_prs, 
-            chunks=(size_sample_chunk, size_trait_chunk, size_cutoff_chunk, size_hap_chunk),
+            chunks=(size_hap_chunk, size_trait_chunk, size_cutoff_chunk, size_sample_chunk),
             dtype=np.dtype('float32'), 
             scaleoffset=4, 
             compression='gzip'
@@ -190,7 +190,7 @@ class PRSmatrix:
                 sys.exit(1)
         
         # gwas's
-        gwas_dset = self.H5_file.create_dataset("traits", (self.ntrait,), dtype='S30')
+        gwas_dset = self.H5_file.create_dataset("traits", (self.ntrait,), dtype=h5py.string_dtype(encoding='ascii'))
         for gwas_name in self.gwas_index.keys():
             gwas_dset[self.gwas_index[gwas_name]] = np.string_(str(gwas_name))
         
