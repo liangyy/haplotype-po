@@ -337,6 +337,62 @@ But it definitely has uncertainty especially when we messy $\Pr(Z)$.
 <!-- plot(df_re %>% filter(method == 'case1') %>% pull(stat), df_re %>% filter(method == 'case3', z == 0.5, z_type == 'scalar') %>% pull(stat)) -->
 <!-- ``` -->
 
+```{r correction}
+get_correction_factor = function(z) {
+  max_z = z
+  max_z[1 - z > z] = 1 - z[1 - z > z]
+  o = mean(max_z) / mean(max_z ^ 2 + (1 - max_z) ^ 2)
+  return(o)
+}
 
+get_correction_factor_cheat = function(z) {
+  # by cheating, we mean that we know z is the true z
+  max_z = z
+  o = mean(max_z) / mean(max_z ^ 2 + (1 - max_z) ^ 2)
+  return(o)
+}
+
+# setting 2 & 3
+re = list()
+for(z in z_seq) {
+  message('Working on scaler z = ', z)
+  zmat = matrix(z, nrow = sample_size, ncol = nrepeat)
+  correction_factor = apply(zmat, 2, get_correction_factor)
+  correction_factor_cheat = apply(zmat, 2, get_correction_factor_cheat)
+  # setting 2
+  dm1_ = dm1(zmat)
+  for(i in 1 : length(ys)) {
+    o = run_gwas_pairwise(dm1_$X, dm1_[[ys[i]]])
+    re[[length(re) + 1]] = data.frame(b = o$bhat, b_se = o$bhat_se, method = 'case2', z = z, z_type = 'scalar', type = types[i], correction_factor = correction_factor, correction_factor_cheat = correction_factor_cheat)
+  }
+  
+  message('Working on beta z = ', z)
+  zmat = matrix(rbeta_from_mean_and_sd(sample_size * nrepeat, mean = z, sd = sd_z), nrow = sample_size, ncol = nrepeat)
+  correction_factor = apply(zmat, 2, get_correction_factor)
+  correction_factor_cheat = apply(zmat, 2, get_correction_factor_cheat)
+  # setting 2
+  dm1_ = dm1(zmat)
+  for(i in 1 : length(ys)) {
+    o = run_gwas_pairwise(dm1_$X, dm1_[[ys[i]]])
+    re[[length(re) + 1]] = data.frame(b = o$bhat, b_se = o$bhat_se, method = 'case2', z = z, z_type = 'beta', type = types[i], correction_factor = correction_factor, correction_factor_cheat = correction_factor_cheat)
+  }
+}
+df_re_correction = do.call(rbind, re)
+```
+
+```{r correction_plot}
+df_re_correction %>% filter(type == 'beta = 1') %>% mutate(corrected_b = b / correction_factor, corrected_b_cheat = b / correction_factor_cheat) %>% 
+  select(z, z_type, type, b, corrected_b, corrected_b_cheat) %>% reshape2::melt(id.vars = c('z', 'z_type', 'type')) %>% 
+  ggplot() + geom_boxplot(aes(x = factor(z), color = variable, y = value)) + facet_wrap(~z_type) +
+  ggtitle('Beta hat: Under the alternative') + th2 +
+  theme(legend.position = 'bottom') +
+  geom_hline(yintercept = 1)
+df_re_correction %>% filter(type == 'beta = 0') %>% mutate(corrected_b = b / correction_factor, corrected_b_cheat = b / correction_factor_cheat) %>% 
+  select(z, z_type, type, b, corrected_b, corrected_b_cheat) %>% reshape2::melt(id.vars = c('z', 'z_type', 'type')) %>% 
+  ggplot() + geom_boxplot(aes(x = factor(z), color = variable, y = value)) + facet_wrap(~z_type) +
+  ggtitle('Beta hat: Under the alternative') + th2 +
+  theme(legend.position = 'bottom') +
+  geom_hline(yintercept = 0)
+```
 
 # References

@@ -382,7 +382,7 @@ div.tocify {
 
 
 <h1 class="title toc-ignore">Power comparison of haplotype-based GWAS</h1>
-<h4 class="date">Last update: Apr 09, 2020</h4>
+<h4 class="date">Last update: Apr 24, 2020</h4>
 
 </div>
 
@@ -664,6 +664,70 @@ df_re %&gt;% filter(type == &#39;beta = 0&#39;) %&gt;%
 <!-- ```{r} -->
 <!-- plot(df_re %>% filter(method == 'case1') %>% pull(stat), df_re %>% filter(method == 'case3', z == 0.5, z_type == 'scalar') %>% pull(stat)) -->
 <!-- ``` -->
+<pre class="r"><code>get_correction_factor = function(z) {
+  max_z = z
+  max_z[1 - z &gt; z] = 1 - z[1 - z &gt; z]
+  o = mean(max_z) / mean(max_z ^ 2 + (1 - max_z) ^ 2)
+  return(o)
+}
+
+get_correction_factor_cheat = function(z) {
+  # by cheating, we mean that we know z is the true z
+  max_z = z
+  o = mean(max_z) / mean(max_z ^ 2 + (1 - max_z) ^ 2)
+  return(o)
+}
+
+# setting 2 &amp; 3
+re = list()
+for(z in z_seq) {
+  message(&#39;Working on scaler z = &#39;, z)
+  zmat = matrix(z, nrow = sample_size, ncol = nrepeat)
+  correction_factor = apply(zmat, 2, get_correction_factor)
+  correction_factor_cheat = apply(zmat, 2, get_correction_factor_cheat)
+  # setting 2
+  dm1_ = dm1(zmat)
+  for(i in 1 : length(ys)) {
+    o = run_gwas_pairwise(dm1_$X, dm1_[[ys[i]]])
+    re[[length(re) + 1]] = data.frame(b = o$bhat, b_se = o$bhat_se, method = &#39;case2&#39;, z = z, z_type = &#39;scalar&#39;, type = types[i], correction_factor = correction_factor, correction_factor_cheat = correction_factor_cheat)
+  }
+  
+  message(&#39;Working on beta z = &#39;, z)
+  zmat = matrix(rbeta_from_mean_and_sd(sample_size * nrepeat, mean = z, sd = sd_z), nrow = sample_size, ncol = nrepeat)
+  correction_factor = apply(zmat, 2, get_correction_factor)
+  correction_factor_cheat = apply(zmat, 2, get_correction_factor_cheat)
+  # setting 2
+  dm1_ = dm1(zmat)
+  for(i in 1 : length(ys)) {
+    o = run_gwas_pairwise(dm1_$X, dm1_[[ys[i]]])
+    re[[length(re) + 1]] = data.frame(b = o$bhat, b_se = o$bhat_se, method = &#39;case2&#39;, z = z, z_type = &#39;beta&#39;, type = types[i], correction_factor = correction_factor, correction_factor_cheat = correction_factor_cheat)
+  }
+}</code></pre>
+<pre><code>## Working on scaler z = 0.4</code></pre>
+<pre><code>## Working on beta z = 0.4</code></pre>
+<pre><code>## Working on scaler z = 0.5</code></pre>
+<pre><code>## Working on beta z = 0.5</code></pre>
+<pre><code>## Working on scaler z = 0.6</code></pre>
+<pre><code>## Working on beta z = 0.6</code></pre>
+<pre><code>## Working on scaler z = 0.7</code></pre>
+<pre><code>## Working on beta z = 0.7</code></pre>
+<pre><code>## Working on scaler z = 0.8</code></pre>
+<pre><code>## Working on beta z = 0.8</code></pre>
+<pre class="r"><code>df_re_correction = do.call(rbind, re)</code></pre>
+<pre class="r"><code>df_re_correction %&gt;% filter(type == &#39;beta = 1&#39;) %&gt;% mutate(corrected_b = b / correction_factor, corrected_b_cheat = b / correction_factor_cheat) %&gt;% 
+  select(z, z_type, type, b, corrected_b, corrected_b_cheat) %&gt;% reshape2::melt(id.vars = c(&#39;z&#39;, &#39;z_type&#39;, &#39;type&#39;)) %&gt;% 
+  ggplot() + geom_boxplot(aes(x = factor(z), color = variable, y = value)) + facet_wrap(~z_type) +
+  ggtitle(&#39;Beta hat: Under the alternative&#39;) + th2 +
+  theme(legend.position = &#39;bottom&#39;) +
+  geom_hline(yintercept = 1)</code></pre>
+<p><img src="haplo_gwas_power_files/figure-html/correction_plot-1.png" width="672" /></p>
+<pre class="r"><code>df_re_correction %&gt;% filter(type == &#39;beta = 0&#39;) %&gt;% mutate(corrected_b = b / correction_factor, corrected_b_cheat = b / correction_factor_cheat) %&gt;% 
+  select(z, z_type, type, b, corrected_b, corrected_b_cheat) %&gt;% reshape2::melt(id.vars = c(&#39;z&#39;, &#39;z_type&#39;, &#39;type&#39;)) %&gt;% 
+  ggplot() + geom_boxplot(aes(x = factor(z), color = variable, y = value)) + facet_wrap(~z_type) +
+  ggtitle(&#39;Beta hat: Under the alternative&#39;) + th2 +
+  theme(legend.position = &#39;bottom&#39;) +
+  geom_hline(yintercept = 0)</code></pre>
+<p><img src="haplo_gwas_power_files/figure-html/correction_plot-2.png" width="672" /></p>
 </div>
 <div id="references" class="section level1 unnumbered">
 <h1>References</h1>
