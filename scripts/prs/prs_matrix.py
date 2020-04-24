@@ -205,7 +205,7 @@ class PRSmatrix:
             next(sample_generator)
         except StopIteration:
             self._myprint(
-                "{} Predicted expression file complete!".format(datetime.datetime.now()),
+                "{} PRS file complete!".format(datetime.datetime.now()),
                 logger
             )
         else:

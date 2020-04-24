@@ -3,14 +3,13 @@ import time
 import numpy as np
 
 class GenotypeHDF5:
-    def __init__(self, list_sample, num_variants, output_h5, dict_variant_meta, phased=True, dtype=int, chromosome=None, 
+    def __init__(self, list_sample, num_variants, output_h5, dict_variant_meta, phased=True, dtype=int, 
             cache_size=int(50 * (1024 ** 2)), 
             max_sample_chunk_size=10000, max_variant_chunk_size=100):
         self.H5_file = None
         self.ARRAY_genotype = None
         self.list_sample = list_sample
         self.nvariant = num_variants
-        self.chromosome = chromosome
         self.output_h5 = output_h5
         self.cache_size = cache_size
         self.max_sample_chunk_size = max_sample_chunk_size
@@ -82,12 +81,12 @@ class GenotypeHDF5:
     
     def save(self):
         # run checkers on length before saving
-        _check_equal(
+        self._check_equal(
             self.nsample, 
             len(self.list_sample)
         )
         for vm in self.dict_variant_meta.keys():
-            _check_equal(
+            self._check_equal(
                 self.nvariant, 
                 len(self.dict_variant_meta[vm][1])
             )
