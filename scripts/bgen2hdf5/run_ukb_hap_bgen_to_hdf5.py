@@ -30,6 +30,9 @@ parser.add_argument('--max-sample-chunk-size', type=int, default=10000, help='''
 parser.add_argument('--max-snp-chunk-size', type=int, default=100, help='''
     Maximum size of chunk on snp axis. 
 ''')
+parser.add_argument('--first-n', type=int, default=None, help='''
+    If set, it will run on first N variants as test.
+''')
 args = parser.parse_args()
 
 import logging, time, sys
@@ -63,6 +66,13 @@ pos = [ i.split(':')[1] for i in reader.variant_index.keys() ]
 non_effect_allele = [ i.split(':')[2] for i in reader.variant_index.keys() ]
 effect_allele = [ i.split(':')[3] for i in reader.variant_index.keys() ]
 chrom = [ '' for i in reader.variant_index.keys() ]
+
+logging.info('** Run on first {} variants'.format(args.first_n_snp))
+if args.first_n_snp is not None:
+    pos = pos[: args.first_n_snp]
+    non_effect_allele = non_effect_allele[: args.first_n_snp]
+    effect_allele = effect_allele[: args.first_n_snp]
+    chrom = chrom[: args.first_n_snp]
 
 logging.info('Loading sample list')
 with open(sample, 'r') as f:
