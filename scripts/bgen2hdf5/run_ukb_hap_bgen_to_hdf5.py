@@ -102,3 +102,4 @@ for dosage_row in tqdm(generator, total=len(chrom)):
 
 logging.info('Saving') 
 geno_writer.save()
+
