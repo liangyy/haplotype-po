@@ -106,7 +106,7 @@ class PRSmatrix:
         # traverse all gwas results and all p-value cutoffs
         ever_updated_counter = 0
         # Bmat = np.zeros((self.ntrait, self.ncutoff))  # matrix to save effect size (flip sign if allele flip)
-        tt0 = time.time()
+        # tt0 = time.time()
         for i in self.gwas_index.keys():
             # tt1 = time.time(); print('anchor1')
             pval = self._get_gwas_info_by_var_id(i, 'pvalue', dosage_row.my_var_id)
@@ -146,7 +146,7 @@ class PRSmatrix:
         # self.ARRAY_prs_1 += np.einsum('k,ij->kij', dosage_row.haplo_dosage_1, Bmat)
         # self.ARRAY_prs_2 += np.einsum('k,ij->kij', dosage_row.haplo_dosage_2, Bmat)
 
-        tt0_ = time.time(); print('all = ', tt0_ - tt0)
+        # tt0_ = time.time(); print('all = ', tt0_ - tt0)
 
     @staticmethod
     def _myprint(msg, logger):

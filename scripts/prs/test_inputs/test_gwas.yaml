@@ -1,4 +1,4 @@
-gwas1:
+20002_1262.gwas.imputed_v3.both_sexes:
   gwas: 
     path: 'test_inputs/test_gwas1.txt'
     param:
@@ -8,7 +8,7 @@ gwas1:
   betacol: 'beta'
   pvalcol: 'pval'
   ld_clump: 'test_inputs/test_gwas1.clump'
-gwas2:
+20002_1262.gwas.imputed_v3.male:
   gwas: 
     path: 'test_inputs/test_gwas2.txt'
     param:
