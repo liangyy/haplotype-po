@@ -60,6 +60,7 @@ class GenotypeHDF5:
                 # hap x variant x sample (C order)
                 shape=(self.nhap, self.nvariant, self.nsample), 
                 chunks=(size_hap_chunk, size_variant_chunk, size_sample_chunk),
+                # chunks=True,  # automate chunks is not always fast
                 dtype=self.dtype, 
                 compression='gzip'
             )

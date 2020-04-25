@@ -1,5 +1,5 @@
 import argparse
-parser = argparse.ArgumentParser(prog='run_bgen2hdf5.py', description='''
+parser = argparse.ArgumentParser(prog='run_ukb_hap_bgen_to_hdf5.py', description='''
     Convert BGEN into HDF5. 
     Work with ukb_hap_v2 BGEN.
 ''')
@@ -30,7 +30,7 @@ parser.add_argument('--max-sample-chunk-size', type=int, default=10000, help='''
 parser.add_argument('--max-snp-chunk-size', type=int, default=100, help='''
     Maximum size of chunk on snp axis. 
 ''')
-parser.add_argument('--first-n', type=int, default=None, help='''
+parser.add_argument('--first-n-snp', type=int, default=None, help='''
     If set, it will run on first N variants as test.
 ''')
 args = parser.parse_args()
@@ -62,7 +62,7 @@ reader = ukb_hap_reader.UKBhapReader(
 )
 
 logging.info('Building variant list')
-pos = [ i.split(':')[1] for i in reader.variant_index.keys() ]
+pos = [ int(i.split(':')[1]) for i in reader.variant_index.keys() ]
 non_effect_allele = [ i.split(':')[2] for i in reader.variant_index.keys() ]
 effect_allele = [ i.split(':')[3] for i in reader.variant_index.keys() ]
 chrom = [ '' for i in reader.variant_index.keys() ]
@@ -75,7 +75,7 @@ if args.first_n_snp is not None:
     chrom = chrom[: args.first_n_snp]
 
 logging.info('Loading sample list')
-with open(sample, 'r') as f:
+with open(args.sample, 'r') as f:
     sample_list = f.readlines()
     sample_list.pop(0)
     sample_list.pop(0)
@@ -94,7 +94,7 @@ logging.info('Initializing genotype writer')
 geno_writer = geno_hdf5.GenotypeHDF5(
     list_sample=sample_list,
     num_variants=len(pos),
-    output_h5='test-bgen2hdf5.h5',
+    output_h5=args.output_hdf5,
     dict_variant_meta={
         'position': 'position',
         'chromosome': 'chr',
