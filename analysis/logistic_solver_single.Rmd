@@ -1,0 +1,111 @@
+---
+title: "Implementing logistic regression solver"
+date: "`r paste0('Last update: ', format(Sys.time(), '%b %d, %Y'))`"    
+---
+
+$$\newcommand{\logit}{\text{logit}}$$
+
+```{r setup}
+rm(list = ls())
+library(ggplot2)
+library(dplyr)
+library(patchwork)
+set.seed(2020)
+```
+
+# About
+
+Here I implement the logistic regression solver described [here](https://github.com/hakyimlab/yanyu-notebook/blob/master/notes/date_042520.Rmd) to verify if the IRLS algorithm is what we look for.
+This note focuses on implementing the single SNP case. 
+Multi-SNP implementation will be implemented in Python with `pytorch` so that it can take advantage of GPU.
+
+# Simulate data
+
+```{r sim_param}
+N = 1000
+K = 6
+maf = 0.1
+sigma_c2 = 1
+sigma2 = 4
+intercept = -3
+```
+
+* $G \in \{0, 1\}^{N \times 1}$ as genotype with $X_i \sim \text{Bernoulli}(\pi)$
+* $C \in \mathbb{R}^{N \times K}$ as covariates with $C_{ik} \sim N(0, \sigma_c^2)$
+* With intercept $\beta_0 = `r intercept`$.
+* Effect sizes if $X$ and $C$ are both $\beta_k \sim N(0, \sigma^2)$.
+* $N = `r N`, K = `r K`, \pi = `r maf`, \sigma_c^2 = `r sigma_c2`, \sigma^2 = `r sigma2`$.
+
+Model: Let $X = [1, G, C]$ and $w = [\beta_0, \beta_g, \beta_c]$, $\logit(\Pr(Y = 1 | X)) = Xw$ which is equivalent to
+$$\Pr(Y = 1 | X) = \frac{1}{1 + e^{-Xw}}$$
+```{r simulate}
+logistic_func = function(u) {
+  return( 1 / ( 1 + exp(-u) ) )
+}
+
+beta = rnorm(K + 1, mean = 0, sd = sqrt(sigma2))
+G = rbinom(N, 1, prob = maf)
+covar = matrix(
+  rnorm(N * K, mean = 0, sd = sqrt(sigma_c2)),
+  nrow = N, ncol = K
+)
+X = cbind(rep(1, N), G, covar)
+w = c(intercept, beta)
+
+# mu := Pr(Y = 1 | X)
+mu = logistic_func(X %*% w)
+
+Y = rbinom(N, 1, prob = mu)
+```
+
+# Implement solver
+
+```{r logistic_solver}
+relative_diff = function(x, x0) {
+  return(
+    sum((x - x0) ^ 2) / sum(x ^ 2)
+  )
+}
+my_logistic_regression = function(X, y, maxiter = 1000, tol = 1e-8) {
+  w = rep(0, dim(X)[2])
+  diff = Inf
+  niter = 0
+  while(diff > tol & niter < maxiter) {
+    # message('diff = ', diff)
+    mu = logistic_func(X %*% w)[,1]
+    S = diag(mu * (1 - mu))
+    XSX = t(X) %*% S %*% X
+    LHS = XSX %*% w + t(X) %*% (Y - mu)
+    w_prev = w
+    w = solve(XSX, LHS)
+    niter = niter + 1
+    diff = relative_diff(w, w_prev)
+  }
+  mu = logistic_func(X %*% w)[,1]
+  S = diag(mu * (1 - mu))
+  XSX = t(X) %*% S %*% X
+  vars = diag(solve(XSX, diag(dim(X)[2])))
+  o = data.frame(est = w, se = sqrt(vars))
+  rownames(o) = NULL
+  return(o)
+}
+
+est = my_logistic_regression(X, y)
+mod = glm(cbind(Y, 1 - Y) ~ -1 + X, family = binomial(link = "logit"))
+mod = summary(mod)$coefficients[, 1:2] %>% as.data.frame() 
+colnames(mod) = c('est', 'se')
+results = inner_join(
+  mod %>% mutate(idx = 1 : nrow(.)),
+  est %>% mutate(idx = 1 : nrow(.)),
+  by = 'idx',
+  suffix = c('.glm', '.mine')
+)
+p1 = results %>% ggplot() + geom_point(aes(x = est.glm, y = est.mine)) + geom_abline(slope = 1, intercept = 0) + coord_equal()
+p2 = results %>% ggplot() + geom_point(aes(x = se.glm, y = se.mine)) + geom_abline(slope = 1, intercept = 0) + coord_equal()
+p1 + p2
+```
+
+# Conclusion
+
+IRLS algorithm gives almost identical estimates and standard errors as `glm` on logistic regression.
+
