@@ -141,7 +141,7 @@ class UKBhapReader:
         nsnp = snp_list.shape[0]
         curr_pos_in_snp_list = 0
         next_pos_in_snp_list = 0
-        while next_pos_in_snp_list < nsnp:
+        while next_pos_in_snp_list <= nsnp:
             # modified from 
             # https://github.com/liangyy/predixcan_prediction/blob/a85d52d89de9fe237a1217b5627c7e8d9f700f7e/bgen/bgen_dosage.py#L80
             next_pos_in_snp_list = self._next_pos(curr_pos_in_snp_list, nsnp, n_var_cached)
