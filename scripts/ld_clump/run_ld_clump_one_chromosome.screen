@@ -1,7 +1,14 @@
+# ARGS1: gwasid
+# ARGS2: chromosome number
+
+TRAIT=$1
+CHRNUM=$2
+
 # environment setup
-conda activate haplotype_po
 source /vol/bmd/yanyul/miniconda3/etc/profile.d/conda.sh
 source /vol/bmd/yanyul/GitHub/ptrs-ukb/scripts/source_snakemake_on_nucleus.sh
+conda activate haplotype_po
+
 
 METAdir=/vol/bmd/yanyul/GitHub/haplotype-po/scripts/ld_clump
 
