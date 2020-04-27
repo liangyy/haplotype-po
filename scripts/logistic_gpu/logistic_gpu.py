@@ -2,11 +2,16 @@ import torch
 
 class BatchLogisticSolver:
     def __init__(self):
-        self.info = '''
-        Fit logit(y) ~ x + covariates for
-        every x_i ~ y pair in batch.
-        '''
-        self.stop_criteria = 'Iterate until all x_i ~ y pairs converge'
+        self.info = '''Fit logit(y) ~ x + covariates for every x_i ~ y pair in batch.'''
+        self.name = 'BatchLogisticSolver'
+        self.stop_criteria = '''Iterate until all x_i ~ y pairs converge'''
+    
+    def message(self):
+        print('-' * 50)
+        print('This is {}'.format(self.name))
+        print('-' * 50)
+        print('* What I do: \n{}'.format(self.info))
+        print('* When I stop: \n{}'.format(self.stop_criteria))
     
     def _calc_Mu_S_XSX(self, XSX, X, C, Wcx):
         
@@ -38,23 +43,24 @@ class BatchLogisticSolver:
         
         return Mu, S, XSX
     
-    def _calc_LHS(self, X, Y, C, Wcx, Mu):
+    def _calc_RHS(self, X, Y, C, Wcx, Mu, XSX):
         
-        # get k (number of covariates, C)
-        k = C.shape[1]
+        # get p (number of Xi's)
+        p = X.shape[1]
         
-        # get LHS
-        RES = self.mat_vec_add(-Mu, Y)  
+        # get RHS
+        RES = self._mat_vec_add(-Mu, Y)  
         C_RES = torch.einsum('nk,np->kp', C, RES)  
         X_RES = torch.einsum('np,np->p', X, RES)  
-        CX_RES[:k, :] = C_RES
-        CX_RES[k, :] = X_RES
+        CX_RES = torch.cat((C_RES, X_RES.view(-1, p)), axis=0)
+        # CX_RES[:k, :] = C_RES
+        # CX_RES[k, :] = X_RES
         
         XSX_Wcx = torch.einsum('jkp,pk->jp', XSX, Wcx)  
     
-        LHS = XSX_Wcx + CX_RES 
+        RHS = XSX_Wcx + CX_RES 
         
-        return LHS 
+        return RHS 
     
     def batchIRLS(self, X, y, C, tol=1e-8, maxiter=100):
         '''
@@ -87,10 +93,10 @@ class BatchLogisticSolver:
             Wcx_old = Wcx.clone()
             
             # compute mu, S, and X^T S X
-            Mu, S, XSX = self._calc_XSX(XSX, X, C, Wcx)
+            Mu, S, XSX = self._calc_Mu_S_XSX(XSX, X, C, Wcx)
             
             # get RHS := X^T(S X W + Y - Mu)
-            RHS = self._calc_LHS(X, Y, C, Wcx, Mu)
+            RHS = self._calc_RHS(X, y, C, Wcx, Mu, XSX)
 
             # solve XSX^{-1} x = RHS and update
             Wcx, _ = torch.solve(
@@ -103,7 +109,7 @@ class BatchLogisticSolver:
             niter += 1
         
         # after iteration
-        _, _, XSX = self._calc_XSX(XSX, X, C, Wcx)
+        _, _, XSX = self._calc_Mu_S_XSX(XSX, X, C, Wcx)
         ONES = torch.eye(k + 1).view(k + 1, k + 1, -1).expand_as(XSX)  # Tensor(k + 1, k + 1)
         VAR, _ = torch.solve(
             torch.einsum('ijk->kij', ONES), 
@@ -116,7 +122,7 @@ class BatchLogisticSolver:
         
         return Wcx.T, torch.sqrt(torch.diagonal(VAR, dim1=1, dim2=2)).T 
         
-    @static
+    @staticmethod
     def _naive_convergence_checker(w_new, w_old):
         '''
         Return the relative difference between w_new and w_old,
@@ -126,7 +132,7 @@ class BatchLogisticSolver:
         den = torch.pow(w_new, 2)
         return torch.sum(nom) / torch.sum(den)    
     
-    @static
+    @staticmethod
     def _mat_vec_add(mat, vec):
         '''
         Add vec to each column of mat.
@@ -134,16 +140,17 @@ class BatchLogisticSolver:
         nrow = vec.shape[0]
         return mat + vec.view(nrow, 1).expand_as(mat)
         
-    @static
+    @staticmethod
     def _logistic_func(u):
         return 1 / ( 1 + torch.exp(-u) )
 
 class BatchLogisticSolverWithMask(BatchLogisticSolver):
     def __init__(self):
         super().__init__()
-        self.stop_criteria = 'Iterate until x_i ~ y pair converges'
+        self.name = 'BatchLogisticSolverWithMask'
+        self.stop_criteria = '''Iterate until x_i ~ y pair converges'''
     
-    @static
+    @staticmethod
     def _divide_fill_zero(a, b):
         o = torch.div(a, b)
         o[b == 0] = 0
@@ -193,10 +200,10 @@ class BatchLogisticSolverWithMask(BatchLogisticSolver):
             Wcx_old = Wcx.clone()
             
             # compute mu, S, and XSX
-            Mu, S, XSX[:, :, mask] = self._calc_XSX(XSX[:, :, mask], X[:, mask], C, Wcx[mask, :])
+            Mu, S, XSX[:, :, mask] = self._calc_Mu_S_XSX(XSX[:, :, mask], X[:, mask], C, Wcx[mask, :])
             
             # get RHS := X^T(S X W + Y - Mu)
-            RHS = self._calc_LHS(X[:, mask], Y, C, Wcx[mask, :], Mu) 
+            RHS = self._calc_RHS(X[:, mask], y, C, Wcx[mask, :], Mu, XSX[:, :, mask]) 
 
             # solve XSX^{-1} x = RHS and update
             tmp_, _ = torch.solve(
@@ -208,7 +215,7 @@ class BatchLogisticSolverWithMask(BatchLogisticSolver):
             max_diff, diffs = self._snp_level_convergence_checker(Wcx, Wcx_old)
             niter += 1
             
-        _, _, XSX = self._calc_XSX(XSX, X, C, Wcx)
+        _, _, XSX = self._calc_Mu_S_XSX(XSX, X, C, Wcx)
         ONES = torch.eye(k + 1).view(k + 1, k + 1, -1).expand_as(XSX)  # Tensor(k + 1, k + 1)
         VAR, _ = torch.solve(
             torch.einsum('ijk->kij', ONES), 
