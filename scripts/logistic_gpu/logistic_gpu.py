@@ -165,7 +165,7 @@ class BatchLogisticSolverWithMask(BatchLogisticSolver):
         diff = self._divide_fill_zero(torch.sum(nom, axis=1), torch.sum(den, axis=1))
         return diff.max(), diff
     
-    def batchIRLS(self, X, y, C, tol=1e-8, maxiter=100):
+    def batchIRLS(self, X, y, C, device='cpu', tol=1e-8, maxiter=100):
         '''
         Input
             X: Tensor(n, p)
@@ -184,11 +184,22 @@ class BatchLogisticSolverWithMask(BatchLogisticSolver):
         k = C.shape[1]
         
         # initialize
-        Wcx = torch.zeros(p, k + 1)
-        XSX = torch.Tensor(k + 1, k + 1, p)
+        if device is None:
+            Wcx = torch.zeros(p, k + 1)
+            XSX = torch.Tensor(k + 1, k + 1, pe)
+            diffs = torch.ones(p) 
+        else:
+            Wcx = torch.zeros(p, k + 1).to(device)
+            XSX = torch.Tensor(k + 1, k + 1, p).to(device)
+            diffs = torch.ones(p).to(device) 
+
+        #     Wcx = torch.FloatTensor(p, k + 1).fill_(0)
+        #     XSX = torch.cuda.FloatTensor(k + 1, k + 1, p).fill_(0)
+        #     diffs = torch.cuda.FloatTensor(p).fill_(1)     
+
         
         max_diff = tol + 1
-        diffs = torch.ones(p) 
+        # diffs = torch.ones(p) 
         niter = 0
         
         while max_diff > tol and niter < maxiter:
@@ -207,7 +218,7 @@ class BatchLogisticSolverWithMask(BatchLogisticSolver):
 
             # solve XSX^{-1} x = RHS and update
             tmp_, _ = torch.solve(
-                torch.einsum('kp->pk', RHS).view(p, k + 1, -1)[mask, :, :], 
+                torch.einsum('kp->pk', RHS).view(mask.sum(), k + 1, -1), 
                 torch.einsum('ijk->kij', XSX)[mask, :, :]
             )
             Wcx[mask, :] = tmp_[:, :, 0]
@@ -216,7 +227,11 @@ class BatchLogisticSolverWithMask(BatchLogisticSolver):
             niter += 1
             
         _, _, XSX = self._calc_Mu_S_XSX(XSX, X, C, Wcx)
-        ONES = torch.eye(k + 1).view(k + 1, k + 1, -1).expand_as(XSX)  # Tensor(k + 1, k + 1)
+        if device is None:
+            ONES = torch.eye(k + 1).view(k + 1, k + 1, -1).expand_as(XSX)  # Tensor(k + 1, k + 1)
+        else:
+            ONES = torch.eye(k + 1).to(device).view(k + 1, k + 1, -1).expand_as(XSX)   
+        #     ONES = torch.eye(k + 1, out=torch.cuda.FloatTensor()).view(k + 1, k + 1, -1).expand_as(XSX)  # , out=torch.cuda.FloatTensor()
         VAR, _ = torch.solve(
             torch.einsum('ijk->kij', ONES), 
             torch.einsum('ijk->kij', XSX)
