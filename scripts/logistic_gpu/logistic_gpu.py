@@ -197,7 +197,7 @@ class BatchLogisticSolverWithMask(BatchLogisticSolver):
         # initialize
         if device is None:
             Wcx = torch.zeros(p, k + 1)
-            XSX = torch.Tensor(k + 1, k + 1, pe)
+            XSX = torch.Tensor(k + 1, k + 1, p)
             diffs = torch.ones(p) 
         else:
             Wcx = torch.zeros(p, k + 1).to(device)
