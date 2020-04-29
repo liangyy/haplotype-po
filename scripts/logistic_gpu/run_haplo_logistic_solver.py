@@ -285,21 +285,24 @@ for h1, h2 in tqdm(variant_generator, total=hdf5_reader.nchunk):
         X = X[:, maf_filter]
         x_list.append(X)
     X = torch.cat(x_list, axis=1)
-    t0 = time.time()
-    bhat, bse, conv = solver.batchIRLS(X.to(device), y[:, 0], C, device=device, use_mask=True, min_prob=1e-20)
-    t1 = time.time(); print('grand solve takes', t1 - t0)
-    #     for p in range(num_phenotype):
-    #         t0 = time.time()
-    #         bhat, bse, conv = solver.batchIRLS(X.to(device), y[:, p], C, device=device, use_mask=True, min_prob=1e-20)
-    #         t1 = time.time()
-    #         bhat_[maf_filter] = bhat[-1]
-    #         bse_[maf_filter] = bse[-1]
-    #         conv_[maf_filter] = conv[-1]
-    #         out_tensor[zi, p, snp_counter:(snp_counter + step_size), 0] = bhat_
-    #         out_tensor[zi, p, snp_counter:(snp_counter + step_size), 1] = bse_
-    #         out_tensor[zi, p, snp_counter:(snp_counter + step_size), 2] = conv_
-    #         t2 = time.time(); print('solve takes', t1 - t0, ' save takes', t2 - t1)
-    #     snp_counter += step_size
+    # t0 = time.time()
+    # bhat, bse, conv = solver.batchIRLS(X.to(device), y[:, 0], C, device=device, use_mask=True, min_prob=1e-20)
+    # t1 = time.time(); print('grand solve takes', t1 - t0)
+    for p in range(num_phenotype):
+        # t0 = time.time()
+        bhat, bse, conv = solver.batchIRLS(X.to(device), y[:, p], C, device=device, use_mask=True, min_prob=1e-20)
+        # t1 = time.time()
+        bhat_[maf_filter] = bhat[-1]
+        bse_[maf_filter] = bse[-1]
+        conv_[maf_filter] = conv[-1]
+        for zi in range(num_prob_z):
+            start = zi * step_size
+            end = (zi + 1) * step_size
+            out_tensor[zi, p, snp_counter:(snp_counter + step_size), 0] = bhat_[start:end]
+            out_tensor[zi, p, snp_counter:(snp_counter + step_size), 1] = bse_[start:end]
+            out_tensor[zi, p, snp_counter:(snp_counter + step_size), 2] = conv_[start:end]
+        # t2 = time.time(); print('solve takes', t1 - t0, ' save takes', t2 - t1)
+    snp_counter += step_size
     if niter >= hdf5_reader.nchunk:
         break
 
