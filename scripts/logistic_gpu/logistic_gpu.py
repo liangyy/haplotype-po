@@ -139,6 +139,8 @@ class BatchLogisticSolver:
             # update active status
             active_p[mask] = active_p[mask] & ( (Mu[:, mask] < min_prob).sum(axis=0) == 0 ) & ( (Mu[:, mask] > (1 - min_prob)).sum(axis=0) == 0 )
             mask[mask] = mask[mask] & active_p[mask]
+            if mask.sum() == 0:
+                break
             
             # get RHS := X^T(S X W + Y - Mu)
             RHS = self._calc_RHS(X[:, mask], y, C, Wcx[mask, :], Mu[:, mask], XSX[:, :, mask]) 

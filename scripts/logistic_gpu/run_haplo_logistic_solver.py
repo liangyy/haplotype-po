@@ -101,7 +101,7 @@ def _add_parent_info_and_combine(dict_):
         dict_[parent]['individual_id'] = dict_[parent]['individual_id'].map(
             lambda x: _extend_id(x, parent)
         )
-    df = pd.concatenate(
+    df = pd.concat(
         (dict_['father'], dict_['mother']),
         axis=0
     )
@@ -113,7 +113,8 @@ def _load_haplotype_imputation(f):
     # for mother, Pr(h1 is from mother) = 1 - Pr(h1 is from father)
     d_dict['mother'].loc[:, d_dict['mother'].columns != 'individual_id'] = d_dict['mother'].loc[:, d_dict['mother'].columns != 'individual_id'].apply(lambda x: 1 - x)
     return _add_parent_info_and_combine(d_dict)
-    
+def multiply_mat_vec_col_by_col(mat, vec):
+    return torch.einsum('ij,i->ij', mat, vec)
 
 import logging, sys
 # configing util
@@ -124,6 +125,7 @@ logging.basicConfig(
     datefmt = '%Y-%m-%d %I:%M:%S %p'
 )
 
+import time
 import torch
 from torch.utils import data
 import pandas as pd
@@ -173,12 +175,13 @@ reference_indiv_df = _subset_row_by_indiv(reference_indiv_df, pheno_df['individu
 reference_indiv_df = _subset_row_by_indiv(reference_indiv_df, covar_df['individual_id'])
 reference_indiv_df = _subset_row_by_indiv(reference_indiv_df, prob_z_df['individual_id'])
 
-if args.individual_list is not None:
-    logging.info('-> Loading individual list')
-    indiv_list = table_reader.load_file_as_lines(args.individual_list)
-    indiv_extended_df = _extend_individual_id_list(indiv_list) 
-    logging.info('-> {} individuals in individual_list'.format(indiv_extended_df.shape[0]))
-    reference_indiv_df = _subset_row_by_indiv(reference_indiv_df, indiv_extended_df['individual_id'])
+# Not yet implemented
+# if args.individual_list is not None:
+#     logging.info('-> Loading individual list')
+#     indiv_list = table_reader.load_file_as_lines(args.individual_list)
+#     indiv_extended_df = _extend_individual_id_list(indiv_list) 
+#     logging.info('-> {} individuals in individual_list'.format(indiv_extended_df.shape[0]))
+#     reference_indiv_df = _subset_row_by_indiv(reference_indiv_df, indiv_extended_df['individual_id'])
 
 num_individual = reference_indiv_df.shape[0]
 logging.info('{} individuals are extracted'.format(num_individual))
@@ -267,25 +270,38 @@ for h1, h2 in tqdm(variant_generator, total=hdf5_reader.nchunk):
     bse_ = torch.zeros((step_size, )).to(device)
     conv_ = torch.zeros((step_size, ), dtype=torch.bool).to(device)
     
+    # haplotypes
+    h1 = h1[0, :, indiv_index].T.to(device)
+    h2 = h2[0, :, indiv_index].T.to(device)
+    
+    x_list = []
     for zi in range(num_prob_z):
-        X = torch.matmul(
-            h1[0, :, :].T, torch.diag(z[:, zi])
-        ) + torch.matmul(
-            h2[0, :, :].T, torch.diag(1 - z[:, zi])
+        X = multiply_mat_vec_col_by_col(
+            h1, z[:, zi]
+        ) + multiply_mat_vec_col_by_col(
+            h2, (1 - z[:, zi])
         )
-        X = X[indiv_index, :]
+        # X = X[indiv_index, :]
         X = X[:, maf_filter]
-        for p in range(num_phenotype):
-            bhat, bse, conv = solver.batchIRLS(X.to(device), y[:, p], C, device=device, use_mask=True, min_prob=1e-20)
-            bhat_[maf_filter] = bhat[-1]
-            bse_[maf_filter] = bse[-1]
-            conv_[maf_filter] = conv[-1]
-            out_tensor[zi, p, snp_counter:(snp_counter + step_size), 0] = bhat_
-            out_tensor[zi, p, snp_counter:(snp_counter + step_size), 1] = bse_
-            out_tensor[zi, p, snp_counter:(snp_counter + step_size), 2] = conv_
-        snp_counter += step_size
-        if niter >= hdf5_reader.nchunk:
-            break
+        x_list.append(X)
+    X = torch.cat(x_list, axis=1)
+    t0 = time.time()
+    bhat, bse, conv = solver.batchIRLS(X.to(device), y[:, 0], C, device=device, use_mask=True, min_prob=1e-20)
+    t1 = time.time(); print('grand solve takes', t1 - t0)
+    #     for p in range(num_phenotype):
+    #         t0 = time.time()
+    #         bhat, bse, conv = solver.batchIRLS(X.to(device), y[:, p], C, device=device, use_mask=True, min_prob=1e-20)
+    #         t1 = time.time()
+    #         bhat_[maf_filter] = bhat[-1]
+    #         bse_[maf_filter] = bse[-1]
+    #         conv_[maf_filter] = conv[-1]
+    #         out_tensor[zi, p, snp_counter:(snp_counter + step_size), 0] = bhat_
+    #         out_tensor[zi, p, snp_counter:(snp_counter + step_size), 1] = bse_
+    #         out_tensor[zi, p, snp_counter:(snp_counter + step_size), 2] = conv_
+    #         t2 = time.time(); print('solve takes', t1 - t0, ' save takes', t2 - t1)
+    #     snp_counter += step_size
+    if niter >= hdf5_reader.nchunk:
+        break
 
 out_tensor = out_tensor.to('cpu').numpy()
 np.save(args.out_npy, out_tensor)
