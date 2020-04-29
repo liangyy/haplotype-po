@@ -3,8 +3,6 @@ param:
   header: 0
   sep: ','
 col:
-  - "age_recruitment"
-  - "sex"
   - "pc1"
   - "pc2"
   - "pc3"

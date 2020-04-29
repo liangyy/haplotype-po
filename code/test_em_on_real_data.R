@@ -59,4 +59,7 @@ table(n_informative)
 
 data.frame(n_informative = n_informative, prob_z = o$z_prob_n, prob_z_deg = o_deg$z_prob_n) %>% 
   ggplot() + geom_point(aes(x = prob_z, y = prob_z_deg, color = n_informative)) + coord_equal()
-  
+
+out = data.frame(eid = df_father$eid, prob_z = o$z_prob_n, prob_z_deg = o_deg$z_prob_n)
+
+write.table(out, 'analysis_output/test_em_output.tsv', quote = FALSE, col.names = TRUE, row.names = FALSE, sep = '\t')
