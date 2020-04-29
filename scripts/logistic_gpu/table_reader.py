@@ -25,8 +25,9 @@ def load_table_from_yaml(yaml):
         file_dict['path'],
         **file_read_kw
     )
-    df = df[ df['col'] + [df['indiv_col']]] ]
-    df = df.rename(column={'individual_id': df['indiv_col']})
+    df = df[ file_dict['col'] + [file_dict['indiv_col']] ]
+    df = df.rename(columns={ file_dict['indiv_col']: 'individual_id'})
+    df['individual_id'] = df['individual_id'].astype(str)
     return df
 
 def load_file_as_lines(filename, skip=0):

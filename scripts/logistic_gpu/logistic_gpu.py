@@ -77,7 +77,7 @@ class BatchLogisticSolver:
         diff = self._divide_fill_zero(torch.sum(nom, axis=1), torch.sum(den, axis=1))
         return diff.max(), diff
     
-    def batchIRLS(self, X, y, C, device=None, tol=1e-8, maxiter=100, min_prob=1e-5, use_mask=False):
+    def batchIRLS(self, X, y, C, device=None, tol=1e-8, maxiter=100, min_prob=1e-10, use_mask=False):
         '''
         Input
             X: Tensor(n, p)
@@ -111,7 +111,7 @@ class BatchLogisticSolver:
             XSX = torch.Tensor(k + 1, k + 1, p).to(device)
             Mu = torch.Tensor(n, p).to(device)
             S = torch.Tensor(n, p).to(device)
-            active_p = torch.zeros(p).to(device) == 1
+            active_p = torch.zeros(p).to(device) == 0
             SE = - torch.ones(k + 1, p).to(device)
             diffs = torch.ones(p).to(device) 
             SKIP_MASK = torch.ones(p).to(device) 
@@ -128,7 +128,7 @@ class BatchLogisticSolver:
         while max_diff > tol and niter < maxiter:
             
             # generate mask
-            mask = SKIP_MASK | diffs > tol 
+            mask = SKIP_MASK | (diffs > tol)
             
             # take a copy of current Wcx
             Wcx_old = Wcx.clone()
@@ -137,8 +137,8 @@ class BatchLogisticSolver:
             Mu[:, mask], _, XSX[:, :, mask] = self._calc_Mu_S_XSX(XSX[:, :, mask], X[:, mask], C, Wcx[mask, :])
             
             # update active status
-            active_p[:, mask] = active_p[:, mask] & (Mu[:, mask] > min_prob) & (Mu[:, mask] < 1 - min_prob)
-            mask[:, mask] = mask[:, mask] & active_p[:, mask]
+            active_p[mask] = active_p[mask] & ( (Mu[:, mask] < min_prob).sum(axis=0) == 0 ) & ( (Mu[:, mask] > (1 - min_prob)).sum(axis=0) == 0 )
+            mask[mask] = mask[mask] & active_p[mask]
             
             # get RHS := X^T(S X W + Y - Mu)
             RHS = self._calc_RHS(X[:, mask], y, C, Wcx[mask, :], Mu[:, mask], XSX[:, :, mask]) 
