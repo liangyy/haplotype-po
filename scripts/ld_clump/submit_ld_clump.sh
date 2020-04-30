@@ -1,15 +1,13 @@
-# ARGS1: gene list
-
-genelist=$1
 
 if [[ ! -d logs ]]
 then
   mkdir -p logs
 fi
 
-for i in `cat $genelist`
+for i in `seq 1 22`
 do
-  export TRAIT=$i
-  bash run_ld_clump.screen
+  screen -dmS ld_clump_$i bash -c "bash submit_ld_clump_one_chromosome.sh \
+  <(ls /vol/bmd/yanyul/UKB/neale_lab_gwas/|sed 's#.tsv.bgz##g') \
+  $i" 
 done
 

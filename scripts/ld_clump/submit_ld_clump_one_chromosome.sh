@@ -10,8 +10,6 @@ fi
 
 for i in `cat $genelist`
 do
-  export TRAIT=$i
-  export CHRNUM=$2
-  bash run_ld_clump_one_chromosome.screen
+  bash run_ld_clump_one_chromosome.screen $i $2
 done
 

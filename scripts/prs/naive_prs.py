@@ -123,7 +123,8 @@ if args.gwas_list is not None:
     gwas_list = set(gwas_list)
     ndelete = 0
     nleft = 0
-    for i in gwas_dict:
+    candidate_gwas_list = list(gwas_dict.keys())
+    for i in candidate_gwas_list:
         if i not in gwas_list:
             del gwas_dict[i] 
             ndelete += 1
