@@ -11,7 +11,7 @@
 
 
 
-<title>Home</title>
+<title>Implementing logistic regression solver</title>
 
 <script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -381,27 +381,105 @@ div.tocify {
 
 
 
-<h1 class="title toc-ignore">Home</h1>
+<h1 class="title toc-ignore">Implementing logistic regression solver</h1>
 <h4 class="date">Last update: Apr 26, 2020</h4>
 
 </div>
 
 
-<div id="notes" class="section level1">
-<h1><span class="header-section-number">1</span> Notes</h1>
-<ul>
-<li><a href="init_idea_outline.html">Initial thoughts</a>.</li>
-<li><a href="haplo_gwas_power.html">Power comparison on haplotype-based GWAS</a>.</li>
-<li><a href="logistic_solver_single.html">Logistic solver (single SNP case)</a></li>
-</ul>
+<p><span class="math display">\[\newcommand{\logit}{\text{logit}}\]</span></p>
+<pre class="r"><code>rm(list = ls())
+library(ggplot2)
+library(dplyr)
+library(patchwork)
+set.seed(2020)</code></pre>
+<div id="about" class="section level1">
+<h1><span class="header-section-number">1</span> About</h1>
+<p>Here I implement the logistic regression solver described <a href="https://github.com/hakyimlab/yanyu-notebook/blob/master/notes/date_042520.Rmd">here</a> to verify if the IRLS algorithm is what we look for. This note focuses on implementing the single SNP case. Multi-SNP implementation will be implemented in Python with <code>pytorch</code> so that it can take advantage of GPU.</p>
 </div>
-<div id="real-data-analysis" class="section level1">
-<h1><span class="header-section-number">2</span> Real data analysis</h1>
+<div id="simulate-data" class="section level1">
+<h1><span class="header-section-number">2</span> Simulate data</h1>
+<pre class="r"><code>N = 1000
+K = 6
+maf = 0.1
+sigma_c2 = 1
+sigma2 = 4
+intercept = -3</code></pre>
 <ul>
-<li><a href="parent_illness_init.html">Initial look at parent illness in UK Biobank</a>.</li>
-<li><a href="parent_illness_2nd.html">Second try at querying illness in UK Biobank</a>: Include instance 0, 1, and 2 (instance 3 is not on Bionimbus).</li>
-<li><a href="gwas_neale_lab_ukb.html">What GWAS to use?: Neale’s lab UK Biobank GWAS</a></li>
+<li><span class="math inline">\(G \in \{0, 1\}^{N \times 1}\)</span> as genotype with <span class="math inline">\(X_i \sim \text{Bernoulli}(\pi)\)</span></li>
+<li><span class="math inline">\(C \in \mathbb{R}^{N \times K}\)</span> as covariates with <span class="math inline">\(C_{ik} \sim N(0, \sigma_c^2)\)</span></li>
+<li>With intercept <span class="math inline">\(\beta_0 = -3\)</span>.</li>
+<li>Effect sizes if <span class="math inline">\(X\)</span> and <span class="math inline">\(C\)</span> are both <span class="math inline">\(\beta_k \sim N(0, \sigma^2)\)</span>.</li>
+<li><span class="math inline">\(N = 1000, K = 6, \pi = 0.1, \sigma_c^2 = 1, \sigma^2 = 4\)</span>.</li>
 </ul>
+<p>Model: Let <span class="math inline">\(X = [1, G, C]\)</span> and <span class="math inline">\(w = [\beta_0, \beta_g, \beta_c]\)</span>, <span class="math inline">\(\logit(\Pr(Y = 1 | X)) = Xw\)</span> which is equivalent to <span class="math display">\[\Pr(Y = 1 | X) = \frac{1}{1 + e^{-Xw}}\]</span></p>
+<pre class="r"><code>logistic_func = function(u) {
+  return( 1 / ( 1 + exp(-u) ) )
+}
+
+beta = rnorm(K + 1, mean = 0, sd = sqrt(sigma2))
+G = rbinom(N, 1, prob = maf)
+covar = matrix(
+  rnorm(N * K, mean = 0, sd = sqrt(sigma_c2)),
+  nrow = N, ncol = K
+)
+X = cbind(rep(1, N), G, covar)
+w = c(intercept, beta)
+
+# mu := Pr(Y = 1 | X)
+mu = logistic_func(X %*% w)
+
+Y = rbinom(N, 1, prob = mu)</code></pre>
+</div>
+<div id="implement-solver" class="section level1">
+<h1><span class="header-section-number">3</span> Implement solver</h1>
+<pre class="r"><code>relative_diff = function(x, x0) {
+  return(
+    sum((x - x0) ^ 2) / sum(x ^ 2)
+  )
+}
+my_logistic_regression = function(X, y, maxiter = 1000, tol = 1e-8) {
+  w = rep(0, dim(X)[2])
+  diff = Inf
+  niter = 0
+  while(diff &gt; tol &amp; niter &lt; maxiter) {
+    # message(&#39;diff = &#39;, diff)
+    mu = logistic_func(X %*% w)[,1]
+    S = diag(mu * (1 - mu))
+    XSX = t(X) %*% S %*% X
+    LHS = XSX %*% w + t(X) %*% (Y - mu)
+    w_prev = w
+    w = solve(XSX, LHS)
+    niter = niter + 1
+    diff = relative_diff(w, w_prev)
+  }
+  mu = logistic_func(X %*% w)[,1]
+  S = diag(mu * (1 - mu))
+  XSX = t(X) %*% S %*% X
+  vars = diag(solve(XSX, diag(dim(X)[2])))
+  o = data.frame(est = w, se = sqrt(vars))
+  rownames(o) = NULL
+  return(o)
+}
+
+est = my_logistic_regression(X, y)
+mod = glm(cbind(Y, 1 - Y) ~ -1 + X, family = binomial(link = &quot;logit&quot;))
+mod = summary(mod)$coefficients[, 1:2] %&gt;% as.data.frame() 
+colnames(mod) = c(&#39;est&#39;, &#39;se&#39;)
+results = inner_join(
+  mod %&gt;% mutate(idx = 1 : nrow(.)),
+  est %&gt;% mutate(idx = 1 : nrow(.)),
+  by = &#39;idx&#39;,
+  suffix = c(&#39;.glm&#39;, &#39;.mine&#39;)
+)
+p1 = results %&gt;% ggplot() + geom_point(aes(x = est.glm, y = est.mine)) + geom_abline(slope = 1, intercept = 0) + coord_equal()
+p2 = results %&gt;% ggplot() + geom_point(aes(x = se.glm, y = se.mine)) + geom_abline(slope = 1, intercept = 0) + coord_equal()
+p1 + p2</code></pre>
+<p><img src="logistic_solver_single_files/figure-html/logistic_solver-1.png" width="672" /></p>
+</div>
+<div id="conclusion" class="section level1">
+<h1><span class="header-section-number">4</span> Conclusion</h1>
+<p>IRLS algorithm gives almost identical estimates and standard errors as <code>glm</code> on logistic regression.</p>
 </div>
 
 

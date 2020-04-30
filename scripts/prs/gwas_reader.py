@@ -28,7 +28,7 @@ def read_snp_map(path):
         snp_map_df['non_effect_allele'] = snp_map_df['allele_ids'].map(lambda x: x.split(',')[1])
     return snp_map_df
 
-def _clean_tab(mydict):
+def clean_tab(mydict):
     for i in mydict.keys():
         if isinstance(mydict[i], str) and '\\t' in mydict[i]:
             mydict[i] = re.sub(mydict[i], '\\t', '\t')
@@ -61,7 +61,7 @@ def gwas_reader(yaml, snp_map=None, logger=None, cache_path=None):
         if 'param' not in this_gwas['gwas']:
             this_gwas['gwas']['param'] = {}
         else:
-            this_gwas['gwas']['param'] = _clean_tab(this_gwas['gwas']['param'])
+            this_gwas['gwas']['param'] = clean_tab(this_gwas['gwas']['param'])
         
         this_gwas['gwas']
         gwas_df = pd.read_csv(

@@ -15,5 +15,6 @@ __pycache__
 *.err
 *.log
 test*
+*.npy
 *.gzip
 
