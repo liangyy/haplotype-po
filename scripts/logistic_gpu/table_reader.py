@@ -19,6 +19,9 @@ def load_table_from_yaml(yaml):
     Rename individual ID column (specified in `indiv_col`)
     as `individual_id`
     '''
+    if yaml is None:
+        return pd.DataFrame({})
+    
     file_dict = gwas_reader.read_yaml(yaml)
     file_read_kw = gwas_reader.clean_tab(file_dict['param'])
     df = pd.read_csv(
