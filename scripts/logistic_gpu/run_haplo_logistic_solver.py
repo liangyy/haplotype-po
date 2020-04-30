@@ -248,6 +248,8 @@ y = y.to(device)
 C = C.to(device)
 z = z.to(device)
 
+# print(z[:3, :])
+
 # out tensor: PrZ x Pheno x Variant x SumStat
 out_tensor = torch.zeros((num_prob_z, num_phenotype, num_variant, 3)).to(device)
 
@@ -266,15 +268,16 @@ for h1, h2 in tqdm(variant_generator, total=hdf5_reader.nchunk):
     ) / step_size / 2 > args.maf_filter
     
     # place holder for output
-    bhat_ = torch.zeros((step_size,)).to(device)
-    bse_ = torch.zeros((step_size, )).to(device)
-    conv_ = torch.zeros((step_size, ), dtype=torch.bool).to(device)
+    bhat_ = torch.zeros((step_size * num_prob_z,)).to(device)
+    bse_ = torch.zeros((step_size * num_prob_z, )).to(device)
+    conv_ = torch.zeros((step_size * num_prob_z, ), dtype=torch.bool).to(device)
     
     # haplotypes
     h1 = h1[0, :, indiv_index].T.to(device)
     h2 = h2[0, :, indiv_index].T.to(device)
     
     x_list = []
+    maf_list = []
     for zi in range(num_prob_z):
         X = multiply_mat_vec_col_by_col(
             h1, z[:, zi]
@@ -284,7 +287,9 @@ for h1, h2 in tqdm(variant_generator, total=hdf5_reader.nchunk):
         # X = X[indiv_index, :]
         X = X[:, maf_filter]
         x_list.append(X)
+        maf_list.append(maf_filter)
     X = torch.cat(x_list, axis=1)
+    MAF = torch.cat(maf_list, axis=0)
     # t0 = time.time()
     # bhat, bse, conv = solver.batchIRLS(X.to(device), y[:, 0], C, device=device, use_mask=True, min_prob=1e-20)
     # t1 = time.time(); print('grand solve takes', t1 - t0)
@@ -292,9 +297,9 @@ for h1, h2 in tqdm(variant_generator, total=hdf5_reader.nchunk):
         # t0 = time.time()
         bhat, bse, conv = solver.batchIRLS(X.to(device), y[:, p], C, device=device, use_mask=True, min_prob=1e-20)
         # t1 = time.time()
-        bhat_[maf_filter] = bhat[-1]
-        bse_[maf_filter] = bse[-1]
-        conv_[maf_filter] = conv[-1]
+        bhat_[MAF] = bhat[-1]
+        bse_[MAF] = bse[-1]
+        conv_[MAF] = conv[-1]
         for zi in range(num_prob_z):
             start = zi * step_size
             end = (zi + 1) * step_size

@@ -6,7 +6,9 @@ PHENO_M=test_inputs/test_phenotype_mother.yaml
 COVAR_F=test_inputs/test_covariate.yaml
 COVAR_M=test_inputs/test_covariate.yaml
 PROBZ=test_inputs/test_prob_z.yaml
-OUT=test_haplo_run.npy
+
+# PROBZ=test_inputs/test_prob_z_flip.yaml
+OUT=test_haplo_run_flip.npy
 
 
 python run_haplo_logistic_solver.py \
