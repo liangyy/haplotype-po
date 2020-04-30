@@ -289,6 +289,7 @@ for h1, h2 in tqdm(variant_generator, total=hdf5_reader.nchunk):
         x_list.append(X)
         maf_list.append(maf_filter)
     X = torch.cat(x_list, axis=1)
+    print(X.shape)
     MAF = torch.cat(maf_list, axis=0)
     # t0 = time.time()
     # bhat, bse, conv = solver.batchIRLS(X.to(device), y[:, 0], C, device=device, use_mask=True, min_prob=1e-20)
@@ -297,6 +298,7 @@ for h1, h2 in tqdm(variant_generator, total=hdf5_reader.nchunk):
         # t0 = time.time()
         bhat, bse, conv = solver.batchIRLS(X.to(device), y[:, p], C, device=device, use_mask=True, min_prob=1e-20)
         # t1 = time.time()
+        print(bhat.shape, bse.shape, conv.shape)
         bhat_[MAF] = bhat[-1]
         bse_[MAF] = bse[-1]
         conv_[MAF] = conv[-1]

@@ -158,6 +158,7 @@ for h1, h2 in tqdm(variant_generator, total=hdf5_reader.nchunk):
     maf_filter = X.sum(axis=0) / X.shape[0] / 2 > 0.01
     X = X[indiv_index, :]
     X = X[:, maf_filter]
+    # print(X[0, :])
     bhat_ = torch.zeros((step_size,)).to(device)
     bse_ = torch.zeros((step_size, )).to(device)
     conv_ = torch.zeros((step_size, ), dtype=torch.bool).to(device)
