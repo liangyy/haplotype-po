@@ -342,3 +342,12 @@ for(i in names(df_combine)) {
 saveRDS(df_eur, '../analysis_output/parent_illness_2nd_european_phenotypes_clean_up.rds')
 ```
 
+```{r save_csv}
+for(i in names(df_combine)) {
+  tmp_ = df_combine[[i]] %>% left_join(df_pheno %>% select(eid, meaning), by = 'eid') %>% filter(!is.na(meaning) & meaning == 'British') %>% select(-meaning)
+  gz1 = gzfile(paste0('../analysis_output/parent_illness_2nd_european_phenotypes_clean_up.', i, '.csv.gz'), "w")
+  write.csv(tmp_, gz1)
+  close(gz1)
+}
+```
+

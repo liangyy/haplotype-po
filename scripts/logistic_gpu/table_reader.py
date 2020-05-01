@@ -13,7 +13,7 @@ import pandas as pd
 sys.path.insert(0, '../prs')
 import gwas_reader
 
-def load_table_from_yaml(yaml):
+def load_table_from_yaml(yaml, rename_cols=False):
     '''
     Load the table specified in YAML.
     Rename individual ID column (specified in `indiv_col`)
@@ -28,8 +28,12 @@ def load_table_from_yaml(yaml):
         file_dict['path'],
         **file_read_kw
     )
-    df = df[ file_dict['col'] + [file_dict['indiv_col']] ]
-    df = df.rename(columns={ file_dict['indiv_col']: 'individual_id'})
+    if rename_cols is False:
+        df = df[ file_dict['col'] + [file_dict['indiv_col']] ]
+    else:
+        df = df[ list(file_dict['col'].keys()) + [file_dict['indiv_col']] ]
+        df = df.rename(columns=file_dict['col'])
+    df = df.rename(columns={ file_dict['indiv_col']: 'individual_id' })
     df['individual_id'] = df['individual_id'].astype(str)
     return df
 
