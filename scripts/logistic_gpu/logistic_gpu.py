@@ -129,6 +129,7 @@ class BatchLogisticSolver:
             
             # generate mask
             mask = SKIP_MASK | (diffs > tol)
+            # print(niter, Mu[:, mask].min(), 1 - Mu[:, mask].max())
             
             # take a copy of current Wcx
             Wcx_old = Wcx.clone()
@@ -154,9 +155,11 @@ class BatchLogisticSolver:
             
             max_diff, diffs[mask] = self._snp_level_convergence_checker(Wcx[mask, :], Wcx_old[mask, :])
             niter += 1
-            
-        _, _, XSX[:, :, active_p] = self._calc_Mu_S_XSX(XSX[:, :, active_p], X[:, active_p], C, Wcx[active_p, :])
         
+        # print(active_p.sum())
+        _, _, XSX[:, :, active_p] = self._calc_Mu_S_XSX(XSX[:, :, active_p], X[:, active_p], C, Wcx[active_p, :])
+       
+        # print(active_p.sum())
         if device is None:
             ONES = torch.eye(k + 1).view(k + 1, k + 1, -1).expand_as(XSX[:, :, active_p])  # Tensor(k + 1, k + 1)
         else:

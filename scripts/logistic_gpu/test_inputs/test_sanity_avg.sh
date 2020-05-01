@@ -1,5 +1,5 @@
 HDF5=/vol/bmd/yanyul/UKB/ukb_hap_v2_to_hdf5/ukb_hap_v2_to_hdf5.chr16.h5
-CHUNKSIZE=30
+CHUNKSIZE=100  # 30
 NTHREADS=4
 PHENO_F=test_inputs/test_phenotype_father.yaml
 COVAR_F=test_inputs/test_covariate.yaml
