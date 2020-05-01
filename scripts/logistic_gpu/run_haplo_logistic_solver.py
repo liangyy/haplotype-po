@@ -81,8 +81,15 @@ def _load_parent_in_pair(ff, mm, add_sex=False):
     if add_sex is True:
         if 'sex' in pheno_df_dict['father'].columns:
             raise ValueError('sex should not occur in the table.')
-        pheno_df_dict['father']['sex'] = 0
-        pheno_df_dict['mother']['sex'] = 1
+        sex_encode = {'father': 0, 'mother': 1}
+        missing_one = False
+        for parent in sex_encode:
+            if pheno_df_dict[parent].shape[0] > 0:
+                missing_one = True
+                break
+        if missing_one is False:
+            for parent in sex_encode:
+                pheno_df_dict[parent]['sex'] = sex_encode[parent]
     # update the individual ID as individual ID + parent 
     return _add_parent_info_and_combine(pheno_df_dict)
 def _extend_individual_id_list(id_list):
@@ -98,9 +105,10 @@ def _extend_individual_id_list(id_list):
     return _add_parent_info_and_combine(dict_)
 def _add_parent_info_and_combine(dict_):
     for parent in dict_.keys():
-        dict_[parent]['individual_id'] = dict_[parent]['individual_id'].map(
-            lambda x: _extend_id(x, parent)
-        )
+        if dict_[parent].shape[0] > 0:
+            dict_[parent]['individual_id'] = dict_[parent]['individual_id'].map(
+                lambda x: _extend_id(x, parent)
+            )
     df = pd.concat(
         (dict_['father'], dict_['mother']),
         axis=0
@@ -255,6 +263,12 @@ out_tensor = torch.zeros((num_prob_z, num_phenotype, num_variant, 3)).to(device)
 
 indiv_index = torch.LongTensor(reference_indiv_df['row_idx'].values)
 
+# np.save('cached_y.npy', y.to('cpu').numpy())
+# np.save('cached_covar.npy', C.to('cpu').numpy())
+# np.save('cached_indiv_index.npy', indiv_index.numpy())
+# np.save('cached_z.npy', z.to('cpu').numpy())
+
+
 niter = 0
 snp_counter = 0
 for h1, h2 in tqdm(variant_generator, total=hdf5_reader.nchunk):
@@ -265,7 +279,7 @@ for h1, h2 in tqdm(variant_generator, total=hdf5_reader.nchunk):
     step_size = h1.shape[1]
     maf_filter = (
         h1.sum(axis=[0, 2]) + h2.sum(axis=[0, 2])
-    ) / step_size / 2 > args.maf_filter
+    ) / h1.shape[2] / 2 > args.maf_filter
     
     # place holder for output
     bhat_ = torch.zeros((step_size * num_prob_z,)).to(device)
@@ -289,6 +303,7 @@ for h1, h2 in tqdm(variant_generator, total=hdf5_reader.nchunk):
         x_list.append(X)
         maf_list.append(maf_filter)
     X = torch.cat(x_list, axis=1)
+    # print(X[0, :])
     MAF = torch.cat(maf_list, axis=0)
     # t0 = time.time()
     # bhat, bse, conv = solver.batchIRLS(X.to(device), y[:, 0], C, device=device, use_mask=True, min_prob=1e-20)
@@ -297,6 +312,7 @@ for h1, h2 in tqdm(variant_generator, total=hdf5_reader.nchunk):
         # t0 = time.time()
         bhat, bse, conv = solver.batchIRLS(X.to(device), y[:, p], C, device=device, use_mask=True, min_prob=1e-20)
         # t1 = time.time()
+        # print(bhat.shape, bse.shape, conv.shape)
         bhat_[MAF] = bhat[-1]
         bse_[MAF] = bse[-1]
         conv_[MAF] = conv[-1]
