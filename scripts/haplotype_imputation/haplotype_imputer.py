@@ -30,14 +30,7 @@ class HaploImputer:
                 return False
         return True
     
-    def _basic_em(self, father, mother, h1, h2, return_all=False):
-        '''
-        Only work with individuals has non-missing
-        (either 0 or 1) in all columns
-        phenotypes in both father and mother.
-        Must be called from self.impute. 
-        Otherwise the tables may have expected's.
-        '''
+    def __call_rlib_em(self, father, mother, h1, h2, rscript_and_func, return_all=False):
         # all_indivs = h1['individual_id'].tolist()
         df_all = pd.DataFrame({
             'individual_id': h1['individual_id'].tolist()
@@ -52,25 +45,10 @@ class HaploImputer:
             mother.drop('individual_id', axis=1),
             desired_values=[0, 1]
         )
-        # breakpoint()
         ff, mm, hh1, hh2 = self._extract_by_rows_binary(
             [father, mother, h1, h2],
             np.logical_and(non_miss_in_father, non_miss_in_mother)
         )
-        
-        # convert to matrix
-        # fmat, mmat, h1mat, h2mat = self._df_to_mat(
-        #     [ff, mm, hh1, hh2]
-        # )
-        
-        # ff.to_csv('ff.csv.gz', compression='gzip')
-        # mm.to_csv('mm.csv.gz', compression='gzip')
-        # hh1.to_csv('hh1.csv.gz', compression='gzip')
-        # hh2.to_csv('hh2.csv.gz', compression='gzip')
-        # print(ff)
-        # print(mm)
-        # print(hh1)
-        # print(hh2)
 
         # drop eid
         fmat, mmat, h1mat, h2mat = self._drop_individual_id(
@@ -78,16 +56,8 @@ class HaploImputer:
         )
         
         # solve EM
-        robjects.r('''
-            source('../../code/rlib_em.R')
-        ''')
-        em_solver = robjects.globalenv['em_algorithm']
-        out = em_solver(
-            pandas2ri.py2ri(fmat),
-            pandas2ri.py2ri(mmat),
-            pandas2ri.py2ri(h1mat),
-            pandas2ri.py2ri(h2mat)
-        )
+        robjects.r(f'source(\'../../code/{rscript}.R\')'.format(rscript=rscript_and_func[0]))
+        em_solver = robjects.globalenv[rscript_and_func[1]]
         
         # output
         out_df = pd.DataFrame({ 'prob_z': pandas2ri.ri2py(out[0]) })
@@ -102,6 +72,32 @@ class HaploImputer:
             ).fillna(0.5)
         
         return out_df
+    
+    def _basic_em(self, father, mother, h1, h2, return_all=False):
+        '''
+        Only work with individuals has non-missing
+        (either 0 or 1) in all columns
+        phenotypes in both father and mother.
+        Must be called from self.impute. 
+        Otherwise the tables may have expected's.
+        '''
+        return self.__call_rlib_em(
+            father, mother, 
+            h1, h2, 
+            rscript_and_func=('rlib_em.R', 'em_algorithm'), 
+            return_all=return_all
+        )
+    
+    def _based_em_deg(self, father, mother, h1, h2, return_all=False):
+        '''
+        Same as _basic_em
+        '''
+        return self.__call_rlib_em(
+            father, mother, 
+            h1, h2, 
+            rscript_and_func=('rlib_em_degenerate.R', 'em_algorithm_deg'), 
+            return_all=return_all
+        )
         
         
         

@@ -15,7 +15,7 @@ eid = intersect(df_father$eid, df_mother$eid)
 df_father = df_father[match(eid, df_father$eid), ]
 df_mother = df_mother[match(eid, df_mother$eid), ]
 df_prs1 = df_prs1[match(eid, df_prs1$eid), ]
-df_prs2 = df_prs2[match(eid, df_prs1$eid), ]
+df_prs2 = df_prs2[match(eid, df_prs2$eid), ]
 
 # rearrange columns 
 cols = colnames(df_father)
