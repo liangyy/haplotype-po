@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import rpy2.robjects as robjects
 from rpy2.robjects import pandas2ri
 pandas2ri.activate()
@@ -20,12 +21,14 @@ class HaploImputer:
             axis=1
         )
         return o
-        
+    
+    @staticmethod
     def __is_all_non_missing(x, val):
-        if x in val:
-            return True
-        else:
-            return False
+        # breakpoint()
+        for xx in x:
+            if xx not in val:
+                return False
+        return True
     
     def _basic_em(self, father, mother, h1, h2, return_all=False):
         '''
@@ -43,19 +46,35 @@ class HaploImputer:
         # filter out individuals with missing observations
         non_miss_in_father = self._missing_checker(
             father.drop('individual_id', axis=1),
-            values=[0, 1]
+            desired_values=[0, 1]
         )
         non_miss_in_mother = self._missing_checker(
             mother.drop('individual_id', axis=1),
-            values=[0, 1]
+            desired_values=[0, 1]
         )
+        # breakpoint()
         ff, mm, hh1, hh2 = self._extract_by_rows_binary(
-            [father, mother, h1, h2]
+            [father, mother, h1, h2],
+            np.logical_and(non_miss_in_father, non_miss_in_mother)
         )
         
         # convert to matrix
-        fmat, mmat, h1mat, h2mat = self._df_to_mat(
-            [ff, mm, hh1, hh2]
+        # fmat, mmat, h1mat, h2mat = self._df_to_mat(
+        #     [ff, mm, hh1, hh2]
+        # )
+        
+        # ff.to_csv('ff.csv.gz', compression='gzip')
+        # mm.to_csv('mm.csv.gz', compression='gzip')
+        # hh1.to_csv('hh1.csv.gz', compression='gzip')
+        # hh2.to_csv('hh2.csv.gz', compression='gzip')
+        # print(ff)
+        # print(mm)
+        # print(hh1)
+        # print(hh2)
+
+        # drop eid
+        fmat, mmat, h1mat, h2mat = self._drop_individual_id(
+              [ff, mm, hh1, hh2]
         )
         
         # solve EM
@@ -64,14 +83,15 @@ class HaploImputer:
         ''')
         em_solver = robjects.globalenv['em_algorithm']
         out = em_solver(
-            pandas2ri.ri2py(fmat),
-            pandas2ri.ri2py(mmat),
-            pandas2ri.ri2py(h1mat),
-            pandas2ri.ri2py(h2mat)
+            pandas2ri.py2ri(fmat),
+            pandas2ri.py2ri(mmat),
+            pandas2ri.py2ri(h1mat),
+            pandas2ri.py2ri(h2mat)
         )
         
         # output
-        out_df = pandas2ri.py2ri(out)
+        out_df = pd.DataFrame({ 'prob_z': pandas2ri.ri2py(out[0]) })
+        # breakpoint()
         out_df['individual_id'] = ff['individual_id']
         if return_all is True:
             out_df = pd.merge(
@@ -118,11 +138,18 @@ class HaploImputer:
         )
         df_f, df_m, df_1, df_2 = self._extract_and_arrange_rows(
             [df_f, df_m, df_1, df_2],
-            individuals
+            individuals_prs
         )
         
         return impute_method(df_f, df_m, df_1, df_2, **kwargs)
     
+    @staticmethod
+    def _drop_individual_id(dflist):
+        o = []
+        for df in dflist:
+            o.append(df.drop('individual_id', axis=1))
+        return o
+
     @staticmethod
     def _df_to_mat(dflist):
         o = []
@@ -134,7 +161,7 @@ class HaploImputer:
     def _extract_by_rows_binary(dflist, binary):
         o = []
         for df in dflist:
-            o.append(df.iloc[binary, :].reset_index(drop=True))
+            o.append(df[binary].reset_index(drop=True))
         return o
     
     @staticmethod
@@ -172,7 +199,7 @@ class HaploImputer:
         out = set(func_to_get_values(dflist[0]))
         for i in range(1, len(dflist)):
             tmp = set(func_to_get_values(dflist[i]))
-            out = list(tmp & out)
+            out = tmp & out
         return list(out)
     
     @staticmethod

@@ -53,6 +53,7 @@ logging.basicConfig(
 import sys
 sys.path.insert(0, '../logistic_gpu')
 import table_reader
+import prs_reader
 import haplotype_imputer
 
 logging.info('Loading observed phenotypes')
@@ -64,14 +65,19 @@ df_mother = table_reader.load_table_from_yaml(
     args.mother_phenotype_yaml,
     rename_cols=True
 )
+# print(df_father)
+# print(df_mother)
 
 logging.info('Loading PRS')
 df_h1, df_h2 = prs_reader.load_prs(args.prs_matrix, args.map_prs_yaml)
+# print(df_h1)
+# print(df_h2)
+
 
 logging.info('Run imputation: mode = {}'.format(args.impute_mode))
 imputer = haplotype_imputer.HaploImputer()
-out = imputer.impute(df_father, df_mother, df_h1, df_h2, mode=args.mode)
+out = imputer.impute(df_father, df_mother, df_h1, df_h2, mode=args.impute_mode)
 
 logging.info('Output')
-out.to_csv(args.output, compression='gzip', sep='\t')
+out.to_csv(args.output, compression='gzip', sep='\t', index=False)
 

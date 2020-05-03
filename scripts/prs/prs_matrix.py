@@ -171,7 +171,7 @@ class PRSmatrix:
             data=self.ARRAY_prs, 
             chunks=(size_hap_chunk, size_trait_chunk, size_cutoff_chunk, size_sample_chunk),
             dtype=np.dtype('float32'), 
-            scaleoffset=4, 
+            # scaleoffset=4, 
             compression='gzip'
         )
             

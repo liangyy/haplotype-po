@@ -214,6 +214,7 @@ num_covariate = reference_covar_mat.shape[1]
 logging.info('{} covariates are extracted'.format(num_covariate))
 num_prob_z = reference_prob_z_mat.shape[1]
 logging.info('{} prob z\'s are extracted'.format(num_prob_z))
+logging.info('They are {}'.format(','.join(reference_prob_z_mat.columns)))
 
 
 
