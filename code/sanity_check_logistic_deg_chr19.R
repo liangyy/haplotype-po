@@ -4,7 +4,7 @@
 # mod = glm(cbind(y, 1 - y) ~ 1 + x, family = 'binomial')
 rm(list=ls())
 
-chr_num = 16
+chr_num = 19
 
 library(dplyr)
 library(ggplot2)
@@ -12,7 +12,7 @@ library(data.table)
 
 library(reticulate)
 np <- import("numpy")
-check_imputer = np$load(paste0('/Users/yanyul/Desktop/tmp/haplotype-po/test_sanity_imputer_chr', chr_num, '.npy'))
+check_imputer = np$load(paste0('/Users/yanyul/Desktop/tmp/haplotype-po/test_sanity_imputer_deg_chr', chr_num, '.npy'))
 dim(check_imputer)
 
 gwas_father = fread('~/Downloads/2_UKB_AD_paternal_summary_output_June2019.txt', sep = ' ', data.table = FALSE)
@@ -90,6 +90,10 @@ gwas_reshape = gwas_reshape %>% group_by(variable) %>% mutate(pexp = rank(pval) 
 gwas_reshape %>% ggplot() + 
   geom_point(aes(x = -log(pexp), y = -log(pval))) + 
   facet_wrap(~variable, ncol = 3) + geom_abline(slope = 1, intercept = 0) # + coord_equal()
+
+gwas_reshape %>% ggplot() + 
+  geom_point(aes(x = -log(pexp), y = -log(pval), color = variable)) + 
+  geom_abline(slope = 1, intercept = 0) 
 
 gwas_reshape_reshape = gwas_reshape %>% reshape2::dcast(pos ~ variable, value.var = 'pval') 
 gwas_reshape_reshape %>% ggplot() +

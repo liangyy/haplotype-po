@@ -17,3 +17,7 @@ clean_up = function(filename) {
   e = read.delim2(filename)
   write.table(e, filename, sep = ',', col.names = T, row.names = F, quote = F)
 }
+
+beta2pval = function(value_beta, value_se) {
+  exp(pnorm(-abs(value_beta / value_se), log.p = T)) * 2
+}

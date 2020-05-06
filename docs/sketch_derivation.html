@@ -11,7 +11,7 @@
 
 
 
-<title>Home</title>
+<title>Sketch derivation</title>
 
 <script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -381,28 +381,130 @@ div.tocify {
 
 
 
-<h1 class="title toc-ignore">Home</h1>
-<h4 class="date">Last update: May 04, 2020</h4>
+<h1 class="title toc-ignore">Sketch derivation</h1>
+<h4 class="date">Last update: May 03, 2020</h4>
 
 </div>
 
 
-<div id="notes" class="section level1">
-<h1><span class="header-section-number">1</span> Notes</h1>
-<ul>
-<li><a href="init_idea_outline.html">Initial thoughts</a>.</li>
-<li><a href="haplo_gwas_power.html">Power comparison on haplotype-based GWAS</a>.</li>
-<li><a href="logistic_solver_single.html">Logistic solver (single SNP case)</a></li>
-</ul>
+<p><span class="math display">\[
+\newcommand{\E}{\text{E}}
+\newcommand{\sd}{\text{sd}}
+\newcommand{\var}{\text{Var}}
+\newcommand{\father}{\text{father}}
+\]</span></p>
+<pre class="r"><code>rm(list = ls())
+library(ggplot2)
+library(dplyr)</code></pre>
+<div id="about" class="section level1">
+<h1><span class="header-section-number">1</span> About</h1>
+<p>Here I sketch derivation of parent GWAS under the linear model. By “parent GWAS”, I refer to the following regression: <span class="math inline">\(y^\father \sim \gamma H_1 + (1 - \gamma) H_2\)</span>. The definition of <span class="math inline">\(\gamma\)</span>, is <strong>strictly</strong> <span class="math inline">\(\gamma := \Pr(\text{$H_1$ is from father})\)</span>.</p>
 </div>
-<div id="real-data-analysis" class="section level1">
-<h1><span class="header-section-number">2</span> Real data analysis</h1>
+<div id="derivation" class="section level1">
+<h1><span class="header-section-number">2</span> Derivation</h1>
+<p>Here I give <span class="math inline">\(\E(\hat\beta)\)</span> and <span class="math inline">\(\var(\hat\beta)\)</span> where <span class="math inline">\(\hat\beta\)</span> is the estimate of the parent GWAS linear regression. Explicitly, we have <span class="math display">\[\begin{aligned}
+  \hat\beta &amp;:= (\tilde{X}&#39;\tilde{X})^{-1}(\tilde{X}&#39;y^\father) \\
+  \tilde{X} &amp;= \gamma H_1 + (1 - \gamma) H_2
+\end{aligned}\]</span> and the true model (allelic test model) is <span class="math inline">\(y^\father = H_1 \beta + \epsilon\)</span>.</p>
+<div id="expectation" class="section level2">
+<h2><span class="header-section-number">2.1</span> Expectation</h2>
 <ul>
-<li><a href="parent_illness_init.html">Initial look at parent illness in UK Biobank</a>.</li>
-<li><a href="parent_illness_2nd.html">Second try at querying illness in UK Biobank</a>: Include instance 0, 1, and 2 (instance 3 is not on Bionimbus).</li>
-<li><a href="gwas_neale_lab_ukb.html">What GWAS to use?: Neale’s lab UK Biobank GWAS</a></li>
-<li><a href="sanity_check.html">Sanity check runs</a></li>
+<li><span class="math inline">\(\tilde{X}&#39;\tilde{X}\)</span></li>
 </ul>
+<p><span class="math display">\[\begin{aligned}
+  \tilde{X}&#39;\tilde{X} &amp;= (\gamma H_1 + (1 - \gamma) H_2)&#39;(\gamma H_1 + (1 - \gamma) H_2) \\
+  &amp;\approx \sum_i \gamma_i^2 H_{1, i}^2 + \sum_i (1 - \gamma_i)^2 H_{2, i}^2 \\
+  &amp; ~~~~ \text{, since $H_1 \perp H_2$} \\
+  &amp;\approx H^2 [ ~ \sum_i \gamma_i^2 + (1 - \gamma_i)^2 ~ ] \\
+  &amp; ~~~~ \text{, $H \perp \gamma$ and $H_1, H_2 \sim iid$ } \\
+  &amp;= H^2 N \bar{S} ~ \text{, let $S = \gamma^2 + (1 - \gamma)^2$}
+\end{aligned}\]</span></p>
+<ul>
+<li><span class="math inline">\(\tilde{X}&#39;y^\father\)</span></li>
+</ul>
+<p><span class="math display">\[\begin{aligned}
+  \tilde{X}&#39; y^\father &amp;= [ ~ \gamma H_1 + (1 - \gamma) H_2 ~ ]&#39; (~ H_1 \beta + \epsilon ~) \\
+  &amp;= ( ~ \gamma H_1&#39; H_1 \beta + \gamma H_1&#39; \epsilon ~ ) + ( ~ (1 - \gamma)H_2&#39; H_1\beta + (1 - \gamma) H_2&#39; \epsilon ~ ) \\
+  &amp;\approx \gamma H_1&#39; H_1 \beta + \gamma H_1&#39;\epsilon + (1 - \gamma) H_2&#39;\epsilon\\
+  &amp; ~~~~ \text{, since $H_1 \perp H_2$} \\
+  &amp;\approx H^2 N\bar\gamma \beta + \tilde{X}&#39;\epsilon
+\end{aligned}\]</span></p>
+<ul>
+<li><span class="math inline">\(\E(\hat\beta)\)</span></li>
+</ul>
+<p><span class="math display">\[\begin{aligned}
+  \E(\hat\beta) &amp;= \frac{\bar{\gamma} \E(\tilde{X}&#39;\epsilon)}{\bar{S}} \beta \\
+  &amp;= \frac{\bar\gamma}{\bar{S}} \beta \\
+  &amp; ~~~~ \text{, since $H_1 \perp \epsilon$ and $H_2 \perp \epsilon$}
+\end{aligned}\]</span></p>
+</div>
+<div id="variance" class="section level2">
+<h2><span class="header-section-number">2.2</span> Variance</h2>
+<ul>
+<li><span class="math inline">\(\var(X&#39;\epsilon)\)</span></li>
+</ul>
+<p><span class="math display">\[\begin{aligned}
+  \var(X&#39;\epsilon) &amp;= \var(\gamma H_1&#39; \epsilon) + \var((1 - \gamma) H_2&#39; \epsilon) \\
+  &amp; ~~~~ \text{, since $H_1 \perp H_2$} \\
+  &amp;= \sum_i \gamma_i H_{1, i}^2 \var(\epsilon) + \sum_i (1 - \gamma_i)^2 H_{2, i}^2 \var(\epsilon) \\
+  &amp;\approx H^2 \var(\epsilon) [~ \sum_i \gamma_i^2 + (1 - \gamma_i)^2 ~] \\
+  &amp; ~~~~ \text{, since $H \perp \gamma$ and $H_1, H_2 \sim iid$} \\
+  &amp;= H^2 N \bar{S} \var(\epsilon)
+\end{aligned}\]</span></p>
+<ul>
+<li><span class="math inline">\(\var(\hat\beta)\)</span></li>
+</ul>
+<p><span class="math display">\[\begin{aligned}
+  \var(\hat\beta) &amp;= \var(~ \frac{\tilde{X}&#39;y^\father}{\tilde{X}&#39;\tilde{X}} ~) \\
+  &amp;= \frac{1}{[~ H^2 N \bar{S} ~]^2} \var(\tilde{X}&#39;y^\father) \\
+  &amp;= \frac{1}{[~ H^2 N \bar{S} ~]^2} \var(H^2 N \bar{S} + \tilde{X}&#39;\epsilon) \\
+  &amp;= \frac{1}{[~ H^2 N \bar{S} ~]^2} \var(\tilde{X}&#39;\epsilon) \\
+  &amp;= \frac{1}{[~ H^2 N \bar{S} ~]^2} H^2 N \bar{S} \var(\epsilon) \\
+  &amp;= \frac{\var(\epsilon)}{H^2 N \bar{S}}
+\end{aligned}\]</span></p>
+</div>
+<div id="test-statistic" class="section level2">
+<h2><span class="header-section-number">2.3</span> Test statistic</h2>
+<p><span class="math display">\[\begin{aligned}
+  T &amp;:= \frac{\hat\beta}{\sqrt{\var(\hat\beta)}} \\
+  &amp;= \frac{\bar{\gamma}}{\bar{S}} \frac{\sqrt{H^2 N \bar{S}}}{\sqrt{\var(\epsilon)}}\beta \\
+  &amp;= \frac{\bar{\gamma}}{\sqrt{\bar{S}}} \underbrace{\sqrt{\frac{N H^2}{\var(\epsilon)}} \beta}_{\text{$T^\star$ from $y^{father} \sim H_1$}} \\
+  &amp;= \frac{\bar{\gamma}}{\sqrt{\bar{S}}} T^\star
+\end{aligned}\]</span></p>
+</div>
+</div>
+<div id="bias" class="section level1">
+<h1><span class="header-section-number">3</span> Bias</h1>
+<p>By definition, <span class="math inline">\(\E(\hat\beta) = \frac{\bar{\gamma}}{\bar{S}} \beta\)</span>. For <span class="math inline">\(\gamma = constant\)</span>.</p>
+<pre class="r"><code>bar_S = function(gamma) {
+  mean( gamma ^ 2 + (1 - gamma) ^ 2)
+}
+bar_gamma = function(gamma) {
+  mean(gamma)
+}
+gamma = 0 : 100 / 100
+df = data.frame(gamma = gamma, bar_S = rep(NA, length(gamma)), bar_gamma = rep(NA, length(gamma)))
+for(gi in 1 : length(gamma)) {
+  df$bar_S[gi] = bar_S(df$gamma[gi])
+  df$bar_gamma[gi] = bar_gamma(df$gamma[gi])
+}
+df %&gt;% ggplot() + 
+  geom_line(aes(x = gamma, y = bar_S, color = &#39;bar_S&#39;)) + 
+  geom_line(aes(x = gamma, y = bar_gamma, color = &#39;bar_gamma&#39;)) + 
+  geom_line(aes(x = gamma, y = bar_gamma / bar_S, color = &#39;bias ratio&#39;))</code></pre>
+<p><img src="sketch_derivation_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+</div>
+<div id="power" class="section level1">
+<h1><span class="header-section-number">4</span> Power</h1>
+<p>Taking the power of <span class="math inline">\(y^\father ~ H_1\)</span> as 1, we have <span class="math inline">\(T = \frac{\bar{\gamma}}{\sqrt{\bar{S}}} T^\star\)</span>.</p>
+<pre class="r"><code>df %&gt;% ggplot() + 
+  geom_line(aes(x = gamma, y = bar_S, color = &#39;bar_S&#39;)) + 
+  geom_line(aes(x = gamma, y = bar_gamma, color = &#39;bar_gamma&#39;)) + 
+  geom_line(aes(x = gamma, y = bar_gamma / sqrt(bar_S), color = &#39;power ratio&#39;)) + 
+  geom_hline(yintercept = 1 / sqrt(2), linetype = 2) + 
+  geom_text(x = 0.35, y = 0.77, label = expression(&quot;y = &quot; * 1 / sqrt(2)), size = 6)</code></pre>
+<pre><code>## Warning in is.na(x): is.na() applied to non-(list or vector) of type &#39;expression&#39;</code></pre>
+<p><img src="sketch_derivation_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
 </div>
 
 

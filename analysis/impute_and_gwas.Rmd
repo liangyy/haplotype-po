@@ -1,0 +1,263 @@
+---
+title: "Impute haplotype and perform GWAS: power analysis"
+date: "`r paste0('Last update: ', format(Sys.time(), '%b %d, %Y'))`"    
+---
+
+$$
+\newcommand{\E}{\text{E}}
+$$
+
+```{r setup}
+rm(list = ls())
+library(ggplot2)
+library(dplyr)
+theme_set(theme_bw(base_size=15))
+set.seed(2020)
+
+# load some gists
+source('https://gist.githubusercontent.com/liangyy/43912b3ecab5d10c89f9d4b2669871c9/raw/3ca651cfa53ffccb8422f432561138a46e93710f/my_ggplot_theme.R')
+source('https://gist.githubusercontent.com/liangyy/e580a36154586148cca7fd4cd973f502/raw/bad4364b1700662c7086fcdea191e42f530d0e2e/zval2pval.R')
+```
+
+# About
+
+Here we perform simulation and conduct the full analysis including both imputationa and association test. 
+The goal is to provide a more realistic $\Pr(Z)$ for GWAS analysis (with high variation).
+At such high variation of $\Pr(Z)$ (some imputations are good but some are very bad), would there still be power gain?
+
+# Simulation 
+
+## Simulation for imputation
+
+1. Simulate haplotypes for the parents, $H_i^{f, 1}, H_i^{f, 2}$ and $H_i^{m, 1}, H_i^{m, 2}$.
+2. Simulate haplotypes for the child, $H_i^1, H_i^2$.
+3. Simulate phenotypes for the parents, $y_{i, p}^f$ and $y_{i, p}^m$.
+4. Simulate extra cohort for building PRS, $y_{i, p}$ and $X_{i, p}$
+
+Some parameter settings:
+
+```{r param1}
+step1_sample_size = 10000
+step1_sample_size_extra = 20000
+step1_n_pheno = 30
+step1_prior_causal = 0.1
+step1_causal_sigma = 1
+step1_n_snp = 1000
+step1_heritabiltiy = 0.05
+step1_maf_low = 0.05
+step1_maf_high = 0.45
+```
+
+* Sample size $`r step1_sample_size`$.
+* Sample size for PRS $`r step1_sample_size_extra`$.
+* Number of phenotypes $`r step1_n_pheno`$.
+* Effect size $\beta_{p, k} \sim \pi \delta_0 + (1 - \pi) N(0, \sigma)$ where $\pi = `r 1 - step1_prior_causal`$ and $\sigma^2 = `r step1_causal_sigma`$.
+* Allele frequency $maf \sim Unif(`r step1_maf_low`, `r step1_maf_high`)$.
+* Number of SNPs $`r step1_n_snp`$.
+* Heritabillty $h^2 = `r step1_heritabiltiy`$ for all phenotypes.
+
+## Simulation for association test
+
+1. Simulate haplotypes for the father, $H^{f, 1}, H^{f, 2}$ and $H^{m, 1}, H^{m, 2}$.
+2. Simulate phenotypes for the parents, $y^f$ and $y^m$.
+3. Let $H^1 = H^{f, 1}$ and $H^2 = H^{m, 1}$.
+
+Some paramter settings:
+
+```{r param2}
+step2_sample_size = 10000
+step2_nrepeat = 500
+step2_maf_low = 0.05
+step2_maf_high = 0.45
+step2_heritability = 0.001
+step2_beta = 1
+```
+
+* Sample size $`r step2_sample_size`$.
+* Number of replication $`r step2_nrepeat`$.
+* Monor allele frequency $f \sim Unif(`r step2_maf_low`, `r step2_maf_high`)$.
+* Heritability (note that it is single SNP scenario) $`r step2_heritability`$.
+
+## Run simulation
+
+Data for imputation.
+
+```{r util}
+source('../code/rlib_simulation.R')
+```
+
+```{r simulation1}
+step1_maf = get_maf(step1_n_snp, step1_maf_low, step1_maf_high)
+step1_h_father = sim_hap(step1_sample_size, step1_n_snp, step1_maf)
+step1_h_mother = sim_hap(step1_sample_size, step1_n_snp, step1_maf)
+step1_h_gwas = sim_hap(step1_sample_size_extra, step1_n_snp, step1_maf)
+step1_h_child = transmit_haplo(step1_h_father, step1_h_mother)
+step1_effect_size = matrix(spike_and_slab(step1_n_snp * step1_n_pheno, 1 - step1_prior_causal, step1_causal_sigma), nrow = step1_n_snp, ncol = step1_n_pheno)
+step1_y_father = simulate_pheno(step1_h_father, step1_effect_size, step1_heritabiltiy, step1_maf)
+step1_y_mother = simulate_pheno(step1_h_mother, step1_effect_size, step1_heritabiltiy, step1_maf)
+step1_y_gwas = simulate_pheno(step1_h_gwas, step1_effect_size, step1_heritabiltiy, step1_maf)
+```
+
+Data for association test.
+
+```{r simulation2}
+step2_maf = get_maf(step2_nrepeat, step2_maf_low, step2_maf_high)
+step2_h_father = sim_hap(step2_sample_size, step2_nrepeat, step2_maf)
+step2_h_mother = sim_hap(step2_sample_size, step2_nrepeat, step2_maf)
+step2_y_father = simulate_pheno_single_snp(step2_h_father, rep(step2_beta, step2_nrepeat), step2_heritability, step2_maf)
+step2_y_mother = simulate_pheno_single_snp(step2_h_mother, rep(step2_beta, step2_nrepeat), step2_heritability, step2_maf)
+step2_y_father_null = simulate_pheno_single_snp(step2_h_father, rep(0, step2_nrepeat), step2_heritability, step2_maf, null = TRUE)
+step2_y_mother_null = simulate_pheno_single_snp(step2_h_mother, rep(0, step2_nrepeat), step2_heritability, step2_maf, null = TRUE)
+```
+
+# Haplotype imputation
+
+## Estimated PRS
+
+```{r estimated-prs-build}
+# build PRS
+source('../code/rlib_gwas.R')
+build_prs = function(geno, pheno, prs_p_cutoff = 0.01) {
+  n_snp = ncol(geno)
+  n_pheno = ncol(pheno)
+  effect_size_prs = matrix(0, nrow = n_snp, ncol = n_pheno)
+  prs_p_cutoff = 0.01
+  prs_z_cutoff = abs(qnorm(prs_p_cutoff / 2))
+  for(pp in 1 : n_pheno) {
+    message('Building phenotype ', pp)
+    gwas = run_gwas(geno, pheno[, pp])
+    pass_ind = abs(gwas$bhat / gwas$bhat_se) > prs_z_cutoff
+    effect_size_prs[, pp][pass_ind] = gwas$bhat[pass_ind]
+  }
+  return(effect_size_prs)
+}
+step1_Xgwas = step1_h_gwas[[1]] + step1_h_gwas[[2]]
+step1_effect_size_prs = build_prs(step1_Xgwas, step1_y_gwas)
+```
+
+## Run EM
+
+```{r estimated-prs}
+source('../code/rlib_em.R')
+step1_g1 = step1_h_child[[1]] %*% step1_effect_size_prs
+step1_g2 = step1_h_child[[2]] %*% step1_effect_size_prs
+collector = list()
+for(p in c(2, 5, 10, 15, 20, 25, 30)) {
+  o = em_algorithm(step1_y_father[, 1:p], step1_y_mother[, 1:p], step1_g1[, 1:p], step1_g2[, 1:p])
+  collector[[length(collector) + 1]] = data.frame(z = o$z_prob_n, num_pheno = p, idx = 1 : length(o$z_prob_n))
+}
+df_estimated = do.call(rbind, collector)
+```
+
+# Run association test
+
+```{r gwas-prepare}
+source('../code/rlib_gwas.R')
+
+dm0 = list(
+  X = (step2_h_father[[1]] + step2_h_mother[[1]]) / 2, 
+  y = step2_y_father, 
+  ynull = step2_y_father_null
+)
+dm1 = function(z) {
+  list(
+    X = step2_h_father[[1]] * z + step2_h_mother[[1]] * (1 - z),
+    y = step2_y_father,
+    ynull = step2_y_father_null
+  )
+}
+dm2 = list(
+  X = step2_h_father[[1]],
+  y = step2_y_father,
+  ynull = step2_y_father_null
+)
+
+```
+
+
+Actual GWAS run.
+
+```{r gwas}
+re = list()
+ys = c('y', 'ynull')
+types = c('beta = 1', 'beta = 0')
+
+# setting 1
+for(i in 1 : length(ys)) {
+  o = run_gwas_pairwise(dm0$X, dm0[[ys[i]]])
+  re[[length(re) + 1]] = data.frame(b = o$bhat, b_se = o$bhat_se, npheno = 0, type = types[i])
+}
+
+# setting 2 
+for(npheno in unique(df_estimated$num_pheno)) {
+  message('Working on npheno = ', npheno)
+  zvec = df_estimated$z[df_estimated$num_pheno == npheno]
+  zmat = matrix(rep(zvec, step2_nrepeat), nrow = step2_sample_size, ncol = step2_nrepeat)
+  # setting 2
+  dm1_ = dm1(zmat)
+  for(i in 1 : length(ys)) {
+    o = run_gwas_pairwise(dm1_$X, dm1_[[ys[i]]])
+    re[[length(re) + 1]] = data.frame(b = o$bhat, b_se = o$bhat_se, npheno = npheno, type = types[i])
+  }
+}
+
+# setting 3
+for(i in 1 : length(ys)) {
+  o = run_gwas_pairwise(dm2$X, dm2[[ys[i]]])
+  re[[length(re) + 1]] = data.frame(b = o$bhat, b_se = o$bhat_se, npheno = Inf, type = types[i])
+}
+
+df_re = do.call(rbind, re) %>% mutate(stat = b / b_se)
+```
+
+# Visualization
+
+Test statistic.
+
+```{r stat, fig.width=7, fig.height=5}
+df_re %>% filter(type == 'beta = 1') %>% 
+  ggplot() + geom_boxplot(aes(x = factor(npheno), y = stat)) +
+  ggtitle('Test statistic: Under the alternative') + th2 +
+  theme(legend.position = 'bottom')
+df_re %>% filter(type == 'beta = 0') %>% 
+  ggplot() + geom_boxplot(aes(x = factor(npheno), y = stat)) +
+  ggtitle('Test statistic: Under the null') + th2 +
+  theme(legend.position = 'bottom')
+```
+
+QQ-plot.
+
+```{r qq, fig.width=5, fig.height=5}
+df_re = df_re %>% mutate(pval = zval2pval(stat))  # , df = sample_size - 2
+df_re = df_re %>% group_by(npheno, type) %>% mutate(pval_exp = rank(pval) / (n() + 1)) %>% ungroup()
+df_re %>% filter(type == 'beta = 0') %>% 
+  ggplot() + geom_point(aes(x = -log(pval_exp), y = -log(pval), color = factor(npheno))) +
+  ggtitle('Test statistic: Under the null') + th2 +
+  geom_abline(slope = 1, intercept = 0) + 
+  theme(legend.position = 'bottom')
+```
+
+```{r qq2, fig.width=5, fig.height=5}
+df_re = df_re %>% mutate(pval = zval2pval(stat))  # , df = sample_size - 2
+df_re = df_re %>% group_by(npheno, type) %>% mutate(pval_exp = rank(pval) / (n() + 1)) %>% ungroup()
+df_re %>% filter(type == 'beta = 1') %>% 
+  ggplot() + geom_point(aes(x = -log(pval_exp), y = -log(pval), color = factor(npheno))) +
+  ggtitle('Test statistic: Under the alternative') + th2 +
+  geom_abline(slope = 1, intercept = 0) + 
+  theme(legend.position = 'bottom')
+```
+
+Beta hat.
+
+```{r bhat, fig.width=7, fig.height=5}
+df_re %>% filter(type == 'beta = 1') %>% 
+  ggplot() + geom_boxplot(aes(x = factor(npheno), y = b)) +
+  ggtitle('Beta hat: Under the alternative') + th2 +
+  theme(legend.position = 'bottom') +
+  geom_hline(yintercept = 1)
+df_re %>% filter(type == 'beta = 0') %>% 
+  ggplot() + geom_boxplot(aes(x = factor(npheno), y = b)) +
+  ggtitle('Beta hat: Under the null') + th2 +
+  theme(legend.position = 'bottom') +
+  geom_hline(yintercept = 0)
+```
