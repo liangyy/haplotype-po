@@ -34,7 +34,7 @@ def clean_tab(mydict):
             mydict[i] = re.sub(mydict[i], '\\t', '\t')
     return mydict
 
-def gwas_reader(yaml, snp_map=None, logger=None, cache_path=None):
+def gwas_reader(yaml, snp_map=None, logger=None, cache_path=None, from_dict=True):
     if cache_path is not None and os.path.exists(cache_path) and os.path.isfile(cache_path):
         filename, file_extension = os.path.splitext(cache_path)
         desired_ext = '.pgz'
@@ -44,7 +44,10 @@ def gwas_reader(yaml, snp_map=None, logger=None, cache_path=None):
         with gzip.open(cache_path, 'rb') as f:
             out_dict  = pickle.load(f)
         return out_dict
-    gwas_dict = read_yaml(yaml)
+    if from_dict is False:
+        gwas_dict = read_yaml(yaml)
+    else:
+        gwas_dict = yaml
     snp_map_df = read_snp_map(snp_map)
     out_dict = {}
     counter = 0

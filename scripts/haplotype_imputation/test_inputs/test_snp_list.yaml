@@ -2,6 +2,7 @@ heart_disease:
   load_method: 'ld_clump'
   params:
     pval_cutoff: 0.05
+    snp_map: '/vol/bmd/yanyul/UKB/haplotype_imputation/snp_map_for_neale_lab_gwas.with_sign.tsv.gz'
     gwas_yaml:
       gwas: 
         path: '/vol/bmd/yanyul/UKB/neale_lab_gwas/20002_1066.gwas.imputed_v3.both_sexes.tsv.bgz'
@@ -12,11 +13,12 @@ heart_disease:
       varcol: 'variant'
       betacol: 'beta'
       pvalcol: 'pval'
-      ld_clump: '/vol/bmd/yanyul/UKB/haplotype_imputation/ld_clump/20002_1066.gwas.imputed_v3.both_sexes/gwas_clump_x_chr16.valid.snp'
+      ld_clump: '/vol/bmd/yanyul/UKB/haplotype_imputation/ld_clump/tmp_20002_1066.gwas.imputed_v3.both_sexes/gwas_clump_x_chr16.valid.snp'
 stroke:
   load_method: 'ld_clump'
   params:
     pval_cutoff: 0.05
+    snp_map: '/vol/bmd/yanyul/UKB/haplotype_imputation/snp_map_for_neale_lab_gwas.with_sign.tsv.gz'
     gwas_yaml:
       gwas: 
         path: '/vol/bmd/yanyul/UKB/neale_lab_gwas/6150_3.gwas.imputed_v3.both_sexes.tsv.bgz'
@@ -27,11 +29,12 @@ stroke:
       varcol: 'variant'
       betacol: 'beta'
       pvalcol: 'pval'
-      ld_clump: '/vol/bmd/yanyul/UKB/haplotype_imputation/ld_clump/6150_3.gwas.imputed_v3.both_sexes/gwas_clump_x_chr16.valid.snp'
+      ld_clump: '/vol/bmd/yanyul/UKB/haplotype_imputation/ld_clump/tmp_6150_3.gwas.imputed_v3.both_sexes/gwas_clump_x_chr16.valid.snp'
 high_blood_pressure:
   load_method: 'ld_clump'
   params:
     pval_cutoff: 0.05
+    snp_map: '/vol/bmd/yanyul/UKB/haplotype_imputation/snp_map_for_neale_lab_gwas.with_sign.tsv.gz'
     gwas_yaml:
       gwas: 
         path: '/vol/bmd/yanyul/UKB/neale_lab_gwas/20002_1065.gwas.imputed_v3.both_sexes.tsv.bgz'
@@ -42,11 +45,12 @@ high_blood_pressure:
       varcol: 'variant'
       betacol: 'beta'
       pvalcol: 'pval'
-      ld_clump: '/vol/bmd/yanyul/UKB/haplotype_imputation/ld_clump/20002_1065.gwas.imputed_v3.both_sexes/gwas_clump_x_chr16.valid.snp'
+      ld_clump: '/vol/bmd/yanyul/UKB/haplotype_imputation/ld_clump/tmp_20002_1065.gwas.imputed_v3.both_sexes/gwas_clump_x_chr16.valid.snp'
 diabetes:
   load_method: 'ld_clump'
   params:
     pval_cutoff: 0.05
+    snp_map: '/vol/bmd/yanyul/UKB/haplotype_imputation/snp_map_for_neale_lab_gwas.with_sign.tsv.gz'
     gwas_yaml:
       gwas: 
         path: '/vol/bmd/yanyul/UKB/neale_lab_gwas/2443.gwas.imputed_v3.both_sexes.tsv.bgz'
@@ -57,4 +61,4 @@ diabetes:
       varcol: 'variant'
       betacol: 'beta'
       pvalcol: 'pval'
-      ld_clump: '/vol/bmd/yanyul/UKB/haplotype_imputation/ld_clump/2443.gwas.imputed_v3.both_sexes/gwas_clump_x_chr16.valid.snp'
+      ld_clump: '/vol/bmd/yanyul/UKB/haplotype_imputation/ld_clump/tmp_2443.gwas.imputed_v3.both_sexes/gwas_clump_x_chr16.valid.snp'
