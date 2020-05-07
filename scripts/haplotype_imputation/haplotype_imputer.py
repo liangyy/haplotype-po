@@ -56,9 +56,15 @@ class HaploImputer:
         )
         
         # solve EM
-        robjects.r(f'source(\'../../code/{rscript}.R\')'.format(rscript=rscript_and_func[0]))
+        robjects.r('source(\'../../code/{rscript}\')'.format(rscript=rscript_and_func[0]))
         em_solver = robjects.globalenv[rscript_and_func[1]]
-        
+        out = em_solver(
+            pandas2ri.py2ri(fmat),
+            pandas2ri.py2ri(mmat),
+            pandas2ri.py2ri(h1mat),
+            pandas2ri.py2ri(h2mat)
+        ) 
+
         # output
         out_df = pd.DataFrame({ 'prob_z': pandas2ri.ri2py(out[0]) })
         # breakpoint()
@@ -88,7 +94,7 @@ class HaploImputer:
             return_all=return_all
         )
     
-    def _based_em_deg(self, father, mother, h1, h2, return_all=False):
+    def _basic_em_deg(self, father, mother, h1, h2, return_all=False):
         '''
         Same as _basic_em
         '''
