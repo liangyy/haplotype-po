@@ -1,3 +1,7 @@
+##
+# Implement idea 1
+##
+
 import argparse
 parser = argparse.ArgumentParser(prog='impute_parent_of_origin.py', description='''
     Impute parent of origin from PRS scores and observed phenotypes.
