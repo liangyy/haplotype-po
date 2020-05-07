@@ -35,6 +35,11 @@ parser.add_argument('--snp-list-yaml', help='''
         params:
             list_path: 'path_to_list'
 ''')
+parser.add_argument('--snp-list-cache', type=str, help='''
+    Path to PGZ file (pickle.gz) file to cache 
+    the information loaded from --snp-list-yaml.
+    Require pgz as extension.
+''')
 parser.add_argument('--father-phenotype-yaml', help='''
     Observed phenotype of father
     with all loading specified in YAML:
@@ -90,7 +95,7 @@ df_mother = table_reader.load_table_from_yaml(
 
 logging.info('Loading variant list')
 snp_loader = snp_list_reader.snpLoader(args.snp_list_yaml)
-snp_loader.load()
+snp_loader.load(args.snp_list_cache)
 
 logging.info('Loading haplotypes')
 h1, h2, hap_indiv_df, hap_pos_df = geno_hdf5_reader.load_haplotypes_by_position(

@@ -1,6 +1,9 @@
 import sys
 sys.path.insert(0, '../prs')
 import gwas_reader
+import os
+import pickle, gzip
+
 
 class snpLoader:
     def __init__(self, snp_yaml):
@@ -10,7 +13,20 @@ class snpLoader:
     def _check_element(dict_, ele_):
         if ele_ not in dict_:
             raise ValueError(f'Missing {ele_}.')
-    def load(self):
+    def load(self, cache_path=None):
+        
+        # load cached file in there is any
+        if cache_path is not None and os.path.exists(cache_path) and os.path.isfile(cache_path):
+            filename, file_extension = os.path.splitext(cache_path)
+            desired_ext = '.pgz'
+            if file_extension != desired_ext:
+                raise ValueError(f'cache_path should have {desired_ext} as extension.')
+            print(f'Loading gwas_dict cached in {cache_path}')
+            with gzip.open(cache_path, 'rb') as f:
+                self.snp_pos_dict = pickle.load(f)
+            return
+        
+        # load from scratch is no cached file
         self.snp_pos_dict = {}
         for trait in self.loader_dict.keys():
             load_method = getattr(
@@ -20,6 +36,17 @@ class snpLoader:
             self.snp_pos_dict[trait] = load_method(
                 self.loader_dict[trait]['params']
             )
+        
+        # cache self.loader_dict if having cache_path
+        if cache_path is not None:
+            dirname = os.path.dirname(cache_path)
+            if not os.path.exists(dirname):
+                raise ValueError('Expect the directory to cache_path exists.')
+            else:
+                print(f'Caching gwas_dict to {cache_path}')
+                with gzip.open(cache_path, 'wb') as f:
+                    pickle.dump(self.snp_pos_dict, f)
+                     
     def _load_yaml(self):
         snp_yaml_dict = gwas_reader.read_yaml(self.snp_yaml)
         self.loader_dict = {}
