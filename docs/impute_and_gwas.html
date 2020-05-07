@@ -11,7 +11,7 @@
 
 
 
-<title>Initial ideas</title>
+<title>Impute haplotype and perform GWAS: power analysis</title>
 
 <script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -381,8 +381,8 @@ div.tocify {
 
 
 
-<h1 class="title toc-ignore">Initial ideas</h1>
-<h4 class="date">Last update: May 03, 2020</h4>
+<h1 class="title toc-ignore">Impute haplotype and perform GWAS: power analysis</h1>
+<h4 class="date">Last update: May 04, 2020</h4>
 
 </div>
 
@@ -392,38 +392,29 @@ div.tocify {
 \]</span></p>
 <pre class="r"><code>rm(list = ls())
 library(ggplot2)
-library(dplyr)
-theme_set(theme_bw(base_size=15))
+library(dplyr)</code></pre>
+<pre><code>## 
+## Attaching package: &#39;dplyr&#39;</code></pre>
+<pre><code>## The following objects are masked from &#39;package:stats&#39;:
+## 
+##     filter, lag</code></pre>
+<pre><code>## The following objects are masked from &#39;package:base&#39;:
+## 
+##     intersect, setdiff, setequal, union</code></pre>
+<pre class="r"><code>theme_set(theme_bw(base_size=15))
 set.seed(2020)
 
 # load some gists
-source(&#39;https://gist.githubusercontent.com/liangyy/43912b3ecab5d10c89f9d4b2669871c9/raw/3ca651cfa53ffccb8422f432561138a46e93710f/my_ggplot_theme.R&#39;)</code></pre>
-<div id="problem-setup" class="section level1">
-<h1><span class="header-section-number">1</span> Problem setup</h1>
-<ul>
-<li><p><strong>Haplotype</strong>: For an individual, we have their haplotype information denoted as <span class="math inline">\(H^1\)</span> and <span class="math inline">\(H^2\)</span>. The haplotype information is obtained throught phasing which requires a external reference (haplotype) panel.</p></li>
-<li><p><strong>Phenotypes of parents</strong>: Besides, we have the phenotypes of their parents. Considering <span class="math inline">\(P\)</span> phenotypes, we have <span class="math inline">\(y_{i, p}^f, y_{i, p}^m\)</span>.</p></li>
-</ul>
-<p>The <strong>goal</strong> is to impute the origin of parent for each of the two haplotypes. We denote the origin as <span class="math inline">\(Z_i\)</span> which represents if <span class="math inline">\(H_i^1\)</span> comes from father.</p>
-</div>
-<div id="model" class="section level1">
-<h1><span class="header-section-number">2</span> Model</h1>
-<p>We consider a simple model as follow.</p>
-<p><span class="math display">\[\begin{aligned}
-  y_{i, p}^f &amp;= (H_i^{f,1} + H_i^{f,2}) \beta_p + \epsilon_{i, p}^f \\
-  y_{i, p}^m &amp;= (H_i^{m,1} + H_i^{m,2}) \beta_p + \epsilon_{i, p}^m
-\end{aligned}\]</span></p>
-<p>And we know that one of <span class="math inline">\(H_i^1\)</span> and <span class="math inline">\(H_i^2\)</span> comes from father and the other comes from mother. Suppose <span class="math inline">\(H_i^1\)</span> comes from father and <span class="math inline">\(H_i^2\)</span> comes from mother, then we can write the haplotype version of the above expressions as follow.</p>
-<p><span class="math display">\[\begin{aligned}
-  y_{i, p}^f &amp;= H_i^1 \beta_p + \epsilon_{i, p}^{f,\star} \\
-  y_{i, p}^m &amp;= H_i^2 \beta_p + \epsilon_{i, p}^{m,\star}
-\end{aligned}\]</span> where <span class="math inline">\(\epsilon_{i, p}^{\star}\)</span> contains two parts: 1) environmental noise; and 2) the genetic component of one haplotype. And let <span class="math inline">\(\epsilon_{i, p}^{\star} \sim N(0, \sigma^2)\)</span>.</p>
-<p>Essentially, we observe <span class="math inline">\(H_i^1, H_i^2\)</span> and <span class="math inline">\(y_{i, p}^f, y_{i, p}^m\)</span> and we’d like to infer <span class="math inline">\(Z_i\)</span>. If we know <span class="math inline">\(\beta_p\)</span>, we can let <span class="math inline">\(g_{i, p}^k = H_i^k \beta_p\)</span> and we can infer <span class="math inline">\(Z_i\)</span> by comparing how similar is <span class="math inline">\((y_{i, 1}^k, \cdots, y_{i, P}^k)\)</span> to <span class="math inline">\((y_{i, p}^f, \cdots, y_{i, P}^f)\)</span>. The uncertainty in estimating <span class="math inline">\(Z_i\)</span> is accounted for in estimating <span class="math inline">\(\Pr(Z_i = 1 | \text{data})\)</span>. To obtain this quantity, we need to estimate <span class="math inline">\(\sigma^2\)</span>.</p>
-<p>However, in practice, we do not observe <span class="math inline">\(\beta_p\)</span>. Instead, we use <span class="math inline">\(\hat\beta_p\)</span> estimated from GWAS, or more generally, we replace <span class="math inline">\(g_{i, p}^k\)</span> (the genetic component captured by a haplotype) with any other proxy to it,  polygenic risk score.</p>
+source(&#39;https://gist.githubusercontent.com/liangyy/43912b3ecab5d10c89f9d4b2669871c9/raw/3ca651cfa53ffccb8422f432561138a46e93710f/my_ggplot_theme.R&#39;)
+source(&#39;https://gist.githubusercontent.com/liangyy/e580a36154586148cca7fd4cd973f502/raw/bad4364b1700662c7086fcdea191e42f530d0e2e/zval2pval.R&#39;)</code></pre>
+<div id="about" class="section level1">
+<h1><span class="header-section-number">1</span> About</h1>
+<p>Here we perform simulation and conduct the full analysis including both imputationa and association test. The goal is to provide a more realistic <span class="math inline">\(\Pr(Z)\)</span> for GWAS analysis (with high variation). At such high variation of <span class="math inline">\(\Pr(Z)\)</span> (some imputations are good but some are very bad), would there still be power gain?</p>
 </div>
 <div id="simulation" class="section level1">
-<h1><span class="header-section-number">3</span> Simulation</h1>
-<p>Here we try a minimal simulation scheme. It contains the following steps:</p>
+<h1><span class="header-section-number">2</span> Simulation</h1>
+<div id="simulation-for-imputation" class="section level2">
+<h2><span class="header-section-number">2.1</span> Simulation for imputation</h2>
 <ol style="list-style-type: decimal">
 <li>Simulate haplotypes for the parents, <span class="math inline">\(H_i^{f, 1}, H_i^{f, 2}\)</span> and <span class="math inline">\(H_i^{m, 1}, H_i^{m, 2}\)</span>.</li>
 <li>Simulate haplotypes for the child, <span class="math inline">\(H_i^1, H_i^2\)</span>.</li>
@@ -431,15 +422,15 @@ source(&#39;https://gist.githubusercontent.com/liangyy/43912b3ecab5d10c89f9d4b26
 <li>Simulate extra cohort for building PRS, <span class="math inline">\(y_{i, p}\)</span> and <span class="math inline">\(X_{i, p}\)</span></li>
 </ol>
 <p>Some parameter settings:</p>
-<pre class="r"><code>sample_size = 10000
-sample_size_extra = 20000
-n_pheno = 30
-prior_causal = 0.1
-causal_sigma = 1
-n_snp = 1000
-heritabiltiy = 0.05
-maf_low = 0.05
-maf_high = 0.45</code></pre>
+<pre class="r"><code>step1_sample_size = 10000
+step1_sample_size_extra = 20000
+step1_n_pheno = 30
+step1_prior_causal = 0.1
+step1_causal_sigma = 1
+step1_n_snp = 1000
+step1_heritabiltiy = 0.05
+step1_maf_low = 0.05
+step1_maf_high = 0.45</code></pre>
 <ul>
 <li>Sample size <span class="math inline">\(10^{4}\)</span>.</li>
 <li>Sample size for PRS <span class="math inline">\(2\times 10^{4}\)</span>.</li>
@@ -449,139 +440,55 @@ maf_high = 0.45</code></pre>
 <li>Number of SNPs <span class="math inline">\(1000\)</span>.</li>
 <li>Heritabillty <span class="math inline">\(h^2 = 0.05\)</span> for all phenotypes.</li>
 </ul>
-<p>Simulation.</p>
+</div>
+<div id="simulation-for-association-test" class="section level2">
+<h2><span class="header-section-number">2.2</span> Simulation for association test</h2>
+<ol style="list-style-type: decimal">
+<li>Simulate haplotypes for the father, <span class="math inline">\(H^{f, 1}, H^{f, 2}\)</span> and <span class="math inline">\(H^{m, 1}, H^{m, 2}\)</span>.</li>
+<li>Simulate phenotypes for the parents, <span class="math inline">\(y^f\)</span> and <span class="math inline">\(y^m\)</span>.</li>
+<li>Let <span class="math inline">\(H^1 = H^{f, 1}\)</span> and <span class="math inline">\(H^2 = H^{m, 1}\)</span>.</li>
+</ol>
+<p>Some paramter settings:</p>
+<pre class="r"><code>step2_sample_size = 10000
+step2_nrepeat = 500
+step2_maf_low = 0.05
+step2_maf_high = 0.45
+step2_heritability = 0.001
+step2_beta = 1</code></pre>
+<ul>
+<li>Sample size <span class="math inline">\(10^{4}\)</span>.</li>
+<li>Number of replication <span class="math inline">\(500\)</span>.</li>
+<li>Monor allele frequency <span class="math inline">\(f \sim Unif(0.05, 0.45)\)</span>.</li>
+<li>Heritability (note that it is single SNP scenario) <span class="math inline">\(0.001\)</span>.</li>
+</ul>
+</div>
+<div id="run-simulation" class="section level2">
+<h2><span class="header-section-number">2.3</span> Run simulation</h2>
+<p>Data for imputation.</p>
 <pre class="r"><code>source(&#39;../code/rlib_simulation.R&#39;)</code></pre>
-<pre class="r"><code>maf = get_maf(n_snp, maf_low, maf_high)
-h_father = sim_hap(sample_size, n_snp, maf)
-h_mother = sim_hap(sample_size, n_snp, maf)
-h_gwas = sim_hap(sample_size_extra, n_snp, maf)
-h_child = transmit_haplo(h_father, h_mother)
-effect_size = matrix(spike_and_slab(n_snp * n_pheno, 1 - prior_causal, causal_sigma), nrow = n_snp, ncol = n_pheno)
-y_father = simulate_pheno(h_father, effect_size, heritabiltiy, maf)
-y_mother = simulate_pheno(h_mother, effect_size, heritabiltiy, maf)
-y_gwas = simulate_pheno(h_gwas, effect_size, heritabiltiy, maf)</code></pre>
+<pre class="r"><code>step1_maf = get_maf(step1_n_snp, step1_maf_low, step1_maf_high)
+step1_h_father = sim_hap(step1_sample_size, step1_n_snp, step1_maf)
+step1_h_mother = sim_hap(step1_sample_size, step1_n_snp, step1_maf)
+step1_h_gwas = sim_hap(step1_sample_size_extra, step1_n_snp, step1_maf)
+step1_h_child = transmit_haplo(step1_h_father, step1_h_mother)
+step1_effect_size = matrix(spike_and_slab(step1_n_snp * step1_n_pheno, 1 - step1_prior_causal, step1_causal_sigma), nrow = step1_n_snp, ncol = step1_n_pheno)
+step1_y_father = simulate_pheno(step1_h_father, step1_effect_size, step1_heritabiltiy, step1_maf)
+step1_y_mother = simulate_pheno(step1_h_mother, step1_effect_size, step1_heritabiltiy, step1_maf)
+step1_y_gwas = simulate_pheno(step1_h_gwas, step1_effect_size, step1_heritabiltiy, step1_maf)</code></pre>
+<p>Data for association test.</p>
+<pre class="r"><code>step2_maf = get_maf(step2_nrepeat, step2_maf_low, step2_maf_high)
+step2_h_father = sim_hap(step2_sample_size, step2_nrepeat, step2_maf)
+step2_h_mother = sim_hap(step2_sample_size, step2_nrepeat, step2_maf)
+step2_y_father = simulate_pheno_single_snp(step2_h_father, rep(step2_beta, step2_nrepeat), step2_heritability, step2_maf)
+step2_y_mother = simulate_pheno_single_snp(step2_h_mother, rep(step2_beta, step2_nrepeat), step2_heritability, step2_maf)
+step2_y_father_null = simulate_pheno_single_snp(step2_h_father, rep(0, step2_nrepeat), step2_heritability, step2_maf, null = TRUE)
+step2_y_mother_null = simulate_pheno_single_snp(step2_h_mother, rep(0, step2_nrepeat), step2_heritability, step2_maf, null = TRUE)</code></pre>
 </div>
-<div id="em-algorithm" class="section level1">
-<h1><span class="header-section-number">4</span> EM algorithm</h1>
-<p><strong>Input</strong>:</p>
-<ul>
-<li><span class="math inline">\(y_{i, p}^f, y_{i, p}^m\)</span></li>
-<li><span class="math inline">\(g_{i, p}^1, g_{i, p}^2\)</span></li>
-</ul>
-<p><strong>Output</strong>:</p>
-<ul>
-<li><span class="math inline">\(\Pr(Z_i = 1 | y, g)\)</span></li>
-</ul>
-<p>Scketch the algorithm.</p>
-<p><span class="math display">\[\begin{aligned}
-  Q(\theta | \theta^{(t)}) &amp;= \E_{Z | y, g, \sigma^2}[ \log \Pr(y, g, Z; \sigma^2)] \\
-  &amp;= \sum_i \E_{Z_i | y_i, g_i, \sigma^2}[\log \Pr(y_i, g_i, Z_i; \sigma^2)] \\
-  &amp;= \sum_i \E_{Z_i | y_i, g_i, \sigma^2}[\log \Pr(Z_i) + \sum_p \log \Pr(y_{i, p}, g_{i, p}, | Z_i ; \sigma^2)]~\text{, assume iid phenotypes} \\
-  &amp;= const. + \sum_i \E_{Z_i | y_i, g_i, \sigma^2}[\sum_p \log \Pr(y_{i, p}, g_{i, p}, | Z_i ; \sigma^2)]
-\end{aligned}\]</span></p>
-<p>And <span class="math display">\[\begin{aligned}
-  \log \Pr(y_{i, p}, g_{i, p}, | Z_i ; \sigma^2) &amp;= Z_i F_1(y_{i, p}, g_{i, p}) + (1 - Z_i) F_2(y_{i, p}, g_{i, p}) \\
-  F_1(y, g) &amp;= l(y^f, g^1) + l(y^m, g^2) \\
-  F_2(y, g) &amp;= l(y^f, g^2) + l(y^m, g^1)
-\end{aligned}\]</span></p>
-<p>So, we have <span class="math display">\[\begin{aligned}
-  Q(\theta|\theta^{(t)}) &amp;= const. + \sum_i \E_{Z_i | y_i, g_i, \sigma^2}[\sum_p (Z_i F_1(y_{i, p}, g_{i, p}) + (1 - Z_i) F_2(y_{i, p}, g_{i, p}))]
-\end{aligned}\]</span></p>
-<p>Let <span class="math inline">\(\E_{Z_i | y_i, g_i, \sigma^2} [Z_i] = w_i\)</span>, we have the simplified version. <span class="math display">\[\begin{aligned}
-  Q(\theta|\theta^{(t)}) &amp;= const. + \sum_i \sum_p (w_i F_1(y_{i, p}, g_{i, p}) + (1 - w_i) F_2(y_{i, p}, g_{i, p})) \\
-  &amp;= const. + \sum_i w_i \sum_p F_1(y_{i, p}, g_{i, p}) + \sum_i (1 - w_i) \sum_p F_2(y_{i, p}, g_{i, p})
-\end{aligned}\]</span></p>
-<p>To obtain <span class="math inline">\(w_i\)</span>, Bayes rule is applied. <span class="math display">\[\begin{aligned}
-  \Pr(Z_i = k | y_i, g_i) &amp;= \frac{\Pr(y_i, g_i | Z_i = k) \Pr(Z_i = k)}{\sum_{k&#39; = 0, 1} \Pr(y_i, g_i | Z_i = k&#39;) \Pr(Z_i = k&#39;)} \\
-  \Pr(Z_i = k) ~&amp;~ \text{is based on prior} \\
-  \log \Pr(y_i, g_i | Z_i) &amp;= \begin{cases}
-    \sum_p  F_1(y_{i, p}, g_{i, p}), ~ Z_i = 1 \\
-    \sum_p F_2(y_{i, p}, g_{i, p}), ~ Z_i = 0
-    \end{cases}
-\end{aligned}\]</span></p>
-<p>So the calculation about <span class="math inline">\(w_i\)</span> concludes the E step. The M step is to update <span class="math inline">\(\sigma^2\)</span>.</p>
-<p><span class="math display">\[\begin{aligned}
-  \arg\max_{\sigma^2} Q(\theta | \theta^{(t)}) &amp;= \arg\max_{\sigma} \sum_i w_i \sum_p F_1(y_{i, p}, g_{i, p}) + \sum_i (1 - w_i) \sum_p F_2(y_{i, p}, g_{i, p}) 
-\end{aligned}\]</span></p>
-<p>Here we consider the simplest case in which phenotypes are independent but each phenotype has its own <span class="math inline">\(\sigma^2\)</span>. Essentially, for each phenotype and each individual, we have <span class="math display">\[\begin{aligned}
-  l(y, g) &amp;= -\frac{1}{2} \log \sigma^2 - \frac{(y - g)^2}{2 \sigma^2}
-\end{aligned}\]</span> The optimization stated above is simply a weighted version of sample variance. <span class="math display">\[\begin{aligned}
-  \sigma_p^2 \leftarrow \frac{1}{2N}\sum_i w_i [(y_{i, p}^f - y_i^1)^2 + y_{i, p}^m - y_i^2)^2] + (1 - w_i) [(y_{i, p}^m - y_i^1)^2 + (y_{i, p}^f - y_i^2)^2]
-\end{aligned}\]</span></p>
 </div>
-<div id="implementing-em-algorithm" class="section level1">
-<h1><span class="header-section-number">5</span> Implementing EM algorithm</h1>
-<pre class="r"><code># copied to rlib_em.R
-# log_prob_y_g_given_z = function(yf, ym, g1, g2, sigma2_p, z) {
-#   # message(&#39;dim = &#39;, dim(diff_y_g(yf, ym, g1, g2, z)))
-#   o = - sweep(diff_y_g(yf, ym, g1, g2, z), 2, FUN = &#39;/&#39;,  2 * sigma2_p)
-#   # message(&#39;length = &#39;, length(sigma2_p))
-#   return(rowSums(o))
-# }
-# diff_y_g = function(yf, ym, g1, g2, z) {
-#   if(z == 1) {
-#     o = (yf - g1) ^ 2 + (ym - g2) ^ 2
-#   } else if(z == 0) {
-#     o = (ym - g1) ^ 2 + (yf - g2) ^ 2
-#   } 
-#   return(o)
-# }
-# em_algorithm = function(y_father, y_mother, g_1, g_2, maxiter = 15, prior_z = 0.5) {
-#   n = nrow(y_father)  # sample size
-#   p = ncol(y_father)  # number of phenotypes
-#   # z_prob_n = rep(0.5, n)
-#   sigma2_p = rep(1, p)
-#   lld = c()
-#   niter = 0
-#   while(niter &lt; maxiter) {
-#     
-#     # E step
-#     ## to handle potential over/underflow
-#     lp1 = log_prob_y_g_given_z(y_father, y_mother, g_1, g_2, sigma2_p, 1)
-#     lp0 = log_prob_y_g_given_z(y_father, y_mother, g_1, g_2, sigma2_p, 0)
-#     # message(&#39;lp1 = &#39;, lp1[2], &#39;; lp0 = &#39;, lp0[2])
-#     lp_max = pmax(lp1, lp0)
-#     lp1 = lp1 - lp_max
-#     lp0 = lp0 - lp_max
-#     p1 = exp(lp1) * prior_z 
-#     p0 = exp(lp0) * (1 - prior_z)
-#     ## 
-#     w = p1 / (p1 + p0)
-#     lld = c(lld, sum(log((p1 + p0)) + lp_max))
-#     # message(p1[1], &#39;;&#39;, p0[1], &#39; ;&#39;, w[1])
-#     
-#     # M step
-#     sigma2_p = 1 / 2 / n * colSums(sweep(diff_y_g(y_father, y_mother, g_1, g_2, 1), 1, FUN = &#39;*&#39;, w)  + sweep(diff_y_g(y_father, y_mother, g_1, g_2, 0), 1, FUN = &#39;*&#39;, 1 - w))
-#     # message(&#39;sigma2 = &#39;, paste(sigma2_p, collapse = &#39;; &#39;))
-#     
-#     # some others
-#     niter = niter + 1
-#   }
-#   return(list(z_prob_n = w, sigma2_p = sigma2_p, lld = lld))
-# }</code></pre>
-</div>
-<div id="some-settings" class="section level1">
-<h1><span class="header-section-number">6</span> Some settings</h1>
-<p>Here we consider two settings:</p>
-<ul>
-<li><strong>Perfect PRS</strong>: suppose we know the true effect sizes</li>
-<li><strong>Estimated PRS</strong>: suppose we use the PRS estimated from an held-out cohort</li>
-</ul>
-<p>We consider how the number of phenotypes could affect the result.</p>
-<div id="perfect-prs" class="section level2">
-<h2><span class="header-section-number">6.1</span> Perfect PRS</h2>
-<pre class="r"><code>source(&#39;../code/rlib_em.R&#39;)
-g1 = h_child[[1]] %*% effect_size
-g2 = h_child[[2]] %*% effect_size
-collector = list()
-for(p in c(2, 5, 10, 15, 20)) {
-  o = em_algorithm(y_father[, 1:p], y_mother[, 1:p], g1[, 1:p], g2[, 1:p])
-  collector[[length(collector) + 1]] = data.frame(z = o$z_prob_n, num_pheno = p, idx = 1 : length(o$z_prob_n))
-}
-df_perfect = do.call(rbind, collector)</code></pre>
-</div>
+<div id="haplotype-imputation" class="section level1">
+<h1><span class="header-section-number">3</span> Haplotype imputation</h1>
 <div id="estimated-prs" class="section level2">
-<h2><span class="header-section-number">6.2</span> Estimated PRS</h2>
+<h2><span class="header-section-number">3.1</span> Estimated PRS</h2>
 <pre class="r"><code># build PRS
 source(&#39;../code/rlib_gwas.R&#39;)
 build_prs = function(geno, pheno, prs_p_cutoff = 0.01) {
@@ -598,8 +505,8 @@ build_prs = function(geno, pheno, prs_p_cutoff = 0.01) {
   }
   return(effect_size_prs)
 }
-Xgwas = h_gwas[[1]] + h_gwas[[2]]
-effect_size_prs = build_prs(Xgwas, y_gwas)</code></pre>
+step1_Xgwas = step1_h_gwas[[1]] + step1_h_gwas[[2]]
+step1_effect_size_prs = build_prs(step1_Xgwas, step1_y_gwas)</code></pre>
 <pre><code>## Building phenotype 1</code></pre>
 <pre><code>## Building phenotype 2</code></pre>
 <pre><code>## Building phenotype 3</code></pre>
@@ -630,24 +537,122 @@ effect_size_prs = build_prs(Xgwas, y_gwas)</code></pre>
 <pre><code>## Building phenotype 28</code></pre>
 <pre><code>## Building phenotype 29</code></pre>
 <pre><code>## Building phenotype 30</code></pre>
-<pre class="r"><code>g1 = h_child[[1]] %*% effect_size_prs
-g2 = h_child[[2]] %*% effect_size_prs
+</div>
+<div id="run-em" class="section level2">
+<h2><span class="header-section-number">3.2</span> Run EM</h2>
+<pre class="r"><code>source(&#39;../code/rlib_em.R&#39;)
+step1_g1 = step1_h_child[[1]] %*% step1_effect_size_prs
+step1_g2 = step1_h_child[[2]] %*% step1_effect_size_prs
 collector = list()
-for(p in c(2, 5, 10, 15, 20)) {
-  o = em_algorithm(y_father[, 1:p], y_mother[, 1:p], g1[, 1:p], g2[, 1:p])
+for(p in c(2, 5, 10, 15, 20, 25, 30)) {
+  o = em_algorithm(step1_y_father[, 1:p], step1_y_mother[, 1:p], step1_g1[, 1:p], step1_g2[, 1:p])
   collector[[length(collector) + 1]] = data.frame(z = o$z_prob_n, num_pheno = p, idx = 1 : length(o$z_prob_n))
 }
 df_estimated = do.call(rbind, collector)</code></pre>
-<pre class="r"><code>tempo = rbind(
-  df_perfect %&gt;% mutate(type = &#39;exact PRS&#39;),
-  df_estimated %&gt;% mutate(type = &#39;estimated PRS&#39;)
-) 
-tempo %&gt;% 
-  ggplot() + geom_boxplot(aes(x = factor(num_pheno), y = z, fill = type)) + th</code></pre>
-<p><img src="init_idea_outline_files/figure-html/result-1.png" width="672" /></p>
-<pre class="r"><code>tempo %&gt;% ggplot() + geom_jitter(aes(x = num_pheno, y = z), width = 1, height = 0, alpha = 0.01) + facet_wrap(~type, nrow = 1) + th2</code></pre>
-<p><img src="init_idea_outline_files/figure-html/result-2.png" width="672" /></p>
 </div>
+</div>
+<div id="run-association-test" class="section level1">
+<h1><span class="header-section-number">4</span> Run association test</h1>
+<pre class="r"><code>source(&#39;../code/rlib_gwas.R&#39;)
+
+dm0 = list(
+  X = (step2_h_father[[1]] + step2_h_mother[[1]]) / 2, 
+  y = step2_y_father, 
+  ynull = step2_y_father_null
+)
+dm1 = function(z) {
+  list(
+    X = step2_h_father[[1]] * z + step2_h_mother[[1]] * (1 - z),
+    y = step2_y_father,
+    ynull = step2_y_father_null
+  )
+}
+dm2 = list(
+  X = step2_h_father[[1]],
+  y = step2_y_father,
+  ynull = step2_y_father_null
+)</code></pre>
+<p>Actual GWAS run.</p>
+<pre class="r"><code>re = list()
+ys = c(&#39;y&#39;, &#39;ynull&#39;)
+types = c(&#39;beta = 1&#39;, &#39;beta = 0&#39;)
+
+# setting 1
+for(i in 1 : length(ys)) {
+  o = run_gwas_pairwise(dm0$X, dm0[[ys[i]]])
+  re[[length(re) + 1]] = data.frame(b = o$bhat, b_se = o$bhat_se, npheno = 0, type = types[i])
+}
+
+# setting 2 
+for(npheno in unique(df_estimated$num_pheno)) {
+  message(&#39;Working on npheno = &#39;, npheno)
+  zvec = df_estimated$z[df_estimated$num_pheno == npheno]
+  zmat = matrix(rep(zvec, step2_nrepeat), nrow = step2_sample_size, ncol = step2_nrepeat)
+  # setting 2
+  dm1_ = dm1(zmat)
+  for(i in 1 : length(ys)) {
+    o = run_gwas_pairwise(dm1_$X, dm1_[[ys[i]]])
+    re[[length(re) + 1]] = data.frame(b = o$bhat, b_se = o$bhat_se, npheno = npheno, type = types[i])
+  }
+}</code></pre>
+<pre><code>## Working on npheno = 2</code></pre>
+<pre><code>## Working on npheno = 5</code></pre>
+<pre><code>## Working on npheno = 10</code></pre>
+<pre><code>## Working on npheno = 15</code></pre>
+<pre><code>## Working on npheno = 20</code></pre>
+<pre><code>## Working on npheno = 25</code></pre>
+<pre><code>## Working on npheno = 30</code></pre>
+<pre class="r"><code># setting 3
+for(i in 1 : length(ys)) {
+  o = run_gwas_pairwise(dm2$X, dm2[[ys[i]]])
+  re[[length(re) + 1]] = data.frame(b = o$bhat, b_se = o$bhat_se, npheno = Inf, type = types[i])
+}
+
+df_re = do.call(rbind, re) %&gt;% mutate(stat = b / b_se)</code></pre>
+</div>
+<div id="visualization" class="section level1">
+<h1><span class="header-section-number">5</span> Visualization</h1>
+<p>Test statistic.</p>
+<pre class="r"><code>df_re %&gt;% filter(type == &#39;beta = 1&#39;) %&gt;% 
+  ggplot() + geom_boxplot(aes(x = factor(npheno), y = stat)) +
+  ggtitle(&#39;Test statistic: Under the alternative&#39;) + th2 +
+  theme(legend.position = &#39;bottom&#39;)</code></pre>
+<p><img src="impute_and_gwas_files/figure-html/stat-1.png" width="672" /></p>
+<pre class="r"><code>df_re %&gt;% filter(type == &#39;beta = 0&#39;) %&gt;% 
+  ggplot() + geom_boxplot(aes(x = factor(npheno), y = stat)) +
+  ggtitle(&#39;Test statistic: Under the null&#39;) + th2 +
+  theme(legend.position = &#39;bottom&#39;)</code></pre>
+<p><img src="impute_and_gwas_files/figure-html/stat-2.png" width="672" /></p>
+<p>QQ-plot.</p>
+<pre class="r"><code>df_re = df_re %&gt;% mutate(pval = zval2pval(stat))  # , df = sample_size - 2
+df_re = df_re %&gt;% group_by(npheno, type) %&gt;% mutate(pval_exp = rank(pval) / (n() + 1)) %&gt;% ungroup()
+df_re %&gt;% filter(type == &#39;beta = 0&#39;) %&gt;% 
+  ggplot() + geom_point(aes(x = -log(pval_exp), y = -log(pval), color = factor(npheno))) +
+  ggtitle(&#39;Test statistic: Under the null&#39;) + th2 +
+  geom_abline(slope = 1, intercept = 0) + 
+  theme(legend.position = &#39;bottom&#39;)</code></pre>
+<p><img src="impute_and_gwas_files/figure-html/qq-1.png" width="480" /></p>
+<pre class="r"><code>df_re = df_re %&gt;% mutate(pval = zval2pval(stat))  # , df = sample_size - 2
+df_re = df_re %&gt;% group_by(npheno, type) %&gt;% mutate(pval_exp = rank(pval) / (n() + 1)) %&gt;% ungroup()
+df_re %&gt;% filter(type == &#39;beta = 1&#39;) %&gt;% 
+  ggplot() + geom_point(aes(x = -log(pval_exp), y = -log(pval), color = factor(npheno))) +
+  ggtitle(&#39;Test statistic: Under the alternative&#39;) + th2 +
+  geom_abline(slope = 1, intercept = 0) + 
+  theme(legend.position = &#39;bottom&#39;)</code></pre>
+<p><img src="impute_and_gwas_files/figure-html/qq2-1.png" width="480" /></p>
+<p>Beta hat.</p>
+<pre class="r"><code>df_re %&gt;% filter(type == &#39;beta = 1&#39;) %&gt;% 
+  ggplot() + geom_boxplot(aes(x = factor(npheno), y = b)) +
+  ggtitle(&#39;Beta hat: Under the alternative&#39;) + th2 +
+  theme(legend.position = &#39;bottom&#39;) +
+  geom_hline(yintercept = 1)</code></pre>
+<p><img src="impute_and_gwas_files/figure-html/bhat-1.png" width="672" /></p>
+<pre class="r"><code>df_re %&gt;% filter(type == &#39;beta = 0&#39;) %&gt;% 
+  ggplot() + geom_boxplot(aes(x = factor(npheno), y = b)) +
+  ggtitle(&#39;Beta hat: Under the null&#39;) + th2 +
+  theme(legend.position = &#39;bottom&#39;) +
+  geom_hline(yintercept = 0)</code></pre>
+<p><img src="impute_and_gwas_files/figure-html/bhat-2.png" width="672" /></p>
 </div>
 
 

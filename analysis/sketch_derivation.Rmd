@@ -1,0 +1,135 @@
+---
+title: "Sketch derivation"
+date: "`r paste0('Last update: ', format(Sys.time(), '%b %d, %Y'))`"    
+bibliography: ref.bib
+---
+
+$$
+\newcommand{\E}{\text{E}}
+\newcommand{\sd}{\text{sd}}
+\newcommand{\var}{\text{Var}}
+\newcommand{\father}{\text{father}}
+$$
+
+```{r setup}
+rm(list = ls())
+library(ggplot2)
+library(dplyr)
+```
+
+# About
+
+Here I sketch derivation of parent GWAS under the linear model.
+By "parent GWAS", I refer to the following regression: $y^\father \sim \gamma H_1 + (1 - \gamma) H_2$.
+The definition of $\gamma$, is **strictly** $\gamma := \Pr(\text{$H_1$ is from father})$.
+
+# Derivation
+
+Here I give $\E(\hat\beta)$ and $\var(\hat\beta)$ where $\hat\beta$ is the estimate of the parent GWAS linear regression.
+Explicitly, we have
+$$\begin{aligned}
+  \hat\beta &:= (\tilde{X}'\tilde{X})^{-1}(\tilde{X}'y^\father) \\
+  \tilde{X} &= \gamma H_1 + (1 - \gamma) H_2
+\end{aligned}$$
+and the true model (allelic test model) is $y^\father = H_1 \beta + \epsilon$.
+
+## Expectation
+
+* $\tilde{X}'\tilde{X}$
+
+$$\begin{aligned}
+  \tilde{X}'\tilde{X} &= (\gamma H_1 + (1 - \gamma) H_2)'(\gamma H_1 + (1 - \gamma) H_2) \\
+  &\approx \sum_i \gamma_i^2 H_{1, i}^2 + \sum_i (1 - \gamma_i)^2 H_{2, i}^2 \\
+  & ~~~~ \text{, since $H_1 \perp H_2$} \\
+  &\approx H^2 [ ~ \sum_i \gamma_i^2 + (1 - \gamma_i)^2 ~ ] \\
+  & ~~~~ \text{, $H \perp \gamma$ and $H_1, H_2 \sim iid$ } \\
+  &= H^2 N \bar{S} ~ \text{, let $S = \gamma^2 + (1 - \gamma)^2$}
+\end{aligned}$$
+
+* $\tilde{X}'y^\father$
+
+$$\begin{aligned}
+  \tilde{X}' y^\father &= [ ~ \gamma H_1 + (1 - \gamma) H_2 ~ ]' (~ H_1 \beta + \epsilon ~) \\
+  &= ( ~ \gamma H_1' H_1 \beta + \gamma H_1' \epsilon ~ ) + ( ~ (1 - \gamma)H_2' H_1\beta + (1 - \gamma) H_2' \epsilon ~ ) \\
+  &\approx \gamma H_1' H_1 \beta + \gamma H_1'\epsilon + (1 - \gamma) H_2'\epsilon\\
+  & ~~~~ \text{, since $H_1 \perp H_2$} \\
+  &\approx H^2 N\bar\gamma \beta + \tilde{X}'\epsilon
+\end{aligned}$$
+
+* $\E(\hat\beta)$
+
+$$\begin{aligned}
+  \E(\hat\beta) &= \frac{\bar{\gamma} \E(\tilde{X}'\epsilon)}{\bar{S}} \beta \\
+  &= \frac{\bar\gamma}{\bar{S}} \beta \\
+  & ~~~~ \text{, since $H_1 \perp \epsilon$ and $H_2 \perp \epsilon$}
+\end{aligned}$$
+
+## Variance
+
+* $\var(X'\epsilon)$
+
+$$\begin{aligned}
+  \var(X'\epsilon) &= \var(\gamma H_1' \epsilon) + \var((1 - \gamma) H_2' \epsilon) \\
+  & ~~~~ \text{, since $H_1 \perp H_2$} \\
+  &= \sum_i \gamma_i H_{1, i}^2 \var(\epsilon) + \sum_i (1 - \gamma_i)^2 H_{2, i}^2 \var(\epsilon) \\
+  &\approx H^2 \var(\epsilon) [~ \sum_i \gamma_i^2 + (1 - \gamma_i)^2 ~] \\
+  & ~~~~ \text{, since $H \perp \gamma$ and $H_1, H_2 \sim iid$} \\
+  &= H^2 N \bar{S} \var(\epsilon)
+\end{aligned}$$
+
+* $\var(\hat\beta)$
+
+$$\begin{aligned}
+  \var(\hat\beta) &= \var(~ \frac{\tilde{X}'y^\father}{\tilde{X}'\tilde{X}} ~) \\
+  &= \frac{1}{[~ H^2 N \bar{S} ~]^2} \var(\tilde{X}'y^\father) \\
+  &= \frac{1}{[~ H^2 N \bar{S} ~]^2} \var(H^2 N \bar{S} + \tilde{X}'\epsilon) \\
+  &= \frac{1}{[~ H^2 N \bar{S} ~]^2} \var(\tilde{X}'\epsilon) \\
+  &= \frac{1}{[~ H^2 N \bar{S} ~]^2} H^2 N \bar{S} \var(\epsilon) \\
+  &= \frac{\var(\epsilon)}{H^2 N \bar{S}}
+\end{aligned}$$
+
+## Test statistic
+
+$$\begin{aligned}
+  T &:= \frac{\hat\beta}{\sqrt{\var(\hat\beta)}} \\
+  &= \frac{\bar{\gamma}}{\bar{S}} \frac{\sqrt{H^2 N \bar{S}}}{\sqrt{\var(\epsilon)}}\beta \\
+  &= \frac{\bar{\gamma}}{\sqrt{\bar{S}}} \underbrace{\sqrt{\frac{N H^2}{\var(\epsilon)}} \beta}_{\text{$T^\star$ from $y^{father} \sim H_1$}} \\
+  &= \frac{\bar{\gamma}}{\sqrt{\bar{S}}} T^\star
+\end{aligned}$$
+
+# Bias
+
+By definition, $\E(\hat\beta) = \frac{\bar{\gamma}}{\bar{S}} \beta$.
+For $\gamma = constant$.
+
+```{r}
+bar_S = function(gamma) {
+  mean( gamma ^ 2 + (1 - gamma) ^ 2)
+}
+bar_gamma = function(gamma) {
+  mean(gamma)
+}
+gamma = 0 : 100 / 100
+df = data.frame(gamma = gamma, bar_S = rep(NA, length(gamma)), bar_gamma = rep(NA, length(gamma)))
+for(gi in 1 : length(gamma)) {
+  df$bar_S[gi] = bar_S(df$gamma[gi])
+  df$bar_gamma[gi] = bar_gamma(df$gamma[gi])
+}
+df %>% ggplot() + 
+  geom_line(aes(x = gamma, y = bar_S, color = 'bar_S')) + 
+  geom_line(aes(x = gamma, y = bar_gamma, color = 'bar_gamma')) + 
+  geom_line(aes(x = gamma, y = bar_gamma / bar_S, color = 'bias ratio'))
+```
+
+# Power
+
+Taking the power of $y^\father ~ H_1$ as 1, we have $T = \frac{\bar{\gamma}}{\sqrt{\bar{S}}} T^\star$.
+
+```{r}
+df %>% ggplot() + 
+  geom_line(aes(x = gamma, y = bar_S, color = 'bar_S')) + 
+  geom_line(aes(x = gamma, y = bar_gamma, color = 'bar_gamma')) + 
+  geom_line(aes(x = gamma, y = bar_gamma / sqrt(bar_S), color = 'power ratio')) + 
+  geom_hline(yintercept = 1 / sqrt(2), linetype = 2) + 
+  geom_text(x = 0.35, y = 0.77, label = expression("y = " * 1 / sqrt(2)), size = 6)
+```

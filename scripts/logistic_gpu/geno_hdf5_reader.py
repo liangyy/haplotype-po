@@ -6,4 +6,39 @@ def get_individual_list(hdf5):
     with h5py.File(hdf5, 'r') as f:
         indiv = f['samples'][:].astype(str)
     return indiv
+
+def get_position_list(hdf5):
+    with h5py.File(hdf5, 'r') as f:
+        pos = f['position'][:]
+    return pos
+
+def _get_all_snp_pos(snp_dict):
+    pos_list = set()
+    for i in snp_dict.keys():
+        pos_list = pos_list.union(set(snp_dict[i]))
+    return list(pos_list)
+
+def load_haplotypes_by_position(hdf5, position_dict):
+    '''
+    return h1, h2, indiv_df, pos_df
+    indiv_df: one column data frame with individual_id as column
+    pos_df: number of variants x number of traits
+    '''
+    position_list = _get_all_snp_pos(position_dict)
+    pos = get_position_list(hdf5)
+    extract_idx = np.where(np.isin(pos, position_list))[0]
+    with h5py.File(hdf5, 'r') as f:
+        geno = f['genotype'][:, extract_idx, :]
+        
+    indiv_df = pd.DataFrame({'individual_id': get_individual_list(hdf5)})
+    position_in_order = pos[extract_idx]
+    pos_df = pd.DataFrame()
+    for n in position_dict.keys():
+        pos_n = position_dict[n]
+        ind_n = np.isin(position_in_order, pos_n)
+        pos_df = pd.concat(
+            (pos_df, pd.DataFrame(n: ind_n)),
+            axis=1
+        )
+    return geno[0, :, :], geno[1, :, :], indiv_df, pos_df
     
