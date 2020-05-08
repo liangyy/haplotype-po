@@ -2,6 +2,7 @@
 
 import h5py
 import numpy as np
+import pandas as pd
 
 def get_individual_list(hdf5):
     with h5py.File(hdf5, 'r') as f:
@@ -10,7 +11,7 @@ def get_individual_list(hdf5):
 
 def get_position_list(hdf5):
     with h5py.File(hdf5, 'r') as f:
-        pos = f['position'][:]
+        pos = f['position'][:].astype(int)
     return pos
 
 def _get_all_snp_pos(snp_dict):
@@ -28,6 +29,7 @@ def load_haplotypes_by_position(hdf5, position_dict):
     position_list = _get_all_snp_pos(position_dict)
     pos = get_position_list(hdf5)
     extract_idx = np.where(np.isin(pos, position_list))[0]
+    # breakpoint()
     with h5py.File(hdf5, 'r') as f:
         geno = f['genotype'][:, extract_idx, :]
         

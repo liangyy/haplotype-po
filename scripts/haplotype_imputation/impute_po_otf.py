@@ -71,6 +71,7 @@ sys.path.insert(0, '../logistic_gpu')
 import table_reader
 import geno_hdf5_reader
 import snp_list_reader
+import haplotype_imputer
 
 # configing util
 logging.basicConfig(
@@ -101,14 +102,19 @@ logging.info('Loading haplotypes')
 h1, h2, hap_indiv_df, hap_pos_df = geno_hdf5_reader.load_haplotypes_by_position(
     args.genotype_in_hdf5, snp_loader.snp_pos_dict
 )
+# breakpoint()
 
 logging.info('Run imputation: mode = {}'.format(args.impute_mode))
 imputer = haplotype_imputer.HaploImputer()
-out = imputer.impute_otf(
+_, _, out, lld = imputer.impute_otf(
     df_father, df_mother, 
-    h1, h2, hap_indiv_list, hap_pos_list,
+    h1, h2, hap_indiv_df, hap_pos_df,
     mode=args.impute_mode
 )
+# lld_ = [ l.numpy()[0] for l in lld ]
+# logging.info('lld = ', ' '.join(lld))
+print(lld)
 
 logging.info('Output')
 out.to_csv(args.output, compression='gzip', sep='\t', index=False)
+

@@ -1,7 +1,7 @@
 heart_disease:
   load_method: 'ld_clump'
   params:
-    pval_cutoff: 0.05
+    pval_cutoff: 0.0001
     snp_map: '/vol/bmd/yanyul/UKB/haplotype_imputation/snp_map_for_neale_lab_gwas.with_sign.tsv.gz'
     gwas_yaml:
       gwas: 
@@ -17,7 +17,7 @@ heart_disease:
 stroke:
   load_method: 'ld_clump'
   params:
-    pval_cutoff: 0.05
+    pval_cutoff: 0.0001
     snp_map: '/vol/bmd/yanyul/UKB/haplotype_imputation/snp_map_for_neale_lab_gwas.with_sign.tsv.gz'
     gwas_yaml:
       gwas: 
@@ -33,7 +33,7 @@ stroke:
 high_blood_pressure:
   load_method: 'ld_clump'
   params:
-    pval_cutoff: 0.05
+    pval_cutoff: 0.0001
     snp_map: '/vol/bmd/yanyul/UKB/haplotype_imputation/snp_map_for_neale_lab_gwas.with_sign.tsv.gz'
     gwas_yaml:
       gwas: 
@@ -49,7 +49,7 @@ high_blood_pressure:
 diabetes:
   load_method: 'ld_clump'
   params:
-    pval_cutoff: 0.05
+    pval_cutoff: 0.0001
     snp_map: '/vol/bmd/yanyul/UKB/haplotype_imputation/snp_map_for_neale_lab_gwas.with_sign.tsv.gz'
     gwas_yaml:
       gwas: 

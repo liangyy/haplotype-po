@@ -1,5 +1,7 @@
 import pandas as pd
 import numpy as np
+import torch
+from copy import deepcopy
 import rpy2.robjects as robjects
 from rpy2.robjects import pandas2ri
 pandas2ri.activate()
@@ -88,7 +90,7 @@ class HaploImputer:
         if mat.shape[0] != m or mat.shape[1] != n:
             raise ValueError(f'Shape does not match the expectation ({m}, {n}).')
     
-    def _neg_residual_t_residual_div_2_sigma2(r, s2):
+    def _neg_residual_t_residual_div_2_sigma2(self, r, s2):
         '''
         calculate: - r^t r / (2 * sigma2)
         sigma2: 1 x p
@@ -135,6 +137,7 @@ class HaploImputer:
         o = torch.exp(r1) / ( torch.exp(r0) + torch.exp(r1) )
         return o
     
+    @staticmethod
     def _logsum(a, b):
         '''
         return log(exp(a) + exp(b))
@@ -142,7 +145,7 @@ class HaploImputer:
         m = torch.max(a, b)
         ma = a - m
         mb = b - m
-        o = torch.log(torch.exp(ma) torch.exp(mb)) + m
+        o = torch.log(torch.exp(ma) + torch.exp(mb)) + m
         return o
     
     @staticmethod
@@ -152,26 +155,29 @@ class HaploImputer:
         vec: n x 1
         return mat_i / vec for each column i
         '''
-        return mat * vec.expand_as(mat)
+        return mat * vec.view(vec.shape[0], -1).expand_as(mat)
     
-    def _update_beta(self, N, M, y, pos, beta):
+    @staticmethod
+    def _update_beta(N, M, y, pos, beta):
         p = pos.shape[1]
         for pi in range(p):
             mask_ = pos[:, pi]
             y_ = y[:, pi]
             M_ = M[:, mask_]
-            N_ = N[mask_, mask_]
-            beta[mask_, pi] = torch.solve(
-                torch.matmul(M_.T, y_), 
+            N_ = N[mask_, :][:, mask_]
+            beta_, _ = torch.solve(
+                torch.matmul(M_.T, y_).view(M_.shape[1], -1), 
                 N_
             )
+            beta[mask_, pi] = beta_[:, 0]
     
+    @staticmethod
     def _update_sigma2(n, y, N, beta, sigma2):
         diag_yty = torch.sum(torch.pow(y, 2), axis=0)
         diag_betat_N_beta = torch.einsum('pk,kj,jp->p', beta.T, N, beta)
-        sigma2[:] = 1 / n * diag_yty - diag_betat_N_beta
+        sigma2[:] = 1 / n * (diag_yty - diag_betat_N_beta)
     
-    def _calc_diff_in_list(list_v1, list_v2):
+    def _calc_diff_in_list(self, list_v1, list_v2):
         out = 0
         if len(list_v1) != len(list_v2):
             raise ValueError('Require the input lists to have the same length')
@@ -179,10 +185,11 @@ class HaploImputer:
             out += self._calc_diff(list_v1[i], list_v2[i])
         return out
     
-    def _calc_diff(u, v)
+    @staticmethod
+    def _calc_diff(u, v):
         return torch.sum(torch.pow(u - v, 2))
     
-    def _eval_lld(l0, l1, sigma2, n):
+    def _eval_lld(self, l0, l1, sigma2, n):
         '''
         l0: n x 1
         l1: n x 1
@@ -191,18 +198,18 @@ class HaploImputer:
         return log(exp(l0) + exp(l1)) - n / 2 * sum(log(sigma2))
         '''
         l1_plus_l0 = self._logsum(l0, l1)
-        o = torch.sum(l1_plus_l0) - n / 2 * torch.sum(torch.log(sigma[0]) + torch.log(sigma2[1]))
+        o = torch.sum(l1_plus_l0) - n / 2 * torch.sum(torch.log(sigma2[0]) + torch.log(sigma2[1]))
         return o
         
-    def _em_otf(yf, ym, h1, h2, pos, device='cpu', tol=1e-5, maxiter=100):
-        
+    def _em_otf(self, yf, ym, h1, h2, pos, device='cpu', tol=1e-5, maxiter=100):
+        # breakpoint() 
         # add intercept
         h1 = np.concatenate(
-            (np.ones((h1.shape[0])), h1),
+            (np.ones((h1.shape[0], 1)), h1),
             axis=1
         )
         h2 = np.concatenate(
-            (np.ones((h2.shape[0])), h2),
+            (np.ones((h2.shape[0], 1)), h2),
             axis=1
         )
         
@@ -212,6 +219,9 @@ class HaploImputer:
         yf = self._to_torch_tensor(yf, device)
         ym = self._to_torch_tensor(ym, device)
         pos = self._to_torch_tensor(pos, device)
+
+        # add extra rows for intercept in pos 
+        pos = torch.cat((torch.ones((1, pos.shape[1])) == 1, pos == 1), axis = 0)
         
         # repeatedly used quantities
         HtH = torch.matmul(h1.T, h1) + torch.matmul(h2.T, h2)
@@ -240,11 +250,12 @@ class HaploImputer:
         diff = tol + 1
         niter = 0
         lld = []
-        
+        # breakpoint()
         while diff > tol and niter < maxiter:
             
             # E step
             l0, l1 = self._calc_l(yf, ym, h1, h2, beta, sigma2)
+            # breakpoint()
             lld_curr = self._eval_lld(l0, l1, sigma2, n)
             gamma = self._calc_gamma(l0, l1)
             lld.append(lld_curr)
@@ -255,18 +266,18 @@ class HaploImputer:
             ## prepare M, N
             d_gamma_h1 = self._mat_vec_mul_by_col(h1, gamma)
             d_ngamma_h2 = self._mat_vec_mul_by_col(h2, (1 - gamma))
-            M = d_gamma_h1 + d_gamma_h2
+            M = d_gamma_h1 + d_ngamma_h2
             N = torch.matmul(h1.T, d_gamma_h1) + torch.matmul(h2.T, d_ngamma_h2)
             tilde_M = H - M
             tilde_N = HtH - N
             
             ## update
-            beta_old = beta.copy()
-            sigma2_old = sigma2.copy()
+            beta_old = deepcopy(beta)
+            sigma2_old = deepcopy(sigma2)
             self._update_beta(N, M, yf, pos, beta[0])
             self._update_beta(tilde_N, tilde_M, ym, pos, beta[1])
             self._update_sigma2(n, yf, N, beta[0], sigma2[0])
-            self._update_sigma2(n, yf, N, beta[1], sigma2[1])
+            self._update_sigma2(n, ym, tilde_N, beta[1], sigma2[1])
             
             # diff
             diff_b = self._calc_diff_in_list(beta_old, beta)
@@ -283,10 +294,10 @@ class HaploImputer:
         gamma = self._calc_gamma(l0, l1)
         lld.append(lld_curr)
         
-        return beta, sigma2 gamma, lld
+        return beta, sigma2, gamma, lld
         
     
-    def _otf_basic_em(self, father, mother, h1, h2, df_indiv, df_pos):
+    def _otf_basic_em(self, father, mother, h1, h2, df_indiv, df_pos, return_all=False):
         '''
         Only work with individuals has non-missing
         (either 0 or 1) in all columns
@@ -307,21 +318,24 @@ class HaploImputer:
             mother.drop('individual_id', axis=1),
             desired_values=[0, 1]
         )
-        ff, mm, hh1, hh2 = self._extract_by_rows_binary(
-            [father, mother, h1, h2],
-            np.logical_and(non_miss_in_father, non_miss_in_mother)
+        to_keep_ind = np.logical_and(non_miss_in_father, non_miss_in_mother)
+        ff, mm = self._extract_by_rows_binary(
+            [father, mother],
+            to_keep_ind 
         )
+        hh1 = h1.T[to_keep_ind, :]
+        hh2 = h2.T[to_keep_ind, :]
 
         # drop eid
-        fmat, mmat = self._drop_individual_id(
-              [ff, mm]
+        fmat, mmat, posmat = self._drop_individual_id(
+              [ff, mm, df_pos]
         )
         
         # solve EM
-        out = self._em_otf(fmat, mmat, h1, h2, df_pos)
+        beta, sigma2, out, lld = self._em_otf(fmat.values, mmat.values, hh1, hh2, posmat.values)
         
         # output
-        out_df = pd.DataFrame({ 'prob_z': pandas2ri.ri2py(out[0]) })
+        out_df = pd.DataFrame({ 'prob_z': out })
         # breakpoint()
         out_df['individual_id'] = ff['individual_id']
         if return_all is True:
@@ -332,7 +346,7 @@ class HaploImputer:
                 how='left'
             ).fillna(0.5)
         
-        return out_df
+        return beta, sigma2, out_df, lld
     
     def _basic_em(self, father, mother, h1, h2, return_all=False):
         '''
@@ -364,7 +378,7 @@ class HaploImputer:
         
         
         
-    def impute_otf(self, df_father, df_mother, h1, h2, indiv_df, pos_df, mode):
+    def impute_otf(self, df_father, df_mother, h1, h2, indiv_df, pos_df, mode, kwargs={}):
         '''
         wrapper for approaches.
         df_father, df_mother: observed phenotypes.
@@ -385,12 +399,12 @@ class HaploImputer:
             [df_father, df_mother, pos_df],
             phenotypes
         )
-        individuals_hap = df_indiv.individual_id.tolist()
+        individuals_hap = indiv_df.individual_id.tolist()
         df_f, df_m, df_indiv = self._extract_and_arrange_rows(
             [df_f, df_m, indiv_df],
             individuals_hap
         )
-        return impute_method(df_f, df_m, h1, h2, df_indiv, df_pos)
+        return impute_method(df_f, df_m, h1, h2, df_indiv, df_pos, **kwargs)
     
     def impute(self, df_father, df_mother, df_h1, df_h2, mode, kwargs={}):
         '''
