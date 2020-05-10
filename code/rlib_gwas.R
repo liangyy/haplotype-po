@@ -66,6 +66,58 @@ tval2pval = function(tval, df) {
   exp(pt(abs(tval), df = df, lower.tail = FALSE, log.p = TRUE)) * 2
 }
 
+pval2zval = function(p) {
+  abs(qnorm(p / 2))
+}
+
+# X: matrix n x p
+# y: matrix n x p
+# w: matrix n x p
+# run yj ~ Xj with Pr(Z) = wj
+# fit full model yj ~ 1 + Xj
+# and null model yj ~ 1
+# test with LRT
+run_gwas_pairwise_em = function(h1, h2, y1, y2, weights, niter = 10000) {
+  n = ncol(h1)
+  intercept = matrix(1, nrow = nrow(h1), ncol = 1)
+  blist = c()
+  selist = c()
+  lrtlist = c()
+  l1list = c()
+  l0list = c()
+  s2list = c()
+  for(i in 1 : n) {
+    xx1 = cbind(intercept, h1[, i])
+    xx2 = cbind(intercept, h2[, i])
+    yy1 = y1[, i, drop = FALSE]
+    yy2 = y2[, i, drop = FALSE]
+    ww = weights[, i]
+    o = em_algorithm_otf_deg(yy1, yy2, xx1, xx2, prior_z = ww, add_intercept = FALSE, maxiter = niter, tol = 1e-10)
+    o0 = em_algorithm_otf_deg(yy1, yy2, intercept, intercept, prior_z = ww, add_intercept = FALSE, maxiter = niter, tol = 1e-10)
+    l1 = o$lld[length(o$lld)]
+    l0 = o0$lld[length(o0$lld)]
+    lrt_stat = 2 * (l1 - l0)
+    
+    ## FIXME
+    if(lrt_stat < 0) {
+      lrt_stat = 0
+    }
+    ## END
+    
+    pval = exp(pchisq(lrt_stat, 1, lower.tail = FALSE, log.p = TRUE))
+    zval = sqrt(lrt_stat)
+    bhat = o$beta[2] 
+    bhat_se = abs(bhat / zval)
+    blist = c(blist, bhat)
+    selist = c(selist, bhat_se)
+    lrtlist = c(lrtlist, lrt_stat)
+    l1list = c(l1list, l1)
+    l0list = c(l0list, l0)
+    s2list = c(s2list, o$sigma2)
+  }
+  return(list(bhat = blist, bhat_se = selist, lrt_stat = lrtlist, l1 = l1list, l0 = l0list, sigma2 = s2list))
+}
+
 # # X: matrix n x p
 # # y: matrix n x p
 # # w: matrix n x p

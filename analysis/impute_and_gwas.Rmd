@@ -261,3 +261,29 @@ df_re %>% filter(type == 'beta = 0') %>%
   theme(legend.position = 'bottom') +
   geom_hline(yintercept = 0)
 ```
+
+Test statistic comparison.
+
+```{r compare}
+df_pos = df_re %>% filter(type == 'beta = 1')
+stat_mat = matrix(df_pos$stat, ncol = length(unique(df_pos$npheno)), byrow = FALSE)
+z_df = list()
+for(n in unique(df_estimated$num_pheno)) {
+  z_vec = df_estimated %>% filter(num_pheno == n) %>% pull(z)
+  mean_z = mean(z_vec)
+  mean_s = mean(z_vec ^ 2 + (1 - z_vec) ^ 2)
+  z_df[[length(z_df) + 1]] = data.frame(est_ratio = mean_z / mean_s, power_ratio = mean_z / sqrt(mean_s), npheno = n)
+}
+z_df = do.call(rbind, z_df)
+z_df = rbind(
+  z_df, 
+  data.frame(est_ratio = 1, power_ratio = 1 / sqrt(2), npheno = 0),
+  data.frame(est_ratio = 1, power_ratio = 1, npheno = Inf)
+)
+```
+
+```{r com_vis, fig.width=10}
+stat_df = stat_mat %>% as.data.frame()
+colnames(stat_df) = paste0('npheno.', unique(df_pos$npheno))
+(stat_df / stat_df$npheno.Inf) %>% reshape2::melt() %>% ggplot() + geom_boxplot(aes(x = variable, y = value)) + coord_cartesian(ylim = c(0, 2)) + geom_point(data = z_df %>% mutate(name = paste0('npheno.', npheno)), aes(x = name, y = power_ratio, color = 'theoretical')) 
+```

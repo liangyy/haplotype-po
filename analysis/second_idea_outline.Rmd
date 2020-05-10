@@ -147,10 +147,10 @@ Some parameter settings:
 ```{r param}
 sample_size = 10000
 n_pheno = 30
-prior_causal = 0.1
+prior_causal = 0.4
 causal_sigma = 1
-n_snp = 100
-heritabiltiy = 0.10
+n_snp = 10
+heritabiltiy = 0.01
 maf_low = 0.05
 maf_high = 0.45
 ```

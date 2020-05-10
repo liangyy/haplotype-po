@@ -2,7 +2,8 @@
 # input: h1 and h2
 # output: Pr(Z = 1)
 # otf stands for on-the-fly
-em_algorithm_otf = function(yf, ym, h1, h2, tol = 1e-5, maxiter = 100, prior_z = 0.5, add_intercept = TRUE) {
+# NOT sex-specific
+em_algorithm_otf_deg = function(yf, ym, h1, h2, tol = 1e-5, maxiter = 100, prior_z = 0.5, add_intercept = TRUE) {
   
   # add intercept
   if(add_intercept == TRUE) {
@@ -28,10 +29,8 @@ em_algorithm_otf = function(yf, ym, h1, h2, tol = 1e-5, maxiter = 100, prior_z =
   # initialize
   beta = list()
   sigma2 = list()
-  beta$f = matrix(0, ncol = p, nrow = k)
-  beta$m = matrix(0, ncol = p, nrow = k)
-  sigma2$f = matrix(1, ncol = p, nrow = 1)
-  sigma2$m = matrix(1, ncol = p, nrow = 1)
+  beta = matrix(0, ncol = p, nrow = k)
+  sigma2 = matrix(1, ncol = p, nrow = 1)
   
   diff = tol + 1
   niter = 1
@@ -41,8 +40,8 @@ em_algorithm_otf = function(yf, ym, h1, h2, tol = 1e-5, maxiter = 100, prior_z =
     # E step
     l0 = calc_l(yf, ym, h1, h2, beta, sigma2, z = 0)
     l1 = calc_l(yf, ym, h1, h2, beta, sigma2, z = 1)
-    lld = c(lld, get_lld(l0, l1, sigma2, n, prior_z = prior_z))
     gamma = calc_gamma(l0, l1, prior_z = prior_z)
+    lld = c(lld, get_lld(l0, l1, sigma2, n, prior_z = prior_z))
     
     # M step
     
@@ -57,10 +56,8 @@ em_algorithm_otf = function(yf, ym, h1, h2, tol = 1e-5, maxiter = 100, prior_z =
     ## update 
     beta_old = beta
     sigma2_old = sigma2
-    beta$f = update_beta(N, M, yf)
-    beta$m = update_beta(tilde_N, tilde_M, ym)
-    sigma2$f = update_sigma2(n, yf, N, beta$f)
-    sigma2$m = update_sigma2(n, ym, tilde_N, beta$m)
+    beta = update_beta(N, M, yf, tilde_N, tilde_M, ym)
+    sigma2 = update_sigma2(n, yf, N, ym, tilde_N, beta)
     
     diff_b = calc_diff(beta_old, beta)
     diff_s = calc_diff(sigma2_old, sigma2)
@@ -89,15 +86,15 @@ em_algorithm_otf = function(yf, ym, h1, h2, tol = 1e-5, maxiter = 100, prior_z =
 calc_l = function(yf, ym, h1, h2, beta, sigma2, z) {
   
   if(z == 1) {
-    yf_ = h1 %*% beta$f
-    ym_ = h2 %*% beta$m
-    s2f_ = sigma2$f
-    s2m_ = sigma2$m
+    yf_ = h1 %*% beta
+    ym_ = h2 %*% beta
+    s2f_ = sigma2
+    s2m_ = sigma2
   } else if(z == 0) {
-    ym_ = h1 %*% beta$m
-    yf_ = h2 %*% beta$f
-    s2m_ = sigma2$m
-    s2f_ = sigma2$f
+    ym_ = h1 %*% beta
+    yf_ = h2 %*% beta
+    s2m_ = sigma2
+    s2f_ = sigma2
   }
   
   rf = yf - yf_  # n x p
@@ -122,19 +119,16 @@ mat_vec_div_by_row = function(mat, vec) {
   o = sweep(mat, 2, vec, FUN = '/')
   return(o)
 }
-update_beta = function(N, M, y) {
-  beta = solve(N, t(M) %*% y)
+update_beta = function(N, M, y, N_, M_, y_) {
+  beta = solve(N + N_, t(M) %*% y + t(M_) %*% y_)
   return(beta)
 }
-update_sigma2 = function(n, y, N, beta) {
-  sigma2 = 1 / n * (diag(t(y) %*% y) - diag(t(beta) %*% N %*% beta))
+update_sigma2 = function(n, y, N, y_, N_, beta) {
+  sigma2 = 1 / 2 / n * (diag(t(y) %*% y) - diag(t(beta) %*% N %*% beta) + diag(t(y_) %*% y_) - diag(t(beta) %*% N_ %*% beta))
   return(sigma2)
 }
 calc_diff = function(o, n) {
-  out = 0
-  for(i in names(o)) {
-    out = out + sum((o[[i]] - n[[i]]) ^ 2)
-  }
+  out = sum((o - n) ^ 2)
   return(out)
 }
 logsum_ = function(a, b, prior_a = 0.5) {
@@ -146,6 +140,6 @@ logsum_ = function(a, b, prior_a = 0.5) {
 }
 get_lld = function(l0, l1, sigma2, n, prior_z = 0.5) {
   l1_plus_l0 = logsum_(l0, l1, 1 - prior_z)
-  o = sum(l1_plus_l0) - n / 2 * sum(log(sigma2$f) + log(sigma2$m))
+  o = sum(l1_plus_l0) - n / 2 * sum(log(sigma2) + log(sigma2)) - n * log(2 * pi)
   return(o)
 }

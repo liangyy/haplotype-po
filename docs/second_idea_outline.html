@@ -382,7 +382,7 @@ div.tocify {
 
 
 <h1 class="title toc-ignore">Second idea</h1>
-<h4 class="date">Last update: May 06, 2020</h4>
+<h4 class="date">Last update: May 07, 2020</h4>
 
 </div>
 
@@ -508,19 +508,19 @@ library(ggplot2)</code></pre>
 <p>Some parameter settings:</p>
 <pre class="r"><code>sample_size = 10000
 n_pheno = 30
-prior_causal = 0.1
+prior_causal = 0.4
 causal_sigma = 1
-n_snp = 100
-heritabiltiy = 0.10
+n_snp = 10
+heritabiltiy = 0.01
 maf_low = 0.05
 maf_high = 0.45</code></pre>
 <ul>
 <li>Sample size <span class="math inline">\(10^{4}\)</span>.</li>
 <li>Number of phenotypes <span class="math inline">\(30\)</span>.</li>
-<li>Effect size <span class="math inline">\(\beta_{p, k} \sim \pi \delta_0 + (1 - \pi) N(0, \sigma)\)</span> where <span class="math inline">\(\pi = 0.9\)</span> and <span class="math inline">\(\sigma^2 = 1\)</span>.</li>
+<li>Effect size <span class="math inline">\(\beta_{p, k} \sim \pi \delta_0 + (1 - \pi) N(0, \sigma)\)</span> where <span class="math inline">\(\pi = 0.6\)</span> and <span class="math inline">\(\sigma^2 = 1\)</span>.</li>
 <li>Allele frequency <span class="math inline">\(maf \sim Unif(0.05, 0.45)\)</span>.</li>
-<li>Number of SNPs <span class="math inline">\(100\)</span>.</li>
-<li>Heritabillty <span class="math inline">\(h^2 = 0.1\)</span> for all phenotypes.</li>
+<li>Number of SNPs <span class="math inline">\(10\)</span>.</li>
+<li>Heritabillty <span class="math inline">\(h^2 = 0.01\)</span> for all phenotypes.</li>
 </ul>
 <p>Simulation.</p>
 <pre class="r"><code>source(&#39;../code/rlib_simulation.R&#39;)</code></pre>
@@ -556,13 +556,13 @@ for(np in c(2, 5, 10, 15, 20, 25, 30)) {
 <pre><code>## # A tibble: 7 x 4
 ##   num_pheno S_bar gamma_bar power_ratio
 ##       &lt;dbl&gt; &lt;dbl&gt;     &lt;dbl&gt;       &lt;dbl&gt;
-## 1         2 0.560     0.547       0.731
-## 2         5 0.633     0.605       0.760
-## 3        10 0.718     0.675       0.797
-## 4        15 0.776     0.734       0.833
-## 5        20 0.819     0.777       0.859
-## 6        25 0.855     0.811       0.877
-## 7        30 0.881     0.839       0.893</code></pre>
+## 1         2 0.506     0.505       0.710
+## 2         5 0.516     0.512       0.712
+## 3        10 0.534     0.524       0.717
+## 4        15 0.545     0.534       0.724
+## 5        20 0.557     0.544       0.729
+## 6        25 0.571     0.556       0.736
+## 7        30 0.582     0.566       0.742</code></pre>
 </div>
 
 
