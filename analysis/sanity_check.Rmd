@@ -12,6 +12,7 @@ library(dplyr)
 library(patchwork)
 library(data.table)
 library(reticulate)
+library(pander)
 options(datatable.fread.datatable = FALSE)
 np <- import("numpy")
 set.seed(2020)
@@ -72,7 +73,7 @@ signed_beta = function(beta, allele_ids, a1, a2) {
 snp_map = fread('zcat < ~/Desktop/tmp/haplotype-po/snp_map_for_neale_lab_gwas.with_sign.tsv.gz', header = TRUE, sep = '\t')
 gwas_father = fread('~/Downloads/2_UKB_AD_paternal_summary_output_June2019.txt', sep = ' ')
 
-methods = data.frame(method = c('em', 'em_deg'), prefix = c('test_sanity_imputer_chr', 'test_sanity_imputer_deg_chr'))
+methods = data.frame(method = c('em', 'em_deg', 'em_otf'), prefix = c('test_sanity_imputer_chr', 'test_sanity_imputer_deg_chr', 'test_sanity_imputer_otf_chr'))
 dl = list()
 dl[[1]] = list()
 dl[[2]] = list()
@@ -80,6 +81,9 @@ for(chr_num in c(16, 19)) {
   pos = snp_map %>% filter(chrom == chr_num) %>% pull(pos)
   for(m in 1 : nrow(methods)) {
     for(i in 1 : 2) {
+      if(!file.exists(paste0('/Users/yanyul/Desktop/tmp/haplotype-po/', methods$prefix[m], chr_num, '.npy'))) {
+        next
+      }
       df = read_from_npy(
         paste0('/Users/yanyul/Desktop/tmp/haplotype-po/', methods$prefix[m], chr_num, '.npy'),
         pos, 
@@ -145,7 +149,7 @@ df_avg = df_ad_qq %>% filter(impute == 'avg')
 df_avg_plot = df_avg %>% inner_join(df_ad_qq %>% filter(impute != 'avg'), by = c('position', 'chr', 'method'), suffix = c('_avg', '_other'))
 
 p1 = df_avg_plot %>% filter(chr == 16) %>% ggplot() + geom_point(aes(x = -log(pval_avg), y = -log(pval_other), color = impute_other), alpha = 0.3) + facet_grid(method~impute_other, scales = 'free') + ggtitle('Avg log p vs my log p') + geom_abline(slope = 1, intercept = 0, color = 'gray')
-p2 = df_avg_plot %>% filter(chr == 19) %>% ggplot() + geom_point(aes(x = -log(pval_avg), y = -log(pval_other), color = impute_other), alpha = 0.3) + facet_grid(method~impute_other, scales = 'free') + ggtitle('Avg log p vs my log p') + geom_abline(slope = 1, intercept = 0, color = 'gray')
+p2 = df_avg_plot %>% filter(chr == 19) %>% ggplot() + geom_point(aes(x = -log(pval_avg), y = -log(pval_other), color = impute_other), alpha = 0.3) + facet_grid(method~impute_other, scales = 'free') + ggtitle('Avg log p vs my log p') + geom_abline(slope = 1, intercept = 0, color = 'gray') # + coord_cartesian(xlim = c(0,25), ylim = c(0,25))
 p1 / p2
 ```
 
