@@ -11,7 +11,7 @@
 
 
 
-<title>Home</title>
+<title>Second idea: logistic regression</title>
 
 <script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -381,29 +381,103 @@ div.tocify {
 
 
 
-<h1 class="title toc-ignore">Home</h1>
-<h4 class="date">Last update: May 13, 2020</h4>
+<h1 class="title toc-ignore">Second idea: logistic regression</h1>
+<h4 class="date">Last update: May 10, 2020</h4>
 
 </div>
 
 
-<div id="notes" class="section level1">
-<h1><span class="header-section-number">1</span> Notes</h1>
-<ul>
-<li><a href="init_idea_outline.html">Initial thoughts</a>. The full pipeline <a href="impute_and_gwas.html">imputation + GWAS</a>.</li>
-<li><a href="haplo_gwas_power.html">Power comparison on haplotype-based GWAS</a>.</li>
-<li><a href="logistic_solver_single.html">Logistic solver (single SNP case)</a>.</li>
-<li><a href="second_idea_outline.html">Second thought on how to do haplotype imputation (on-the-fly OTF)</a>. Along this line, <a href="second_idea_outline_logistic.html">the variation with logistic model replacing linear model</a>. Also, <a href="second_idea_outline_per_snp.html">per-SNP likelihood replacing the PRS model</a>.</li>
-</ul>
+<p><span class="math display">\[
+\newcommand{\E}{\text{E}}
+\newcommand{\diag}{\text{diag}}
+\]</span></p>
+<pre class="r"><code>library(dplyr)
+library(ggplot2)</code></pre>
+<div id="about" class="section level1">
+<h1><span class="header-section-number">1</span> About</h1>
+<p>Along the <a href="second_idea_outline.html">second thought</a>, here I discuss logistic model in replace of the linear model. The inference computation is quite similar except for some minor changes. Here I sketch the procedure as note for implementation. Nothing more than book-keeping.</p>
 </div>
-<div id="real-data-analysis" class="section level1">
-<h1><span class="header-section-number">2</span> Real data analysis</h1>
+<div id="em-sketch" class="section level1">
+<h1><span class="header-section-number">2</span> EM sketch</h1>
+<p>For the sake of completeness, I sketch the whole EM procedure here. But it resembles the previous note by a lot.</p>
 <ul>
-<li><a href="parent_illness_init.html">Initial look at parent illness in UK Biobank</a>.</li>
-<li><a href="parent_illness_2nd.html">Second try at querying illness in UK Biobank</a>: Include instance 0, 1, and 2 (instance 3 is not on Bionimbus).</li>
-<li><a href="gwas_neale_lab_ukb.html">What GWAS to use?: Neale’s lab UK Biobank GWAS</a></li>
-<li><a href="sanity_check.html">Sanity check runs</a></li>
+<li>Complete likelihood</li>
 </ul>
+<p><span class="math display">\[\begin{aligned}
+  \Pr(y^f, y^m, Z | H^1, H^2, \beta) &amp;= \prod_{i = 1}^n \Pr(y_i^f, y_i^m, Z_i | H_i^1, H_i^2, \beta) \\
+  &amp;= \prod_{i = 1}^n \Pr(y_i^f, y_i^m | Z_i, H_i^1, H_i^2, \beta) \Pr(Z_i) \\
+  \log \Pr(y^f, y^m, Z | H^1, H^2, \beta) &amp;= \sum_i \log \Pr(y^f, y^m, Z_i | H_i^1, H_i^2, \beta) + \log \Pr(Z_i) \\
+  &amp;= \sum_i \sum_{j \in \{f, m\}} \log \Pr(y^j | Z_i, H_i^1, H_i^2, \beta^j) + \log \Pr(Z_i)
+\end{aligned}\]</span></p>
+<p>So, we can focus on the per-individual-parent log likelihood. And specifically, for logistic model, we can spread out the log likelihood as follow (<strong>taking “father” for example</strong> and dropping individual index <span class="math inline">\(i\)</span>).</p>
+<p><span class="math display">\[\begin{aligned}
+  \log \Pr(y^f | Z, H^1, H^2, \beta^f) &amp;= Z ~[~ y^f \log \mu^{1,f} + (1 - y^f) \log (1 - \mu^{1, f}) ~]~ \\
+  &amp;+ (1 - Z) ~[~ y^f \log \mu^{2, f} + (1 - y^f) \log (1 - \mu^{2, f}) ~]~
+\end{aligned}\]</span> , where <span class="math inline">\(\mu^{h, j}\)</span> presents the <span class="math inline">\(\Pr(y^j = 1 | \beta^j, H^h)\)</span>. For instance, for <span class="math inline">\(\mu^{1, f}\)</span>, it indicates the probability of <span class="math inline">\(y^f\)</span> being case if haplotype 1 is from father.</p>
+<ul>
+<li><span class="math inline">\(Q(\theta, \theta^{t}))\)</span> function</li>
+</ul>
+<p><span class="math display">\[\begin{aligned}
+  \E_{Z | \theta^{(t)}, y, H^1, H^2} [~ \log \Pr(y^f | Z, H^1, H^2, \beta^f) ~] &amp;= \gamma ~[~ y^f \log \mu^{1,f} + (1 - y^f) \log (1 - \mu^{1, f}) ~]~ \\
+  &amp;+ (1 - \gamma) ~[~ y^f \log \mu^{2, f} + (1 - y^f) \log (1 - \mu^{2, f}) ~]~
+\end{aligned}\]</span> , where <span class="math inline">\(\gamma = \Pr(Z = 1 | \beta^{f, (t)}, y^f, H^1, H^2)\)</span>.</p>
+<ul>
+<li>E step</li>
+</ul>
+<p><span class="math display">\[\begin{aligned}
+  f(\mu, y) &amp;= \begin{cases}
+    \mu &amp; y = 1 \\
+    1 - \mu &amp; y = 0
+  \end{cases} \\
+  l_{i, 1} &amp;= f(\mu_i^{1, f}, y_i^f) f(\mu_i^{2, m}, y_i^m) \\
+  l_{i, 0} &amp;= f(\mu_i^{2, f}, y_i^f) f(\mu_i^{1, m}, y_i^m) \\
+  \gamma_i &amp;= \frac{l_{i, 1} \Pr(Z_i = 1)}{l_{i, 1} \Pr(Z_i = 1) + l_{i, 0} \Pr(Z_i = 0)} 
+\end{aligned}\]</span></p>
+<ul>
+<li>M step</li>
+</ul>
+<p>First, let’s vectorize some quantities.</p>
+<p><span class="math display">\[\begin{aligned}
+  \mu^j &amp;:= \begin{bmatrix}
+    \mu^{1, j} \\
+    \mu^{2, j}
+  \end{bmatrix} \\
+  Y^j &amp;:= \begin{bmatrix}
+    y^{j} \\
+    y^{j}
+  \end{bmatrix} \\
+  X &amp;:= \begin{bmatrix}
+    H^1 \\
+    H^2
+  \end{bmatrix} \\
+  \Gamma &amp;:= \diag([\gamma, 1 - \gamma]) \\
+  &amp;= \begin{bmatrix}
+    \gamma &amp; 0 \\
+    0 &amp; 1 - \gamma
+  \end{bmatrix}
+\end{aligned}\]</span></p>
+<p>Objective and derivatives (consider one parent and take father as example).</p>
+<p><span class="math display">\[\begin{aligned}
+  \E[\log L^f] &amp;= (\mu^f)&#39; \Gamma Y^f + (1 - \mu^f)&#39; \Gamma (1 - Y^f) \\
+  \nabla_{\beta^f} \E[\log L^f] &amp;= X&#39; \Gamma (Y^f - \mu^f) \\
+  \nabla^2_{\beta^f} \E[\log L^f] &amp;= X&#39; \Gamma S^f X \\
+  S^f &amp;:= \diag(\mu^f (1 - \mu^f))
+\end{aligned}\]</span></p>
+<p>First, transform the variables by a bit.</p>
+<p><span class="math display">\[\begin{aligned}
+  \widetilde{Y}^f &amp;= \sqrt{\Gamma} Y^f \\
+  \widetilde{\mu}^f &amp;= \sqrt{\Gamma} \mu^f \\
+  \widetilde{X} &amp;= \sqrt{\Gamma} X
+\end{aligned}\]</span></p>
+<p>So, the first and second derivative can be re-written as the following.</p>
+<p><span class="math display">\[\begin{aligned}
+  \nabla_{\beta^f} \E [\log L^f] &amp;= \widetilde{X}&#39; (\widetilde{Y}^f - \widetilde{\mu}^f) \\
+  \nabla^2_{\beta^f} \E [\log L^f] &amp;= \widetilde{X}&#39; S^f \widetilde{X}
+\end{aligned}\]</span></p>
+<p>Then, we can solve by IRLS by iteration as follow.</p>
+<p><span class="math display">\[\begin{aligned}
+  \beta^f &amp;= (\widetilde{X}&#39; S^f \widetilde{X})^{-1} \widetilde{X}&#39;[~ S^f \widetilde{X} \beta^{f, (t)} + \widetilde{Y}^f - \widetilde{\mu}^f ~]
+\end{aligned}\]</span></p>
 </div>
 
 

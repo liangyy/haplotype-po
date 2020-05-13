@@ -1,0 +1,118 @@
+---
+title: "Second idea: logistic regression"
+date: "`r paste0('Last update: ', format(Sys.time(), '%b %d, %Y'))`"    
+---
+
+$$
+\newcommand{\E}{\text{E}}
+\newcommand{\diag}{\text{diag}}
+$$
+
+```{r setup}
+library(dplyr)
+library(ggplot2)
+```
+
+# About
+
+Along the [second thought](second_idea_outline.html), here I discuss logistic model in replace of the linear model.
+The inference computation is quite similar except for some minor changes.
+Here I sketch the procedure as note for implementation.
+Nothing more than book-keeping.
+
+# EM sketch
+
+For the sake of completeness, I sketch the whole EM procedure here. But it resembles the previous note by a lot.
+
+* Complete likelihood
+
+$$\begin{aligned}
+  \Pr(y^f, y^m, Z | H^1, H^2, \beta) &= \prod_{i = 1}^n \Pr(y_i^f, y_i^m, Z_i | H_i^1, H_i^2, \beta) \\
+  &= \prod_{i = 1}^n \Pr(y_i^f, y_i^m | Z_i, H_i^1, H_i^2, \beta) \Pr(Z_i) \\
+  \log \Pr(y^f, y^m, Z | H^1, H^2, \beta) &= \sum_i \log \Pr(y^f, y^m, Z_i | H_i^1, H_i^2, \beta) + \log \Pr(Z_i) \\
+  &= \sum_i \sum_{j \in \{f, m\}} \log \Pr(y^j | Z_i, H_i^1, H_i^2, \beta^j) + \log \Pr(Z_i)
+\end{aligned}$$
+
+So, we can focus on the per-individual-parent log likelihood. 
+And specifically, for logistic model, we can spread out the log likelihood as follow (**taking "father" for example** and dropping individual index $i$).
+
+$$\begin{aligned}
+  \log \Pr(y^f | Z, H^1, H^2, \beta^f) &= Z ~[~ y^f \log \mu^{1,f} + (1 - y^f) \log (1 - \mu^{1, f}) ~]~ \\
+  &+ (1 - Z) ~[~ y^f \log \mu^{2, f} + (1 - y^f) \log (1 - \mu^{2, f}) ~]~
+\end{aligned}$$
+, where $\mu^{h, j}$ presents the $\Pr(y^j = 1 | \beta^j, H^h)$. For instance, for $\mu^{1, f}$, it indicates the probability of $y^f$ being case if haplotype 1 is from father.
+
+* $Q(\theta, \theta^{t}))$ function
+
+$$\begin{aligned}
+  \E_{Z | \theta^{(t)}, y, H^1, H^2} [~ \log \Pr(y^f | Z, H^1, H^2, \beta^f) ~] &= \gamma ~[~ y^f \log \mu^{1,f} + (1 - y^f) \log (1 - \mu^{1, f}) ~]~ \\
+  &+ (1 - \gamma) ~[~ y^f \log \mu^{2, f} + (1 - y^f) \log (1 - \mu^{2, f}) ~]~
+\end{aligned}$$
+, where $\gamma = \Pr(Z = 1 | \beta^{f, (t)}, y^f, H^1, H^2)$.
+
+* E step
+
+$$\begin{aligned}
+  f(\mu, y) &= \begin{cases}
+    \mu & y = 1 \\
+    1 - \mu & y = 0
+  \end{cases} \\
+  l_{i, 1} &= f(\mu_i^{1, f}, y_i^f) f(\mu_i^{2, m}, y_i^m) \\
+  l_{i, 0} &= f(\mu_i^{2, f}, y_i^f) f(\mu_i^{1, m}, y_i^m) \\
+  \gamma_i &= \frac{l_{i, 1} \Pr(Z_i = 1)}{l_{i, 1} \Pr(Z_i = 1) + l_{i, 0} \Pr(Z_i = 0)} 
+\end{aligned}$$
+
+* M step
+
+First, let's vectorize some quantities.
+
+$$\begin{aligned}
+  \mu^j &:= \begin{bmatrix}
+    \mu^{1, j} \\
+    \mu^{2, j}
+  \end{bmatrix} \\
+  Y^j &:= \begin{bmatrix}
+    y^{j} \\
+    y^{j}
+  \end{bmatrix} \\
+  X &:= \begin{bmatrix}
+    H^1 \\
+    H^2
+  \end{bmatrix} \\
+  \Gamma &:= \diag([\gamma, 1 - \gamma]) \\
+  &= \begin{bmatrix}
+    \gamma & 0 \\
+    0 & 1 - \gamma
+  \end{bmatrix}
+\end{aligned}$$
+
+Objective and derivatives (consider one parent and take father as example).
+
+$$\begin{aligned}
+  \E[\log L^f] &= (\mu^f)' \Gamma Y^f + (1 - \mu^f)' \Gamma (1 - Y^f) \\
+  \nabla_{\beta^f} \E[\log L^f] &= X' \Gamma (Y^f - \mu^f) \\
+  \nabla^2_{\beta^f} \E[\log L^f] &= X' \Gamma S^f X \\
+  S^f &:= \diag(\mu^f (1 - \mu^f))
+\end{aligned}$$
+
+First, transform the variables by a bit.
+
+$$\begin{aligned}
+  \widetilde{Y}^f &= \sqrt{\Gamma} Y^f \\
+  \widetilde{\mu}^f &= \sqrt{\Gamma} \mu^f \\
+  \widetilde{X} &= \sqrt{\Gamma} X
+\end{aligned}$$
+
+So, the first and second derivative can be re-written as the following.
+
+$$\begin{aligned}
+  \nabla_{\beta^f} \E [\log L^f] &= \widetilde{X}' (\widetilde{Y}^f - \widetilde{\mu}^f) \\
+  \nabla^2_{\beta^f} \E [\log L^f] &= \widetilde{X}' S^f \widetilde{X}
+\end{aligned}$$
+
+Then, we can solve by IRLS by iteration as follow.
+
+$$\begin{aligned}
+  \beta^f &= (\widetilde{X}' S^f \widetilde{X})^{-1} \widetilde{X}'[~ S^f \widetilde{X} \beta^{f, (t)} + \widetilde{Y}^f - \widetilde{\mu}^f ~]
+\end{aligned}$$
+
