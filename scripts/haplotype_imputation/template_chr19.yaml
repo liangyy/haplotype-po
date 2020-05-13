@@ -1,0 +1,15 @@
+load_method: 'ld_clump'
+params:
+  pval_cutoff: {pval}
+  snp_map: '/vol/bmd/yanyul/UKB/haplotype_imputation/snp_map_for_neale_lab_gwas.with_sign.tsv.gz'
+  gwas_yaml:
+    gwas: 
+      path: '/vol/bmd/yanyul/UKB/neale_lab_gwas/{name}.tsv.bgz'
+      param:
+        compression: 'gzip'
+        header: 0
+        sep: '\t'
+    varcol: 'variant'
+    betacol: 'beta'
+    pvalcol: 'pval'
+    ld_clump: '/vol/bmd/yanyul/UKB/haplotype_imputation/ld_clump/tmp_{name}/gwas_clump_x_chr19.valid.snp'

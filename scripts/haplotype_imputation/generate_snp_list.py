@@ -24,15 +24,15 @@ logging.basicConfig(
     datefmt = '%Y-%m-%d %I:%M:%S %p'
 )
 
-import yaml, os
-os.path.insert(0, '../prs')
+import yaml, sys
+sys.path.insert(0, '../prs')
 import gwas_reader
 
 
 out_dict = {}
 
 with open(args.yaml_template, 'r') as f:
-    template_lines = f.readlines()
+    template_lines = f.read()
 traits = gwas_reader.read_yaml(args.trait_yaml)
 
 for trait in traits.keys():

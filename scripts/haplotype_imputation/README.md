@@ -18,3 +18,17 @@ Given PRS results and observed phenotypes, the parent of origin of the haplotype
     - A map to link the PRS phenotypes and observed phenotypes.
 * Output:
     - Pr(Z) per-individual representing the probability of haplotype 1 is from father.
+
+# Run on OTF
+
+Test memo.
+
+1. Prepare snp list YAML
+
+```
+python generate_snp_list.py --yaml-template template.yaml --trait-yaml test_inputs/test_full_traits.yaml --out-yaml test_inputs/test_full_traits_snp_list.yaml
+```
+
+2. Run
+
+
