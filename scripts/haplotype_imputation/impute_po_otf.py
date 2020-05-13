@@ -68,10 +68,14 @@ parser.add_argument('--impute-mode', type=str, default='basic_em', help='''
 parser.add_argument('--output', help='''
     Output in TSV.GZ format.
 ''')
+parser.add_argument('--nthread', default=None, help='''
+    Number of threads to use.
+''')
 args = parser.parse_args()
 
 
 import logging, sys
+import torch
 sys.path.insert(0, '../logistic_gpu')
 import table_reader
 import geno_hdf5_reader
@@ -86,7 +90,8 @@ logging.basicConfig(
     datefmt = '%Y-%m-%d %I:%M:%S %p'
 )
 
-
+if args.nthread is not None:
+    torch.set_num_threads(args.nthread)
 
 logging.info('Loading observed phenotypes')
 df_father = table_reader.load_table_from_yaml(

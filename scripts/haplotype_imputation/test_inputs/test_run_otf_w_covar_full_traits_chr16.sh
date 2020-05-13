@@ -6,6 +6,7 @@ PHENO_M=test_inputs/test_mother_phenotype.yaml
 COVAR=test_inputs/test_shared_covariate.yaml
 MODE=basic_em
 OUT=test_run_otf_w_covar_full_traits_chr16.tsv.gz
+NTHREAD=8
 
 python impute_po_otf.py \
   --genotype-in-hdf5 $GENO \
@@ -15,4 +16,5 @@ python impute_po_otf.py \
   --mother-phenotype-yaml $PHENO_M \
   --shared-covariate-yaml $COVAR \
   --impute-mode $MODE \
+  --nthread $NTHREAD \
   --output $OUT > test_run_otf_w_covar_full_traits_chr16.log 2>&1
