@@ -3,7 +3,7 @@ SNPyaml=test_inputs/test_snp_list.yaml
 SNPcache=test_inputs/test_snp_list.pgz
 COVAR=test_inputs/test_shared_covariate.yaml
 PHENO_F=test_inputs/test_father_phenotype_no_hypertension.yaml
-PHENO_M=test_inputs/test_father_phenotype_no_hypertension.yaml
+PHENO_M=test_inputs/test_mother_phenotype_no_hypertension.yaml
 MODE=basic_em
 OUT=test_run_otf_w_covar_no_hypertension.tsv.gz
 

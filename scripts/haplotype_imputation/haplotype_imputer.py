@@ -307,6 +307,7 @@ class HaploImputer:
             
             # niter
             niter += 1
+            # breakpoint()
         
         # last update
         l0, l1 = self._calc_l(yf, ym, h1, h2, beta, sigma2)

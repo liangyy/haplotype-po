@@ -68,7 +68,7 @@ parser.add_argument('--impute-mode', type=str, default='basic_em', help='''
 parser.add_argument('--output', help='''
     Output in TSV.GZ format.
 ''')
-parser.add_argument('--nthread', default=None, help='''
+parser.add_argument('--nthread', default=None, type=int, help='''
     Number of threads to use.
 ''')
 args = parser.parse_args()
