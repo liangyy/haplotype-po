@@ -8,7 +8,7 @@ date: "`r paste0('Last update: ', format(Sys.time(), '%b %d, %Y'))`"
 * [Initial thoughts](init_idea_outline.html). The full pipeline [imputation + GWAS](impute_and_gwas.html).
 * [Power comparison on haplotype-based GWAS](haplo_gwas_power.html).
 * [Logistic solver (single SNP case)](logistic_solver_single.html).
-* [Second thought on how to do haplotype imputation (on-the-fly OTF)](second_idea_outline.html). Along this line, [the variation with logistic model replacing linear model](second_idea_outline_logistic.html)
+* [Second thought on how to do haplotype imputation (on-the-fly OTF)](second_idea_outline.html). Along this line, [the variation with logistic model replacing linear model](second_idea_outline_logistic.html). Also, [per-SNP likelihood replacing the PRS model](second_idea_outline_per_snp.html).
 
 # Real data analysis
 

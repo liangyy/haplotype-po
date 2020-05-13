@@ -38,6 +38,28 @@ simulate_pheno = function(h, beta, h2, maf) {
   pheno
 }
 
+simulate_pheno_liability = function(h, beta, h2, maf, prevalence) {
+  n = nrow(h[[1]])
+  p = ncol(h[[1]])
+  k = ncol(beta)
+  var_snp = 2 * maf * (1 - maf)  # n x 1
+  var_genetics = t(beta ^ 2) %*% var_snp  # k x 1
+  var_e = (1 - h2) * var_genetics / h2  # k x 1
+  env_noise = matrix(rnorm(n * k, sd = sqrt(rep(var_e, n))), byrow = TRUE, ncol = k, nrow = n)  # n x k
+  pheno = h[[1]] %*% beta + h[[2]] %*% beta + env_noise
+  # take top n * prevalence as case
+  .liability2binary(pheno, prevalence)
+}
+
+.liability2binary = function(y, prevalence) {
+  yb = matrix(0, ncol = ncol(y), nrow = nrow(y))
+  n_case = round(prevalence * nrow(y))
+  for(i in 1 : ncol(y)) {
+    yb[, i][order(y[, i], decreasing = TRUE)[1 : n_case]] = 1
+  }
+  yb
+}
+
 simulate_pheno_single_snp = function(h, beta, h2, maf, null = FALSE) {
   # h: matrix n x p
   # beta: vector p x 1

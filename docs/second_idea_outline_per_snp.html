@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+
+
+<title>Second idea: per SNP likelihood</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<link href="site_libs/font-awesome-5.1.0/css/all.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-5.1.0/css/v4-shims.css" rel="stylesheet" />
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+</style>
+
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 51px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h2 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h3 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h4 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h5 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h6 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #ffffff;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row-fluid">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Imputing parent of origin of haplotype</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="https://github.com/liangyy/haplotype-po">
+    <span class="fa fa-github"></span>
+     
+  </a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+<div class="btn-group pull-right">
+<button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">Second idea: per SNP likelihood</h1>
+<h4 class="date">Last update: May 12, 2020</h4>
+
+</div>
+
+
+<p><span class="math display">\[
+\newcommand{\E}{\text{E}}
+\newcommand{\diag}{\text{diag}}
+\]</span></p>
+<div id="about" class="section level1">
+<h1><span class="header-section-number">1</span> About</h1>
+<p>Here we try the idea of per-SNP likelihood. By per-SNP likelihood, I mean a likelihood (for one individual) takes the form: <span class="math inline">\(\Pr(y | X; \theta) = \Pr(y | X_1; \theta_1) \Pr(y | X_2; \theta_2) \cdots \Pr(y | X_p; \theta_p)\)</span>. For the sake of simplicity, I focus on the case that <span class="math inline">\(\Pr(y | X_j; \theta_j)\)</span> is characterized by the model <span class="math inline">\(y = X_j \beta_j + \epsilon_j, \epsilon_j \sim N(0, \sigma_j^2)\)</span>.</p>
+<p>As <a href="second_idea_outline.html">the note of the EM on-the-fly</a>, I sketch the formulas for EM implementations. At the minimal, it is technical note to explicitly write down what to be implemented and why in principle.</p>
+</div>
+<div id="likelihood-and-its-derivatives" class="section level1">
+<h1><span class="header-section-number">2</span> Likelihood and its derivatives</h1>
+<p>Essentially, the only difference between what we try to do here and the <a href="second_idea_outline.html">previous note</a> is about how we evaluate the likelihood. And on the top of that, how to do M step. So, for the sake of completeness, I sketch the (log-)likelihood and its derivatives.</p>
+<ul>
+<li>Complete likelihood</li>
+</ul>
+<p><span class="math display">\[\begin{aligned}
+  \Pr(y^f, y^m, Z | H^1, H^2; \theta) &amp;= \prod_{i = 1}^n \Pr(y_i^f, y_i^m, Z_i | H_i^1, H_i^2; \theta) \\
+  &amp;= \prod_{i = 1}^n \Pr(y_i^f, y_i^m | Z_i, H_i^1, H_i^2; \theta) \Pr(Z_i) \\
+  \log \Pr(y^f, y^m, Z | H^1, H^2; \theta) &amp;= \sum_i \log \Pr(y_i^f, y_i^m | Z_i, H_i^1, H_i^2; \theta) + \log \Pr(Z_i) \\
+  &amp;= \sum_i \log \Pr(y_i^f | Z_i, H_i^1, H_i^2; \theta^f) + \log \Pr(y_i^m | Z_i, H_i^1, H_i^2; \theta^m) + \log \Pr(Z_i)
+\end{aligned}\]</span></p>
+<p>Taking father as example.</p>
+<p><span class="math display">\[\begin{aligned}
+  \log \Pr(y_i^f | Z_i, H_i^1, H_i^2; \theta^f) &amp;= - \frac{1}{2} \sum_{l \in \text{all loci}} Z_i [ ~ \log \sigma_{f,l}^2 + \frac{(y_i^f - H_{i,l}^1 \beta_{l}^f)^2}{\sigma_{f,l}^2} ~] + (1 - Z_i) [~ \log \sigma_{f,l}^2 + \frac{(y_i^f - H_{i,l}^2 \beta_{l}^f)^2}{\sigma_{f,l}^2} ~] \\
+  &amp;= - \frac{1}{2} \sum_{l \in \text{all loci}} \log \sigma_{f, l}^2 + Z_i \frac{(y_i^f - H_{i,l}^1 \beta_{l}^f)^2}{\sigma_{f,l}^2} + (1 - Z_i) \frac{(y_i^f - H_{i,l}^2 \beta_{l}^f)^2}{\sigma_{f,l}^2}
+\end{aligned}\]</span></p>
+<ul>
+<li><span class="math inline">\(Q(\theta, \theta^{(t)})\)</span> function</li>
+</ul>
+<p>Let <span class="math inline">\(\E_{Z|y, H, \theta^{(t)}}[Z_i] = \gamma_i\)</span></p>
+<p><span class="math display">\[\begin{aligned}
+  \E_{Z | y, H, \theta^{(t)}} [~ \log \Pr(y_i^f | Z_i, H_i^1, H_i^2; \theta^f) ~] &amp;= - \frac{1}{2} \sum_{l \in \text{all loci}} \log \sigma_{f, l}^2 + \E[Z_i] \frac{(y_i^f - H_{i,l}^1 \beta_{l}^f)^2}{\sigma_{f,l}^2} + (1 - \E[Z_i]) \frac{(y_i^f - H_{i,l}^2 \beta_{l}^f)^2}{\sigma_{f,l}^2} \\
+  &amp;= - \frac{1}{2} \sum_{l \in \text{all loci}} \log \sigma_{f, l}^2 + \gamma_i \frac{(y_i^f - H_{i,l}^1 \beta_{l}^f)^2}{\sigma_{f,l}^2} + (1 - \gamma_i) \frac{(y_i^f - H_{i,l}^2 \beta_{l}^f)^2}{\sigma_{f,l}^2}
+\end{aligned}\]</span></p>
+<ul>
+<li>E step</li>
+</ul>
+<p><span class="math display">\[\begin{aligned}
+  l_{1, i}^j &amp;= \sum_{l \in \text{all loci}} \frac{(y_i^j - H_{i,l}^1 \beta_{l}^j)^2}{\sigma_{j,l}^2} \\
+  l_{0, i}^j &amp;= \sum_{l \in \text{all loci}} \frac{(y_i^j - H_{i,l}^2 \beta_{l}^j)^2}{\sigma_{j,l}^2} \\
+  \gamma_i &amp;= \frac{e^{l_{1,i}^f + l_{1, i}^m} \Pr(Z_i = 1)}{e^{l_{1,i}^f + l_{1, i}^m} \Pr(Z_i = 1) + e^{l_{0,i}^f + l_{0, i}^m} \Pr(Z_i = 0)}
+\end{aligned}\]</span></p>
+<ul>
+<li>M step</li>
+</ul>
+<p><span class="math display">\[\begin{aligned}
+  \beta^j, \sigma_j^2 &amp;= \arg \max_{\beta, \sigma^2} - \frac{1}{2} \sum_i \sum_{l \in \text{all loci}} \log \sigma_{l}^2 + \gamma_i \frac{(y_i^j - H_{i,l}^1 \beta_{l})^2}{\sigma_{l}^2} + (1 - \gamma_i) \frac{(y_i^j - H_{i,l}^2 \beta_{l})^2}{\sigma_{l}^2} \\
+  &amp;= \arg \max_{\beta, \sigma^2} - \frac{1}{2} \sum_{l \in \text{all loci}} \sum_i \log \sigma_{l}^2 + \gamma_i \frac{(y_i^j - H_{i,l}^1 \beta_{l})^2}{\sigma_{l}^2} + (1 - \gamma_i) \frac{(y_i^j - H_{i,l}^2 \beta_{l})^2}{\sigma_{l}^2} \\
+  \beta_l^j, \sigma_{j,l}^2 &amp;= \arg\max_{\beta, \sigma^2} -\frac{1}{2} \sum_i \log \sigma^2 + \gamma_i \frac{(y_i^j - H_{i,l}^1 \beta)^2}{\sigma^2} + (1 - \gamma_i) \frac{(y_i^j - H_{i,l}^2 \beta)^2}{\sigma^2}
+\end{aligned}\]</span></p>
+<p>Essentially, it corresponds to solve weighted least squares which corresponds to the following update rule.</p>
+<p><span class="math display">\[\begin{aligned}
+  \Gamma &amp;= \begin{bmatrix}
+    \gamma &amp; 0 \\
+    0 &amp; (1 - \gamma)
+  \end{bmatrix} \\
+  X^f &amp;= \begin{bmatrix}
+    H^1 \\
+    H^2
+  \end{bmatrix} \\
+  X^m &amp;= \begin{bmatrix}
+    H^2 \\
+    H^1
+  \end{bmatrix} \\
+  Y^j &amp;= \begin{bmatrix}
+    y^j \\
+    y^j
+  \end{bmatrix} \\
+  \widetilde{X}^j &amp;= \sqrt{\Gamma} X^j \\
+  \widetilde{Y}^j &amp;= \sqrt{\Gamma} Y^j \\
+  \beta_l^j &amp;= ((\widetilde{X}^j_l)&#39; \widetilde{X}^j_l)^{-1} \widetilde{X}_l&#39; \widetilde{Y}^j \\
+  \sigma_{j, l}^2 &amp;= \frac{(\widetilde{Y}^j)&#39; \widetilde{Y}^j - \beta_l^j (\widetilde{X}^j_l)&#39; \widetilde{Y}^j}{n}
+\end{aligned}\]</span></p>
+<p>The matrix form is as follow.</p>
+<p><span class="math display">\[\begin{aligned}
+  \beta^j &amp;= \diag((\widetilde{X}^j)&#39;\widetilde{X}^j)^{-1} (\widetilde{X}^j)&#39; \widetilde{Y}^j \\
+  \sigma_j^2 &amp;= \frac{(\widetilde{Y}^j)&#39;(\widetilde{Y}^j) - (\widetilde{X}^j)&#39; \diag(\beta) \widetilde{Y}}{n}
+\end{aligned}\]</span></p>
+</div>
+<div id="simulation" class="section level1">
+<h1><span class="header-section-number">3</span> Simulation</h1>
+<p>Now I simulate some data to test the EM implementation.</p>
+<p>Mostly reuse the scheme in <a href="init_idea_outline.html">init_idea_outline</a>. It contains the following steps:</p>
+<ol style="list-style-type: decimal">
+<li>Simulate haplotypes for the parents, <span class="math inline">\(H_i^{f, 1}, H_i^{f, 2}\)</span> and <span class="math inline">\(H_i^{m, 1}, H_i^{m, 2}\)</span>.</li>
+<li>Simulate haplotypes for the child, <span class="math inline">\(H_i^1, H_i^2\)</span>.</li>
+<li>Simulate phenotypes for the parents, <span class="math inline">\(y_{i, p}^f\)</span> and <span class="math inline">\(y_{i, p}^m\)</span>.</li>
+</ol>
+<p>Some parameter settings:</p>
+<pre class="r"><code>sample_size = 10000
+n_pheno = 30
+prior_causal = 0.4
+causal_sigma = 1
+n_snp = 20
+heritabiltiy = 0.01
+maf_low = 0.05
+maf_high = 0.45</code></pre>
+<ul>
+<li>Sample size <span class="math inline">\(10^{4}\)</span>.</li>
+<li>Number of phenotypes <span class="math inline">\(30\)</span>.</li>
+<li>Effect size <span class="math inline">\(\beta_{p, k} \sim \pi \delta_0 + (1 - \pi) N(0, \sigma)\)</span> where <span class="math inline">\(\pi = 0.6\)</span> and <span class="math inline">\(\sigma^2 = 1\)</span>.</li>
+<li>Allele frequency <span class="math inline">\(maf \sim Unif(0.05, 0.45)\)</span>.</li>
+<li>Number of SNPs <span class="math inline">\(20\)</span>.</li>
+<li>Heritabillty <span class="math inline">\(h^2 = 0.01\)</span> for all phenotypes.</li>
+</ul>
+<p>Simulation.</p>
+<pre class="r"><code>source(&#39;../code/rlib_simulation.R&#39;)</code></pre>
+<pre class="r"><code>maf = get_maf(n_snp, maf_low, maf_high)
+h_father = sim_hap(sample_size, n_snp, maf)
+h_mother = sim_hap(sample_size, n_snp, maf)
+h_child = transmit_haplo(h_father, h_mother)
+effect_size = matrix(spike_and_slab(n_snp * n_pheno, 1 - prior_causal, causal_sigma), nrow = n_snp, ncol = n_pheno)
+y_father = simulate_pheno(h_father, effect_size, heritabiltiy, maf)
+y_mother = simulate_pheno(h_mother, effect_size, heritabiltiy, maf)</code></pre>
+</div>
+<div id="run-em" class="section level1">
+<h1><span class="header-section-number">4</span> Run EM</h1>
+<pre class="r"><code>h1 = h_child[[1]]
+h2 = h_child[[2]]
+df_z = list()
+for(np in c(2, 5, 10, 20, 25, 30)) {
+  message(&#39;Working on num_pheno = &#39;, np)
+  source(&#39;../code/rlib_em_otf.R&#39;)
+  o = em_algorithm_otf(y_father[, 1 : np], y_mother[, 1 : np], h1, h2, maxiter = 50)
+  source(&#39;../code/rlib_em_per_snp.R&#39;)
+  o2 = em_per_snp(y_father[, 1 : np], y_mother[, 1 : np], h1, h2, maxiter = 3)
+  df_z[[length(df_z) + 1]] = data.frame(prob_z = o$gamma, num_pheno = np, type = &#39;prs&#39;, snp = 1 : length(o$gamma))
+  df_z[[length(df_z) + 1]] = data.frame(prob_z = o2$prob_z, num_pheno = np, type = &#39;per_snp&#39;, snp = 1 : length(o2$prob_z))
+}</code></pre>
+<pre><code>## Working on num_pheno = 2</code></pre>
+<pre><code>## Working on num_pheno = 5</code></pre>
+<pre><code>## Working on num_pheno = 10</code></pre>
+<pre><code>## Working on num_pheno = 20</code></pre>
+<pre><code>## Working on num_pheno = 25</code></pre>
+<pre><code>## Working on num_pheno = 30</code></pre>
+<pre class="r"><code>df_z = do.call(rbind, df_z)</code></pre>
+<pre class="r"><code>library(dplyr)
+library(ggplot2)
+library(data.table)
+df_z %&gt;% ggplot() + geom_boxplot(aes(x = factor(num_pheno), y = prob_z, color = type))</code></pre>
+<p><img src="second_idea_outline_per_snp_files/figure-html/vis-1.png" width="672" /></p>
+<pre class="r"><code>df_z %&gt;% group_by(num_pheno, type) %&gt;% summarize(S_bar = mean(prob_z ^ 2 + (1 - prob_z) ^ 2), mean_prob_z = mean(prob_z)) %&gt;% mutate(power_ratio = mean_prob_z / sqrt(S_bar))</code></pre>
+<pre><code>## # A tibble: 12 x 5
+## # Groups:   num_pheno [6]
+##    num_pheno type    S_bar mean_prob_z power_ratio
+##        &lt;dbl&gt; &lt;fct&gt;   &lt;dbl&gt;       &lt;dbl&gt;       &lt;dbl&gt;
+##  1         2 prs     0.512       0.505       0.706
+##  2         2 per_snp 0.509       0.505       0.707
+##  3         5 prs     0.523       0.511       0.707
+##  4         5 per_snp 0.518       0.510       0.709
+##  5        10 prs     0.540       0.522       0.710
+##  6        10 per_snp 0.532       0.520       0.713
+##  7        20 prs     0.577       0.543       0.715
+##  8        20 per_snp 0.562       0.539       0.719
+##  9        25 prs     0.594       0.553       0.717
+## 10        25 per_snp 0.577       0.548       0.722
+## 11        30 prs     0.608       0.561       0.720
+## 12        30 per_snp 0.589       0.556       0.725</code></pre>
+<pre class="r"><code>df_z %&gt;% reshape2::dcast(snp + num_pheno ~ type, value.var = &#39;prob_z&#39;) %&gt;% ggplot() +
+  geom_point(aes(x = prs, y = per_snp), alpha = .1) + facet_wrap(~num_pheno) + 
+  geom_abline(slope = 1, intercept = 0, color = &#39;red&#39;)</code></pre>
+<p><img src="second_idea_outline_per_snp_files/figure-html/more_compare-1.png" width="672" /></p>
+<pre class="r"><code>df_z %&gt;% ggplot() + geom_density(aes(x = prob_z, color = type)) + facet_wrap(~num_pheno, scales = &#39;free_y&#39;)</code></pre>
+<p><img src="second_idea_outline_per_snp_files/figure-html/more_compare-2.png" width="672" /></p>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("hide" === "show");
+});
+</script>
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

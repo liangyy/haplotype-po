@@ -11,7 +11,7 @@
 
 
 
-<title>Home</title>
+<title>Imputation scheme: linear model vs logistic model</title>
 
 <script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -381,29 +381,118 @@ div.tocify {
 
 
 
-<h1 class="title toc-ignore">Home</h1>
-<h4 class="date">Last update: May 13, 2020</h4>
+<h1 class="title toc-ignore">Imputation scheme: linear model vs logistic model</h1>
+<h4 class="date">Last update: May 11, 2020</h4>
 
 </div>
 
 
-<div id="notes" class="section level1">
-<h1><span class="header-section-number">1</span> Notes</h1>
-<ul>
-<li><a href="init_idea_outline.html">Initial thoughts</a>. The full pipeline <a href="impute_and_gwas.html">imputation + GWAS</a>.</li>
-<li><a href="haplo_gwas_power.html">Power comparison on haplotype-based GWAS</a>.</li>
-<li><a href="logistic_solver_single.html">Logistic solver (single SNP case)</a>.</li>
-<li><a href="second_idea_outline.html">Second thought on how to do haplotype imputation (on-the-fly OTF)</a>. Along this line, <a href="second_idea_outline_logistic.html">the variation with logistic model replacing linear model</a>. Also, <a href="second_idea_outline_per_snp.html">per-SNP likelihood replacing the PRS model</a>.</li>
-</ul>
+<p><span class="math display">\[
+\newcommand{\E}{\text{E}}
+\]</span></p>
+<pre class="r"><code>rm(list = ls())
+library(ggplot2)
+library(dplyr)
+theme_set(theme_bw(base_size=15))
+set.seed(2020)
+
+# load some gists
+source(&#39;https://gist.githubusercontent.com/liangyy/43912b3ecab5d10c89f9d4b2669871c9/raw/3ca651cfa53ffccb8422f432561138a46e93710f/my_ggplot_theme.R&#39;)
+
+# load my library
+source(&#39;../code/rlib_simulation.R&#39;)</code></pre>
+<div id="about" class="section level1">
+<h1><span class="header-section-number">1</span> About</h1>
+<p>Previous attempt focuses on modeling continuous trait where linear model was used (<span class="math inline">\(y = X\beta + \espilon\)</span>). Now that the actual data is binary traits, I sketch the logistic version of EM at <a href="second_idea_outline_logistic.html">here</a>. Here, I do simulation to see how logistic model performs as compared to linear model when the outcomes are binary.</p>
 </div>
-<div id="real-data-analysis" class="section level1">
-<h1><span class="header-section-number">2</span> Real data analysis</h1>
+<div id="simulation" class="section level1">
+<h1><span class="header-section-number">2</span> Simulation</h1>
+<p>To simulation binary trait, I take liability model. Specifically, <span class="math inline">\(\phi = X\beta+ \epsilon\)</span> and <span class="math inline">\(y = \mathbb{I}_{\phi &gt; \tau}\)</span> with <span class="math inline">\(\tau = \Phi^{-1}(1 - K)\)</span> and <span class="math inline">\(K\)</span> being disease prevalence.</p>
+<p>By heritability, I mean the proportion of liability variation that can be explained by <span class="math inline">\(X\beta\)</span>. And the parameters for simulation are as follow.</p>
+<pre class="r"><code>sample_size = 10000
+n_pheno = 30
+prior_causal = 0.4
+causal_sigma = 1
+n_snp = 20
+heritabiltiy = 0.05
+maf_low = 0.05
+maf_high = 0.45
+prevalence = 0.10</code></pre>
 <ul>
-<li><a href="parent_illness_init.html">Initial look at parent illness in UK Biobank</a>.</li>
-<li><a href="parent_illness_2nd.html">Second try at querying illness in UK Biobank</a>: Include instance 0, 1, and 2 (instance 3 is not on Bionimbus).</li>
-<li><a href="gwas_neale_lab_ukb.html">What GWAS to use?: Neale’s lab UK Biobank GWAS</a></li>
-<li><a href="sanity_check.html">Sanity check runs</a></li>
+<li>Sample size <span class="math inline">\(10^{4}\)</span>.</li>
+<li>Number of phenotypes <span class="math inline">\(30\)</span>.</li>
+<li>Effect size <span class="math inline">\(\beta_{p, k} \sim \pi \delta_0 + (1 - \pi) N(0, \sigma)\)</span> where <span class="math inline">\(\pi = 0.6\)</span> and <span class="math inline">\(\sigma^2 = 1\)</span>.</li>
+<li>Allele frequency <span class="math inline">\(maf \sim Unif(0.05, 0.45)\)</span>.</li>
+<li>Number of SNPs <span class="math inline">\(20\)</span>.</li>
+<li>Heritabillty <span class="math inline">\(h^2 = 0.05\)</span> for all phenotypes.</li>
+<li>Disease prevalence <span class="math inline">\(K = 0.1\)</span>.</li>
 </ul>
+<pre class="r"><code>maf = get_maf(n_snp, maf_low, maf_high)
+h_father = sim_hap(sample_size, n_snp, maf)
+h_mother = sim_hap(sample_size, n_snp, maf)
+h_child = transmit_haplo(h_father, h_mother)
+effect_size = matrix(spike_and_slab(n_snp * n_pheno, 1 - prior_causal, causal_sigma), nrow = n_snp, ncol = n_pheno)
+y_father = simulate_pheno_liability(h_father, effect_size, heritabiltiy, maf, prevalence)
+y_mother = simulate_pheno_liability(h_mother, effect_size, heritabiltiy, maf, prevalence)</code></pre>
+</div>
+<div id="run-em" class="section level1">
+<h1><span class="header-section-number">3</span> Run EM</h1>
+<div id="linear-model" class="section level2">
+<h2><span class="header-section-number">3.1</span> Linear model</h2>
+<pre class="r"><code>source(&#39;../code/rlib_em_otf.R&#39;)
+h1 = h_child[[1]]
+h2 = h_child[[2]]
+df_z = list()
+for(np in c(2, 5, 10, 15, 20, 25, 30)) {
+  message(&#39;Working on num_pheno = &#39;, np)
+  o = em_algorithm_otf(y_father[, 1 : np], y_mother[, 1 : np], h1, h2, maxiter = 50)
+  df_z[[length(df_z) + 1]] = data.frame(prob_z = o$gamma, num_pheno = np)
+}</code></pre>
+<pre><code>## Working on num_pheno = 2</code></pre>
+<pre><code>## Working on num_pheno = 5</code></pre>
+<pre><code>## Working on num_pheno = 10</code></pre>
+<pre><code>## Working on num_pheno = 15</code></pre>
+<pre><code>## Working on num_pheno = 20</code></pre>
+<pre><code>## Working on num_pheno = 25</code></pre>
+<pre><code>## Working on num_pheno = 30</code></pre>
+<pre class="r"><code>df_z = do.call(rbind, df_z)</code></pre>
+</div>
+<div id="logistic-model" class="section level2">
+<h2><span class="header-section-number">3.2</span> Logistic model</h2>
+<pre class="r"><code>source(&#39;../code/em_logistic.R&#39;)
+h1 = h_child[[1]]
+h2 = h_child[[2]]
+h1_w_inter = cbind(rep(1, nrow(h1)), h1)
+h2_w_inter = cbind(rep(1, nrow(h2)), h2)
+df_z_logistic = list()
+for(np in c(2, 5, 10, 15, 20, 25, 30)) {
+  message(&#39;Working on num_pheno = &#39;, np)
+  o = em_logistic(y_father[, 1 : np], y_mother[, 1 : np], h1_w_inter, h2_w_inter, prior_prob_z = 0.5, maxiter = 50)
+  df_z_logistic[[length(df_z_logistic) + 1]] = data.frame(prob_z = o$prob_z, num_pheno = np)
+}</code></pre>
+<pre><code>## Working on num_pheno = 2</code></pre>
+<pre><code>## Working on num_pheno = 5</code></pre>
+<pre><code>## Working on num_pheno = 10</code></pre>
+<pre><code>## Working on num_pheno = 15</code></pre>
+<pre><code>## Working on num_pheno = 20</code></pre>
+<pre><code>## Working on num_pheno = 25</code></pre>
+<pre><code>## Working on num_pheno = 30</code></pre>
+<pre class="r"><code>df_z_logistic = do.call(rbind, df_z_logistic)</code></pre>
+</div>
+</div>
+<div id="results" class="section level1">
+<h1><span class="header-section-number">4</span> Results</h1>
+<pre class="r"><code>df = rbind(
+  df_z %&gt;% mutate(type = &#39;linear&#39;),
+  df_z_logistic %&gt;% mutate(type = &#39;logistic&#39;)
+)</code></pre>
+<pre class="r"><code>df %&gt;% ggplot() + geom_boxplot(aes(x = factor(num_pheno), y = prob_z, color = type))</code></pre>
+<p><img src="imputation_linear_vs_logistic_files/figure-html/vis-1.png" width="672" /></p>
+<pre class="r"><code>tmp_ = df %&gt;% group_by(num_pheno, type) %&gt;% summarize(S_bar = mean(prob_z ^ 2 + (1 - prob_z) ^ 2), gamma_bar = mean(prob_z)) %&gt;% mutate(power_ratio = gamma_bar / sqrt(S_bar))  
+tmp_ %&gt;% ggplot() + geom_point(aes(x = factor(num_pheno), y = power_ratio, color = type), position = position_dodge(1))</code></pre>
+<p><img src="imputation_linear_vs_logistic_files/figure-html/vis-2.png" width="672" /></p>
+<pre class="r"><code>tmp_ %&gt;% ggplot() + geom_point(aes(x = factor(num_pheno), y = gamma_bar, color = type), position = position_dodge(1))</code></pre>
+<p><img src="imputation_linear_vs_logistic_files/figure-html/vis-3.png" width="672" /></p>
 </div>
 
 
