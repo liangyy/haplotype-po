@@ -52,18 +52,20 @@ def load_file_as_lines(filename, skip=0):
             o.append(i.strip())
     return o
 
-def standardize_columns(df, except=[]):
+def standardize_columns(df, except_cols=[]):
     '''
-    Standardize columns except for the ones in except
+    Standardize columns except for the ones in except_cols
     '''        
     cols = df.columns.tolist()
     for cc in cols:
-        if cols in except:
+        if cc in except_cols:
             continue
         else:
             df[cc] = _standardize(df[cc])    
     return df
 
 def _standardize(dat):
+    # breakpoint()
     dat = (dat - np.mean(dat)) / np.std(dat)
     return dat
+

@@ -224,9 +224,10 @@ class HaploImputer:
                 axis=1
             )
             # add column in pos
-            pos = np.concatenate(
-                (pos, np.ones(covar.shape[0]. covar.shape[1])),
-                axis=1
+            # breakpoint()
+            pos = pos = np.concatenate( 
+                (pos, np.ones((covar.shape[1], pos.shape[1]))), 
+                axis=0 
             )
         
         
@@ -236,8 +237,8 @@ class HaploImputer:
         yf = self._to_torch_tensor(yf, device)
         ym = self._to_torch_tensor(ym, device)
         pos = self._to_torch_tensor(pos, device)
-        if covar is not None:
-            covar = self._to_torch_tensor(covar, device)
+        
+        # breakpoint()
 
         # add extra rows for intercept in pos 
         pos = torch.cat((torch.ones((1, pos.shape[1])) == 1, pos == 1), axis = 0)

@@ -105,7 +105,8 @@ if args.shared_covariate_yaml is not None:
         args.shared_covariate_yaml,
         rename_cols=True
     )
-    df_covar = table_reader.standardize_columns(df_covar, except='individual_id')
+    # breakpoint()
+    df_covar = table_reader.standardize_columns(df_covar, except_cols=['individual_id'])
 
 logging.info('Loading variant list')
 snp_loader = snp_list_reader.snpLoader(args.snp_list_yaml)
@@ -122,8 +123,8 @@ imputer = haplotype_imputer.HaploImputer()
 _, _, out, lld = imputer.impute_otf(
     df_father, df_mother, 
     h1, h2, hap_indiv_df, hap_pos_df,
-    mode=args.impute_mode
-    covar=df_covar
+    mode=args.impute_mode,
+    df_covar=df_covar
 )
 # lld_ = [ l.numpy()[0] for l in lld ]
 # logging.info('lld = ', ' '.join(lld))
