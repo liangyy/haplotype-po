@@ -53,9 +53,14 @@ parser.add_argument('--father-phenotype-yaml', help='''
     indiv_col: 'eid'  # column name of individual id
 ''')
 parser.add_argument('--mother-phenotype-yaml', help='''
-    Observed phenotype  of mother 
+    Observed phenotype of mother 
     with all loading specified in YAML 
     (follow the same structure as father's)
+''')
+parser.add_argument('--shared-covariate-yaml', default=None, help='''
+    Covariate shared by father and mother
+    with all loading specified in YAML 
+    (follow the same structure as phenotype's)
 ''')
 parser.add_argument('--impute-mode', type=str, default='basic_em', help='''
     Imputation approach.
@@ -83,7 +88,6 @@ logging.basicConfig(
 
 
 
-
 logging.info('Loading observed phenotypes')
 df_father = table_reader.load_table_from_yaml(
     args.father_phenotype_yaml,
@@ -93,6 +97,15 @@ df_mother = table_reader.load_table_from_yaml(
     args.mother_phenotype_yaml,
     rename_cols=True
 )
+
+df_covar = None
+if args.shared_covariate_yaml is not None:
+    logging.info('Loading covariates')
+    df_covar = table_reader.load_table_from_yaml(
+        args.shared_covariate_yaml,
+        rename_cols=True
+    )
+    df_covar = table_reader.standardize_columns(df_covar, except='individual_id')
 
 logging.info('Loading variant list')
 snp_loader = snp_list_reader.snpLoader(args.snp_list_yaml)
@@ -110,6 +123,7 @@ _, _, out, lld = imputer.impute_otf(
     df_father, df_mother, 
     h1, h2, hap_indiv_df, hap_pos_df,
     mode=args.impute_mode
+    covar=df_covar
 )
 # lld_ = [ l.numpy()[0] for l in lld ]
 # logging.info('lld = ', ' '.join(lld))

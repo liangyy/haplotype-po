@@ -201,7 +201,7 @@ class HaploImputer:
         o = torch.sum(l1_plus_l0) - n / 2 * torch.sum(torch.log(sigma2[0]) + torch.log(sigma2[1]))
         return o
         
-    def _em_otf(self, yf, ym, h1, h2, pos, device='cpu', tol=1e-5, maxiter=100):
+    def _em_otf(self, yf, ym, h1, h2, pos, covar=None, device='cpu', tol=1e-5, maxiter=100):
         # breakpoint() 
         # add intercept
         h1 = np.concatenate(
@@ -213,12 +213,31 @@ class HaploImputer:
             axis=1
         )
         
+        # add covariate if there is any
+        if covar is not None:
+            h1 = np.concatenate(
+                (h1, covar),
+                axis=1
+            )
+            h2 = np.concatenate(
+                (h2, covar),
+                axis=1
+            )
+            # add column in pos
+            pos = np.concatenate(
+                (pos, np.ones(covar.shape[0]. covar.shape[1])),
+                axis=1
+            )
+        
+        
         # push everything to torch Tensor
         h1 = self._to_torch_tensor(h1, device)
         h2 = self._to_torch_tensor(h2, device)
         yf = self._to_torch_tensor(yf, device)
         ym = self._to_torch_tensor(ym, device)
         pos = self._to_torch_tensor(pos, device)
+        if covar is not None:
+            covar = self._to_torch_tensor(covar, device)
 
         # add extra rows for intercept in pos 
         pos = torch.cat((torch.ones((1, pos.shape[1])) == 1, pos == 1), axis = 0)
@@ -297,7 +316,7 @@ class HaploImputer:
         return beta, sigma2, gamma, lld
         
     
-    def _otf_basic_em(self, father, mother, h1, h2, df_indiv, df_pos, return_all=False):
+    def _otf_basic_em(self, father, mother, h1, h2, df_indiv, df_pos, df_covar=None, return_all=False):
         '''
         Only work with individuals has non-missing
         (either 0 or 1) in all columns
@@ -318,21 +337,36 @@ class HaploImputer:
             mother.drop('individual_id', axis=1),
             desired_values=[0, 1]
         )
+            
         to_keep_ind = np.logical_and(non_miss_in_father, non_miss_in_mother)
-        ff, mm = self._extract_by_rows_binary(
-            [father, mother],
-            to_keep_ind 
-        )
+        
+        if df_covar is None:
+            ff, mm = self._extract_by_rows_binary(
+                [father, mother],
+                to_keep_ind 
+            )
+            cc = None
+        else:
+            ff, mm, cc = self._extract_by_rows_binary(
+                [father, mother, df_covar],
+                to_keep_ind 
+            )
         hh1 = h1.T[to_keep_ind, :]
         hh2 = h2.T[to_keep_ind, :]
 
         # drop eid
-        fmat, mmat, posmat = self._drop_individual_id(
-              [ff, mm, df_pos]
-        )
+        if cc is None:
+            fmat, mmat, posmat = self._drop_individual_id(
+                  [ff, mm, df_pos]
+            )
+            cmat = None
+        else:
+            fmat, mmat, cmat, posmat = self._drop_individual_id(
+                  [ff, mm, cc, df_pos]
+            )
         
         # solve EM
-        beta, sigma2, out, lld = self._em_otf(fmat.values, mmat.values, hh1, hh2, posmat.values)
+        beta, sigma2, out, lld = self._em_otf(fmat.values, mmat.values, hh1, hh2, posmat.values, covar=cmat)
         
         # output
         out_df = pd.DataFrame({ 'prob_z': out })
@@ -378,7 +412,7 @@ class HaploImputer:
         
         
         
-    def impute_otf(self, df_father, df_mother, h1, h2, indiv_df, pos_df, mode, kwargs={}):
+    def impute_otf(self, df_father, df_mother, h1, h2, indiv_df, pos_df, mode, df_covar=None, kwargs={}):
         '''
         wrapper for approaches.
         df_father, df_mother: observed phenotypes.
@@ -400,11 +434,20 @@ class HaploImputer:
             phenotypes
         )
         individuals_hap = indiv_df.individual_id.tolist()
-        df_f, df_m, df_indiv = self._extract_and_arrange_rows(
-            [df_f, df_m, indiv_df],
-            individuals_hap
-        )
-        return impute_method(df_f, df_m, h1, h2, df_indiv, df_pos, **kwargs)
+        
+        if df_covar is None:
+            df_f, df_m, df_indiv = self._extract_and_arrange_rows(
+                [df_f, df_m, indiv_df],
+                individuals_hap
+            )
+            df_c = None
+        else:
+            df_f, df_m, df_c, df_indiv = self._extract_and_arrange_rows(
+                [df_f, df_m, df_covar, indiv_df],
+                individuals_hap
+            )
+            
+        return impute_method(df_f, df_m, h1, h2, df_indiv, df_pos, df_covar=df_c, **kwargs)
     
     def impute(self, df_father, df_mother, df_h1, df_h2, mode, kwargs={}):
         '''

@@ -10,6 +10,7 @@
 
 import sys
 import pandas as pd
+import numpy as np
 sys.path.insert(0, '../prs')
 import gwas_reader
 
@@ -50,4 +51,19 @@ def load_file_as_lines(filename, skip=0):
                 continue
             o.append(i.strip())
     return o
-            
+
+def standardize_columns(df, except=[]):
+    '''
+    Standardize columns except for the ones in except
+    '''        
+    cols = df.columns.tolist()
+    for cc in cols:
+        if cols in except:
+            continue
+        else:
+            df[cc] = _standardize(df[cc])    
+    return df
+
+def _standardize(dat):
+    dat = (dat - np.mean(dat)) / np.std(dat)
+    return dat
