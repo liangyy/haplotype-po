@@ -1,0 +1,15 @@
+path: '../../analysis_output/parent_illness_2nd_european_phenotypes_clean_up.father.csv.gz'
+param:
+  header: 0
+  sep: ','
+  compression: 'gzip'
+col:
+  Heart disease (1): 'heart_disease'
+  Stroke (1): 'stroke'
+  Diabetes (1): 'diabetes'
+  Chronic bronchitis/emphysema (1): 'emphysema'
+  Parkinson's disease (2): 'parkinson'
+  Severe depression (2): 'depression'
+  Lung cancer (2): 'lung_cancer'
+  Bowel cancer (2): 'bowel_cancer'
+indiv_col: 'eid'
