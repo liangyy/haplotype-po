@@ -705,8 +705,11 @@ class HaploImputer:
         # output
         out_df = pd.DataFrame({ 'prob_z': out })
         # breakpoint()
-        out_df['individual_id'] = ff['individual_id']
+        out_df['individual_id'] = father['individual_id']
         if return_all is True:
+            df_all = pd.DataFrame({
+                'individual_id': df_indiv['individual_id'].tolist()
+            })
             out_df = pd.merge(
                 df_all, out_df, 
                 left_on='individual_id',
