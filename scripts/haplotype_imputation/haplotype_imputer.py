@@ -389,8 +389,8 @@ class HaploImputer:
             h2_ = h2[:, mask_]
             beta_f_ = beta[0][mask_, :][:, pi]
             beta_m_ = beta[1][mask_, :][:, pi]
-            beta_c_f_ = beta_c[0][:, :, pi]
-            beta_c_m_ = beta_c[1][:, :, pi]
+            beta_c_f_ = beta_c[0][:, mask_, :][:, :, pi]
+            beta_c_m_ = beta_c[1][:, mask_, :][:, :, pi]
             sigma2_f_ = sigma2[0][mask_, :][:, pi]
             sigma2_m_ = sigma2[1][mask_, :][:, pi]
             l0_, l1_ = self.__calc_l_per_snp_one_y(y1_, y2_, h1_, h2_, covar_mat, [beta_f_, beta_m_], [beta_c_f_, beta_c_m_], [sigma2_f_, sigma2_m_])
@@ -427,7 +427,7 @@ class HaploImputer:
             h1_ = h1[:, mask_]
             h2_ = h2[:, mask_]
             beta_ = beta[:, pi][mask_]
-            beta_c_ = beta_c[:, :, pi]
+            beta_c_ = beta_c[:, :, pi][:, mask_]
             sigma2_ = self.__update_sigma2_per_snp_one_y(n, y1_, y2_, h1_, h2_, c1, c2, beta_, beta_c_)
             sigma2[mask_, pi] = sigma2_
     
