@@ -350,7 +350,7 @@ class HaploImputer:
             beta_, beta_c_ = self.__update_beta_per_snp_one_y(CtC, CtXp, XtXp, CtYp, XtYp)
             # breakpoint()
             beta[mask_, pi] = beta_[:, 0]
-            beta_c[:, pi] = beta_c_[:, 0]
+            beta_c[:, :, pi] = beta_c_[:, :, 0]
     
     @staticmethod
     def __update_beta_per_snp_one_y(CtC, CtX, XtX, CtY, XtY):
@@ -373,7 +373,7 @@ class HaploImputer:
         # S = torch.unsqueeze(S, axis=1)
         BtD_minus_E = torch.matmul(B.T, D) - E
         beta = - torch.einsum('kl,kp->kp', 1 / S, BtD_minus_E)
-        beta_c = A + torch.matmul(B, -beta)
+        beta_c = A + torch.einsum('nk,kp->nkp', B, -beta)
         return beta, beta_c
     
     def _calc_l_per_snp(self, yf, ym, h1, h2, covar_mat, pos, beta, beta_c, sigma2):
@@ -389,8 +389,8 @@ class HaploImputer:
             h2_ = h2[:, mask_]
             beta_f_ = beta[0][mask_, :][:, pi]
             beta_m_ = beta[1][mask_, :][:, pi]
-            beta_c_f_ = beta_c[0][:, pi]
-            beta_c_m_ = beta_c[1][:, pi]
+            beta_c_f_ = beta_c[0][:, :, pi]
+            beta_c_m_ = beta_c[1][:, :, pi]
             sigma2_f_ = sigma2[0][mask_, :][:, pi]
             sigma2_m_ = sigma2[1][mask_, :][:, pi]
             l0_, l1_ = self.__calc_l_per_snp_one_y(y1_, y2_, h1_, h2_, covar_mat, [beta_f_, beta_m_], [beta_c_f_, beta_c_m_], [sigma2_f_, sigma2_m_])
@@ -427,7 +427,7 @@ class HaploImputer:
             h1_ = h1[:, mask_]
             h2_ = h2[:, mask_]
             beta_ = beta[:, pi][mask_]
-            beta_c_ = beta_c[:, pi]
+            beta_c_ = beta_c[:, :, pi]
             sigma2_ = self.__update_sigma2_per_snp_one_y(n, y1_, y2_, h1_, h2_, c1, c2, beta_, beta_c_)
             sigma2[mask_, pi] = sigma2_
     
@@ -446,11 +446,11 @@ class HaploImputer:
         '''
         yp1 = torch.einsum('nk,k->nk', x1, beta)
         yp2 = torch.einsum('nk,k->nk', x2, beta)
-        cb1 = torch.matmul(c1, beta_c)
-        cb2 = torch.matmul(c2, beta_c)
+        cb1 = torch.einsum('nc,ck->nk', c1, beta_c)
+        cb2 = torch.einsum('nc,ck->nk', c2, beta_c)
         
-        r1 = y1[:, None] - yp1 - cb1[:, None]
-        r2 = y2[:, None] - yp2 - cb2[:, None]
+        r1 = y1[:, None] - yp1 - cb1
+        r2 = y2[:, None] - yp2 - cb2
         return r1, r2
     
     def __update_sigma2_per_snp_one_y(self, n, y1, y2, h1, h2, c1, c2, beta, beta_c):
@@ -552,8 +552,8 @@ class HaploImputer:
             torch.zeros((k, p)),  # mother
         ]
         beta_c = [
-            torch.zeros((ncovar, p)),  # father
-            torch.zeros((ncovar, p)),  # mother
+            torch.zeros((ncovar, k, p)),  # father
+            torch.zeros((ncovar, k, p)),  # mother
         ]
         sigma2 = [
             torch.ones((k, p)),  # father
@@ -605,10 +605,10 @@ class HaploImputer:
         gamma = self._calc_gamma_per_snp(l0, l1)
         lld.append(lld_curr)
        
-        beta[0] = torch.cat((beta_c[0], beta[0]), axis=0)
-        beta[1] = torch.cat((beta_c[1], beta[1]), axis=0)
+        # beta[0] = torch.cat((beta_c[0], beta[0]), axis=0)
+        # beta[1] = torch.cat((beta_c[1], beta[1]), axis=0)
 
-        return beta, sigma2, gamma, lld
+        return beta, beta_c, sigma2, gamma, lld
     
     def __call_otf_em(self, father, mother, h1, h2, df_indiv, df_pos, em_func, df_covar=None, return_all=False): 
         df_all = pd.DataFrame({
@@ -660,8 +660,7 @@ class HaploImputer:
         # np.save('hh2.npy', hh2)
         # np.save('posmat.npy', posmat.values)
         # beta, sigma2, out, lld = self._em_otf(fmat.values, mmat.values, hh1, hh2, posmat.values)
-        beta, sigma2, out, lld = em_func(fmat.values, mmat.values, hh1, hh2, posmat.values, covar=cmat)
-        return beta, sigma2, out, lld
+        return em_func(fmat.values, mmat.values, hh1, hh2, posmat.values, covar=cmat)
     
     def _otf_per_snp_em(self, father, mother, h1, h2, df_indiv, df_pos, df_covar=None, return_all=False):
         '''
@@ -671,7 +670,7 @@ class HaploImputer:
         Must be called from self.impute_otf. 
         Otherwise the tables may not have the expected properties.
         '''
-        beta, sigma2, out, lld = self.__call_otf_em(father, mother, h1, h2, df_indiv, df_pos, em_func=self._em_otf_per_snp, df_covar=df_covar, return_all=return_all)
+        beta, beta_c, sigma2, out, lld = self.__call_otf_em(father, mother, h1, h2, df_indiv, df_pos, em_func=self._em_otf_per_snp, df_covar=df_covar, return_all=return_all)
         # beta[0] = torch.cat((beta_c[0], beta[0]), axis=0)
         # beta[1] = torch.cat((beta_c[1], beta[1]), axis=0)
         
