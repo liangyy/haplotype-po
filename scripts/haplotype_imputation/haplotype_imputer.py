@@ -658,12 +658,12 @@ class HaploImputer:
         
         # solve EM
         # breakpoint()
-        np.save('fmat.npy', fmat.values)
-        np.save('mmat.npy', mmat.values)
-        np.save('hh1.npy', hh1)
-        np.save('hh2.npy', hh2)
-        np.save('posmat.npy', posmat.values)
-        np.save('cmat.npy', cmat)
+        # np.save('fmat.npy', fmat.values)
+        # np.save('mmat.npy', mmat.values)
+        # np.save('hh1.npy', hh1)
+        # np.save('hh2.npy', hh2)
+        # np.save('posmat.npy', posmat.values)
+        # np.save('cmat.npy', cmat)
         # beta, sigma2, out, lld = self._em_otf(fmat.values, mmat.values, hh1, hh2, posmat.values)
         return em_func(fmat.values, mmat.values, hh1, hh2, posmat.values, covar=cmat)
     
