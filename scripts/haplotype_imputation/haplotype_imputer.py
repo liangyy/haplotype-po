@@ -189,7 +189,7 @@ class HaploImputer:
     def _calc_diff(u, v):
         return torch.sum(torch.pow(u - v, 2))
     
-    def _eval_lld(self, l0, l1, sigma2, n):
+    def _eval_lld(self, l0, l1, sigma2, n, prior_z=0.5):
         '''
         l0: n x 1
         l1: n x 1
@@ -197,6 +197,10 @@ class HaploImputer:
         n: scalar
         return log(exp(l0) + exp(l1)) - n / 2 * sum(log(sigma2))
         '''
+        # FIXME: not sure what's the best way to have prior_z integrated ..
+        # prior_z_t = torch.ones((1)) * prior_z
+        # l1_plus_l0 = self._logsum(l0 + torch.log(1 - prior_z_t), l1 + torch.log(prior_z_t))
+        # END
         l1_plus_l0 = self._logsum(l0, l1)
         o = torch.sum(l1_plus_l0) - n / 2 * torch.sum(torch.log(sigma2[0]) + torch.log(sigma2[1]))
         return o
@@ -362,7 +366,7 @@ class HaploImputer:
         E = XtY  # k x p
         S = XtX - XtC B  # k x 1 (take diag)
         beta = - S^-1 (Bt D - E)  # k x p
-        beta_c = A + B S^-1 (Bt D - E)  # Nc x p
+        beta_c = A + B S^-1 (Bt D - E)  # Nc x k x p
         '''
         A, _ = torch.solve(CtY, CtC)
         B, _ = torch.solve(CtX, CtC)
@@ -373,7 +377,7 @@ class HaploImputer:
         # S = torch.unsqueeze(S, axis=1)
         BtD_minus_E = torch.matmul(B.T, D) - E
         beta = - torch.einsum('kl,kp->kp', 1 / S, BtD_minus_E)
-        beta_c = A + torch.einsum('nk,kp->nkp', B, -beta)
+        beta_c = A[:, None, :] + torch.einsum('nk,kp->nkp', B, -beta)
         return beta, beta_c
     
     def _calc_l_per_snp(self, yf, ym, h1, h2, covar_mat, pos, beta, beta_c, sigma2):
