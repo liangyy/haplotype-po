@@ -316,6 +316,296 @@ class HaploImputer:
         lld.append(lld_curr)
         
         return beta, sigma2, gamma, lld
+    
+    def _update_beta_per_snp(self, CtC, CtX, XtX, CtY, XtY, pos, beta, beta_c):
+        '''
+        X: n x k
+        Y: n x p
+        C: n x Nc
+        CtC: Nc x Nc
+        CtX: Nc x k
+        XtX: k x 1
+        CtY: Nc x p
+        XtY: k x p
+        pos: k x p
+        '''
+        # check dim
+        k = XtX.shape[0]
+        Nc = CtC.shape[0]
+        p = pos.shape[1]
+        self._check_dim(CtC, Nc, Nc)
+        self._check_dim(CtX, Nc, k)
+        self._check_dim(XtX, k, 1)
+        self._check_dim(CtY, Nc, p)
+        self._check_dim(XtY, k, p)
+        self._check_dim(pos, k, p)
+        
+        # main
+        for pi in range(p):
+            mask_ = pos[:, pi]
+            CtYp = CtY[:, pi].unsqueeze(axis=1)
+            XtXp = XtX[mask_, :]
+            CtXp = CtX[:, mask_]
+            XtYp = XtY[mask_, :][:, pi].unsqueeze(axis=1)
+            beta_, beta_c_ = self.__update_beta_per_snp_one_y(CtC, CtXp, XtXp, CtYp, XtYp)
+            # breakpoint()
+            beta[mask_, pi] = beta_[:, 0]
+            beta_c[:, pi] = beta_c_[:, 0]
+    
+    @staticmethod
+    def __update_beta_per_snp_one_y(CtC, CtX, XtX, CtY, XtY):
+        '''
+        Equation:
+        A = (CtC)^-1 CtY  # Nc x p
+        B = (CtC)^-1 CtX  # Nc x k
+        D = CtY  # Nc x p
+        E = XtY  # k x p
+        S = XtX - XtC B  # k x 1 (take diag)
+        beta = - S^-1 (Bt D - E)  # k x p
+        beta_c = A + B S^-1 (Bt D - E)  # Nc x p
+        '''
+        A, _ = torch.solve(CtY, CtC)
+        B, _ = torch.solve(CtX, CtC)
+        D = CtY
+        E = XtY
+        S = XtX - torch.einsum('nk,nk->k', CtX, B)[:, None]
+        # breakpoint()
+        # S = torch.unsqueeze(S, axis=1)
+        BtD_minus_E = torch.matmul(B.T, D) - E
+        beta = - torch.einsum('kl,kp->kp', 1 / S, BtD_minus_E)
+        beta_c = A + torch.matmul(B, -beta)
+        return beta, beta_c
+    
+    def _calc_l_per_snp(self, yf, ym, h1, h2, covar_mat, pos, beta, beta_c, sigma2):
+        p = pos.shape[1]
+        l1 = torch.zeros((yf.shape[0],))
+        l0 = torch.zeros((yf.shape[0],))
+        for pi in range(p):
+            mask_ = pos[:, pi]
+            # breakpoint()
+            y1_ = yf[:, pi]
+            y2_ = ym[:, pi]
+            h1_ = h1[:, mask_]
+            h2_ = h2[:, mask_]
+            beta_f_ = beta[0][mask_, :][:, pi]
+            beta_m_ = beta[1][mask_, :][:, pi]
+            beta_c_f_ = beta_c[0][:, pi]
+            beta_c_m_ = beta_c[1][:, pi]
+            sigma2_f_ = sigma2[0][mask_, :][:, pi]
+            sigma2_m_ = sigma2[1][mask_, :][:, pi]
+            l0_, l1_ = self.__calc_l_per_snp_one_y(y1_, y2_, h1_, h2_, covar_mat, [beta_f_, beta_m_], [beta_c_f_, beta_c_m_], [sigma2_f_, sigma2_m_])
+            l1 = l1 + l1_
+            l0 = l0 + l0_
+        return l0, l1
+    
+    def __calc_l_per_snp_one_y(self, yf, ym, h1, h2, c, beta, beta_c, sigma2):
+        s2f_ = sigma2[0]
+        s2m_ = sigma2[1]
+        rf1, rf0 = self.__get_residual(yf, yf, h1, h2, c, c, beta[0], beta_c[0])
+        rm1, rm0 = self.__get_residual(ym, ym, h2, h1, c, c, beta[1], beta_c[1])
+        l1 = self._neg_residual_t_residual_div_2_sigma2_per_snp(rf1, s2f_) + self._neg_residual_t_residual_div_2_sigma2_per_snp(rm1, s2m_)
+        l0 = self._neg_residual_t_residual_div_2_sigma2_per_snp(rf0, s2f_) + self._neg_residual_t_residual_div_2_sigma2_per_snp(rm0, s2m_)
+        # breakpoint()
+        return l0, l1
+    
+    def _neg_residual_t_residual_div_2_sigma2_per_snp(self, res, s2):
+        '''
+        res: n x k
+        s2: k
+        return: - res ** 2 / 2 / s2
+        '''
+        # breakpoint()
+        o = - torch.pow(res, 2) / 2 / s2[None, :]
+        return o.sum(axis=1)
+    
+    def _update_sigma2_per_snp(self, n, y1, y2, h1, h2, c1, c2, pos, beta, beta_c, sigma2):
+        p = pos.shape[1]
+        for pi in range(p):
+            mask_ = pos[:, pi]
+            y1_ = y1[:, pi]
+            y2_ = y2[:, pi]
+            h1_ = h1[:, mask_]
+            h2_ = h2[:, mask_]
+            beta_ = beta[:, pi][mask_]
+            beta_c_ = beta_c[:, pi]
+            sigma2_ = self.__update_sigma2_per_snp_one_y(n, y1_, y2_, h1_, h2_, c1, c2, beta_, beta_c_)
+            sigma2[mask_, pi] = sigma2_
+    
+    @staticmethod
+    def __get_residual(y1, y2, x1, x2, c1, c2, beta, beta_c):
+        '''
+        Equation
+        
+        cb1 = c1 beta_c
+        cb2 = c2 beta_c
+        
+        for each column of h1, and h2
+        
+        r1 = y1 - h1 beta - cb1
+        r2 = y2 - h2 beta - cb2
+        '''
+        yp1 = torch.einsum('nk,k->nk', x1, beta)
+        yp2 = torch.einsum('nk,k->nk', x2, beta)
+        cb1 = torch.matmul(c1, beta_c)
+        cb2 = torch.matmul(c2, beta_c)
+        
+        r1 = y1[:, None] - yp1 - cb1[:, None]
+        r2 = y2[:, None] - yp2 - cb2[:, None]
+        return r1, r2
+    
+    def __update_sigma2_per_snp_one_y(self, n, y1, y2, h1, h2, c1, c2, beta, beta_c):
+        '''
+        get residual from __get_residual
+        rsq = r1.T r1 + r2.T r2
+        sigma2 = rsq / n
+        '''
+        r1, r2 = self.__get_residual(y1, y2, h1, h2, c1, c2, beta, beta_c)
+        rsq = torch.pow(r1, 2) + torch.pow(r2, 2)
+        sigma2 = rsq.sum(axis=0) / n
+        
+        return sigma2
+    
+    def _eval_lld_per_snp(self, l0, l1, sigma2, n):
+        return self._eval_lld(l0, l1, sigma2, n)
+    
+    def _calc_gamma_per_snp(self, l0, l1):
+        return self._calc_gamma(l0, l1)
+        
+    def _update_beta_and_sigma2_per_snp(self, beta, beta_c, sigma2, h1, h2, yf, ym, gamma, pos, covar_mat, HtH, CtH, CtC, CtYf, CtYm, n):
+        ## prepare CtC, CtX, XtX, CtY, XtY
+        ## and update beta 
+        d_sqrt_gamma_h1 = self._mat_vec_mul_by_col(h1, torch.sqrt(gamma))
+        d_sqrt_ngamma_h2 = self._mat_vec_mul_by_col(h2, torch.sqrt(1 - gamma))
+        d_sqrt_ngamma_h1 = self._mat_vec_mul_by_col(h1, torch.sqrt(1 - gamma))
+        d_sqrt_gamma_h2 = self._mat_vec_mul_by_col(h2, torch.sqrt(gamma))
+        d_sqrt_gamma_covar = self._mat_vec_mul_by_col(covar_mat, torch.sqrt(gamma))
+        d_sqrt_ngamma_covar = self._mat_vec_mul_by_col(covar_mat, torch.sqrt(1 - gamma))
+        ### for father
+        d_sqrt_gamma_yf = self._mat_vec_mul_by_col(yf, torch.sqrt(gamma))
+        d_sqrt_ngamma_yf = self._mat_vec_mul_by_col(yf, torch.sqrt(1 - gamma))
+        CtX = torch.matmul(d_sqrt_gamma_covar.T, d_sqrt_gamma_h1) + torch.matmul(d_sqrt_ngamma_covar.T, d_sqrt_ngamma_h2)
+        XtX = torch.einsum('ij,ij->j', d_sqrt_gamma_h1, d_sqrt_gamma_h1) + torch.einsum('ij,ij->j', d_sqrt_ngamma_h2, d_sqrt_ngamma_h2)
+        XtX = torch.unsqueeze(XtX, axis=1)
+        XtYf = torch.matmul(d_sqrt_gamma_h1.T, d_sqrt_gamma_yf) + torch.matmul(d_sqrt_ngamma_h2.T, d_sqrt_ngamma_yf)
+        self._update_beta_per_snp(CtC, CtX, XtX, CtYf, XtYf, pos, beta[0], beta_c[0])
+        ### for mother
+        d_sqrt_gamma_ym = self._mat_vec_mul_by_col(ym, torch.sqrt(gamma))
+        d_sqrt_ngamma_ym = self._mat_vec_mul_by_col(ym, torch.sqrt(1 - gamma))
+        CtX = CtH - CtX
+        XtX = HtH - XtX
+        XtYm = torch.matmul(d_sqrt_ngamma_h1.T, d_sqrt_ngamma_ym) + torch.matmul(d_sqrt_gamma_h2.T, d_sqrt_gamma_ym)
+        # XtYm = HtYm - XtYm
+        self._update_beta_per_snp(CtC, CtX, XtX, CtYm, XtYm, pos, beta[1], beta_c[1])
+        
+        ## update sigma
+        self._update_sigma2_per_snp(n, d_sqrt_gamma_yf, d_sqrt_ngamma_yf, d_sqrt_gamma_h1, d_sqrt_ngamma_h2, d_sqrt_gamma_covar, d_sqrt_ngamma_covar, pos, beta[0], beta_c[0], sigma2[0])
+        self._update_sigma2_per_snp(n, d_sqrt_gamma_ym, d_sqrt_ngamma_ym, d_sqrt_gamma_h2, d_sqrt_ngamma_h1, d_sqrt_gamma_covar, d_sqrt_ngamma_covar, pos, beta[1], beta_c[1], sigma2[1])
+    
+    
+    def _em_otf_per_snp(self, yf, ym, h1, h2, pos, covar=None, device='cpu', tol=1e-5, maxiter=100):
+        # breakpoint() 
+        # add intercept as part of covariate matrix
+        covar_mat = np.ones((h1.shape[0], 1))
+        
+        # add covariate if there is any
+        if covar is not None:
+            covar_mat = np.concatenate(
+                (covar_mat, covar),
+                axis=1
+            )
+        
+        
+        # push everything to torch Tensor
+        h1 = self._to_torch_tensor(h1, device)
+        h2 = self._to_torch_tensor(h2, device)
+        yf = self._to_torch_tensor(yf, device)
+        ym = self._to_torch_tensor(ym, device)
+        pos = self._to_torch_tensor(pos, device) == 1
+        covar_mat = self._to_torch_tensor(covar_mat, device)
+        
+        
+        # repeatedly used terms
+        HtH = torch.einsum('nk,nk->k', h1, h1) + torch.einsum('nk,nk->k', h2, h2)
+        HtH = torch.unsqueeze(HtH, axis=1)
+        # HtYm = torch.matmul(h1.T, ym) + torch.matmul(h2.T, ym)
+        CtH = torch.matmul(covar_mat.T, h1) + torch.matmul(covar_mat.T, h2)
+        CtC = torch.matmul(covar_mat.T, covar_mat)
+        CtYf = torch.matmul(covar_mat.T, yf)
+        CtYm = torch.matmul(covar_mat.T, ym)
+        
+        
+        # dimensions
+        p = yf.shape[1]
+        n = yf.shape[0]
+        k = h1.shape[1]
+        ncovar = covar_mat.shape[1]
+        self._check_dim(h1, n, k)
+        self._check_dim(h2, n, k)
+        self._check_dim(yf, n, p)
+        self._check_dim(ym, n, p)
+        self._check_dim(pos, k, p)
+        self._check_dim(covar_mat, n, ncovar)
+        
+        # initilization
+        beta = [
+            torch.zeros((k, p)),  # father
+            torch.zeros((k, p)),  # mother
+        ]
+        beta_c = [
+            torch.zeros((ncovar, p)),  # father
+            torch.zeros((ncovar, p)),  # mother
+        ]
+        sigma2 = [
+            torch.ones((k, p)),  # father
+            torch.ones((k, p)),  # mother
+        ]
+        
+        diff = tol + 1
+        niter = 0
+        lld = []
+        # breakpoint()
+        while diff > tol and niter < maxiter:
+            
+            # E step
+            l0, l1 = self._calc_l_per_snp(yf, ym, h1, h2, covar_mat, pos, beta, beta_c, sigma2)
+            # breakpoint()
+            lld_curr = self._eval_lld_per_snp(l0, l1, sigma2, n)
+            gamma = self._calc_gamma_per_snp(l0, l1)
+            lld.append(lld_curr)
+            # breakpoint()
+    
+            
+            # M step
+            
+            ## cache variables
+            beta_old = deepcopy(beta)
+            sigma2_old = deepcopy(sigma2)
+            
+            ## update beta and sigma2
+            # breakpoint()
+            self._update_beta_and_sigma2_per_snp(
+                beta, beta_c, sigma2, 
+                h1, h2, yf, ym, gamma, pos, covar_mat, 
+                HtH, CtH, CtC, CtYf, CtYm, n
+            )
+            
+            # diff
+            diff_b = self._calc_diff_in_list(beta_old, beta)
+            diff_s = self._calc_diff_in_list(sigma2_old, sigma2)
+            
+            diff = diff_b + diff_s
+            
+            # niter
+            niter += 1
+            # breakpoint()
+        
+        # last update
+        l0, l1 = self._calc_l_per_snp(yf, ym, h1, h2, covar_mat, pos, beta, beta_c, sigma2)
+        lld_curr = self._eval_lld_per_snp(l0, l1, sigma2, n)
+        gamma = self._calc_gamma_per_snp(l0, l1)
+        lld.append(lld_curr)
+        
+        return beta, beta_c, sigma2, gamma, lld
         
     
     def _otf_basic_em(self, father, mother, h1, h2, df_indiv, df_pos, df_covar=None, return_all=False):
