@@ -604,10 +604,13 @@ class HaploImputer:
         lld_curr = self._eval_lld_per_snp(l0, l1, sigma2, n)
         gamma = self._calc_gamma_per_snp(l0, l1)
         lld.append(lld_curr)
-        
-        return beta, beta_c, sigma2, gamma, lld
+       
+        beta[0] = torch.cat((beta_c[0], beta[0]), axis=0)
+        beta[1] = torch.cat((beta_c[1], beta[1]), axis=0)
+
+        return beta, sigma2, gamma, lld
     
-    def __call_otf_em(self, father, mother, h1, h2, df_indiv, df_pos, em_func, df_covar=None, return_all=False)    
+    def __call_otf_em(self, father, mother, h1, h2, df_indiv, df_pos, em_func, df_covar=None, return_all=False): 
         df_all = pd.DataFrame({
             'individual_id': df_indiv['individual_id'].tolist()
         })
@@ -668,15 +671,18 @@ class HaploImputer:
         Must be called from self.impute_otf. 
         Otherwise the tables may not have the expected properties.
         '''
-        beta, beta_c, sigma2, out, lld = self.__call_otf_em(father, mother, h1, h2, df_indiv, df_pos, em_func=self._em_otf_per_snp, df_covar=df_covar, return_all=return_all)
-        beta[0] = torch.cat((beta_c[0], beta[0]), axis=0)
-        beta[1] = torch.cat((beta_c[1], beta[1]), axis=0)
+        beta, sigma2, out, lld = self.__call_otf_em(father, mother, h1, h2, df_indiv, df_pos, em_func=self._em_otf_per_snp, df_covar=df_covar, return_all=return_all)
+        # beta[0] = torch.cat((beta_c[0], beta[0]), axis=0)
+        # beta[1] = torch.cat((beta_c[1], beta[1]), axis=0)
         
         # output
         out_df = pd.DataFrame({ 'prob_z': out })
         # breakpoint()
-        out_df['individual_id'] = ff['individual_id']
+        out_df['individual_id'] = father['individual_id']
         if return_all is True:
+            df_all = pd.DataFrame({
+                'individual_id': df_indiv['individual_id'].tolist()
+            })
             out_df = pd.merge(
                 df_all, out_df, 
                 left_on='individual_id',
