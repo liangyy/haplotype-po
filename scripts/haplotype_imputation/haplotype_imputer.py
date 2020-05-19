@@ -614,7 +614,7 @@ class HaploImputer:
 
         return beta, beta_c, sigma2, gamma, lld
     
-    def __call_otf_em(self, father, mother, h1, h2, df_indiv, df_pos, em_func, df_covar=None, return_all=False): 
+    def __call_otf_em(self, father, mother, h1, h2, df_indiv, df_pos, em_func, df_covar=None, return_all=False, debug_cache=None): 
         df_all = pd.DataFrame({
             'individual_id': df_indiv['individual_id'].tolist()
         })
@@ -657,17 +657,18 @@ class HaploImputer:
             )
         
         # solve EM
+        if debug_cache is not None:
         # breakpoint()
-        # np.save('fmat.npy', fmat.values)
-        # np.save('mmat.npy', mmat.values)
-        # np.save('hh1.npy', hh1)
-        # np.save('hh2.npy', hh2)
-        # np.save('posmat.npy', posmat.values)
-        # np.save('cmat.npy', cmat)
+            np.save(f'{debug_cache}_fmat.npy', fmat.values)
+            np.save(f'{debug_cache}_mmat.npy', mmat.values)
+            np.save(f'{debug_cache}_hh1.npy', hh1)
+            np.save(f'{debug_cache}_hh2.npy', hh2)
+            np.save(f'{debug_cache}_posmat.npy', posmat.values)
+            np.save(f'{debug_cache}_cmat.npy', cmat)
         # beta, sigma2, out, lld = self._em_otf(fmat.values, mmat.values, hh1, hh2, posmat.values)
         return em_func(fmat.values, mmat.values, hh1, hh2, posmat.values, covar=cmat), ff['individual_id']
     
-    def _otf_per_snp_em(self, father, mother, h1, h2, df_indiv, df_pos, df_covar=None, return_all=False):
+    def _otf_per_snp_em(self, father, mother, h1, h2, df_indiv, df_pos, df_covar=None, return_all=False, debug_cache=None):
         '''
         Only work with individuals has non-missing
         (either 0 or 1) in all columns
@@ -675,7 +676,7 @@ class HaploImputer:
         Must be called from self.impute_otf. 
         Otherwise the tables may not have the expected properties.
         '''
-        (beta, beta_c, sigma2, out, lld), indiv_id = self.__call_otf_em(father, mother, h1, h2, df_indiv, df_pos, em_func=self._em_otf_per_snp, df_covar=df_covar, return_all=return_all)
+        (beta, beta_c, sigma2, out, lld), indiv_id = self.__call_otf_em(father, mother, h1, h2, df_indiv, df_pos, em_func=self._em_otf_per_snp, df_covar=df_covar, return_all=return_all, debug_cache=debug_cache)
         # beta[0] = torch.cat((beta_c[0], beta[0]), axis=0)
         # beta[1] = torch.cat((beta_c[1], beta[1]), axis=0)
         
@@ -696,7 +697,7 @@ class HaploImputer:
         
         return (beta, beta_c), sigma2, out_df, lld
         
-    def _otf_basic_em(self, father, mother, h1, h2, df_indiv, df_pos, df_covar=None, return_all=False):
+    def _otf_basic_em(self, father, mother, h1, h2, df_indiv, df_pos, df_covar=None, return_all=False, debug_cache=None):
         '''
         Only work with individuals has non-missing
         (either 0 or 1) in all columns
@@ -704,7 +705,7 @@ class HaploImputer:
         Must be called from self.impute_otf. 
         Otherwise the tables may not have the expected properties.
         '''
-        (beta, sigma2, out, lld), indiv_id = self.__call_otf_em(father, mother, h1, h2, df_indiv, df_pos, em_func=self._em_otf, df_covar=df_covar, return_all=return_all)
+        (beta, sigma2, out, lld), indiv_id = self.__call_otf_em(father, mother, h1, h2, df_indiv, df_pos, em_func=self._em_otf, df_covar=df_covar, return_all=return_all, debug_cache=debug_cache)
         
         # output
         out_df = pd.DataFrame({ 'prob_z': out })

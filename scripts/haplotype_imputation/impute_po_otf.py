@@ -74,6 +74,9 @@ parser.add_argument('--nthread', default=None, type=int, help='''
 parser.add_argument('--imputer-output', type=str, help='''
     Pickle GZ imputer output
 ''')
+parser.add_argument('--debug-cache-prefix', type=str, default=None, help='''
+    Set if want to cache the input for debugging.
+''')
 
 args = parser.parse_args()
 
@@ -134,7 +137,8 @@ beta, sigma2, out, lld = imputer.impute_otf(
     df_father, df_mother, 
     h1, h2, hap_indiv_df, hap_pos_df,
     mode=args.impute_mode,
-    df_covar=df_covar
+    df_covar=df_covar,
+    debug_cache=args.debug_cache_prefix
 )
 # lld_ = [ l.numpy()[0] for l in lld ]
 # logging.info('lld = ', ' '.join(lld))
