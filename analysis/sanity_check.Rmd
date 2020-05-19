@@ -67,16 +67,22 @@ signed_beta = function(beta, allele_ids, a1, a2) {
   obeta[ref == a1 & alt == a2] = -beta[ref == a1 & alt == a2]
   return(obeta)
 }
+get_id = function(id) {
+  unlist(lapply(strsplit(id, ':'), function(x) {
+    paste0(x[1], ':', x[2])
+  }))
+}
 ```
 
 ```{r load}
 snp_map = fread('zcat < ~/Desktop/tmp/haplotype-po/snp_map_for_neale_lab_gwas.with_sign.tsv.gz', header = TRUE, sep = '\t')
 gwas_father = fread('~/Downloads/2_UKB_AD_paternal_summary_output_June2019.txt', sep = ' ')
 
-methods = data.frame(method = c('em', 'em_deg', 'em_otf'), prefix = c('test_sanity_imputer_chr', 'test_sanity_imputer_deg_chr', 'test_sanity_imputer_otf_chr'))
+methods = data.frame(method = c('em', 'em_deg', 'em_otf', 'em_otf_w_covar', 'em_otf_w_covar_hypertension', 'em_per_snp_w_covar_hypertension'), prefix = c('test_sanity_imputer_chr', 'test_sanity_imputer_deg_chr', 'test_sanity_imputer_otf_chr', 'test_sanity_imputer_otf_w_covar_chr', 'test_sanity_imputer_otf_w_covar_hypertension_chr', 'test_sanity_imputer_otf_per_snp_w_covar_hypertension_chr'))
 dl = list()
 dl[[1]] = list()
 dl[[2]] = list()
+dl[[3]] = list()
 for(chr_num in c(16, 19)) {
   pos = snp_map %>% filter(chrom == chr_num) %>% pull(pos)
   for(m in 1 : nrow(methods)) {
@@ -92,10 +98,22 @@ for(chr_num in c(16, 19)) {
       df = df %>% mutate(chr = chr_num, method = methods$method[m])
       dl[[i]][[length(dl[[i]]) + 1]] = df
     }
+    if(methods$method[m] %in% c('em_otf_w_covar_hypertension', 'em_per_snp_w_covar_hypertension')) {
+      if(!file.exists(paste0('/Users/yanyul/Desktop/tmp/haplotype-po/', methods$prefix[m], chr_num, '.npy'))) {
+        next
+      }
+      df = read_from_npy(
+        paste0('/Users/yanyul/Desktop/tmp/haplotype-po/', methods$prefix[m], chr_num, '.npy'),
+        pos, 
+        3
+      )
+      df = df %>% mutate(chr = chr_num, method = methods$method[m])
+      dl[[3]][[length(dl[[3]]) + 1]] = df
+    }
   }
 }
 df = list()
-info = c('HD', 'AD')
+info = c('HD', 'AD', 'HT')
 for(i in 1 : length(info)) {
   df[[i]] = do.call(rbind, dl[[i]]) %>% mutate(trait = info[i])
 }
@@ -123,7 +141,7 @@ df_ad %>% group_by(method, impute) %>% summarize(nsnp = n()) %>% pander
 
 ## Effect size
 
-```{r ad_beta}
+```{r ad_beta, fig.height=10, fig.width=5}
 df_paper = df_ad %>% filter(method == 'paper')
 df_paper_plot = df_paper %>% inner_join(df_ad %>% filter(method != 'paper'), by = c('position', 'chr'), suffix = c('_paper', '_other'))
 df_paper_plot %>% ggplot() + geom_point(aes(x = beta_paper, y = beta_other), alpha = .2) + facet_grid(method_other~impute_other) + ggtitle('paper beta vs my beta') + geom_abline(slope = 1, intercept = 0, color = 'gray')
@@ -135,6 +153,14 @@ df_ad_plot = df_ad %>% filter(method %in% c('em', 'em_deg')) %>% reshape2::dcast
 df_ad_plot %>% ggplot() + geom_point(aes(x = em, y = em_deg), alpha = 0.2) + facet_wrap(~impute) + ggtitle('compare em vs em_deg: beta')
 df_ad_plot = df_ad %>% filter(method %in% c('em', 'em_deg')) %>% reshape2::dcast(position + impute + chr ~ method, value.var = 'se')
 df_ad_plot %>% ggplot() + geom_point(aes(x = em, y = em_deg), alpha = 0.2) + facet_wrap(~impute) + ggtitle('compare em vs em_deg: se')
+```
+
+```{r ad_beta2, fig.height=3, fig.width=5}
+# compare em vs em_deg
+df_ad_plot = df_ad %>% filter(method %in% c('em_otf_w_covar_hypertension', 'em_per_snp_w_covar_hypertension')) %>% reshape2::dcast(position + impute + chr ~ method, value.var = 'beta')
+df_ad_plot %>% ggplot() + geom_point(aes(x = em_otf_w_covar_hypertension, y = em_per_snp_w_covar_hypertension), alpha = 0.2) + facet_wrap(~impute) + ggtitle('compare em vs em_deg: beta')
+df_ad_plot = df_ad %>% filter(method %in% c('em_otf_w_covar_hypertension', 'em_per_snp_w_covar_hypertension')) %>% reshape2::dcast(position + impute + chr ~ method, value.var = 'se')
+df_ad_plot %>% ggplot() + geom_point(aes(x = em_otf_w_covar_hypertension, y = em_per_snp_w_covar_hypertension), alpha = 0.2) + facet_wrap(~impute) + ggtitle('compare em vs em_deg: se')
 ```
 
 ## P-value
@@ -152,6 +178,8 @@ p1 = df_avg_plot %>% filter(chr == 16) %>% ggplot() + geom_point(aes(x = -log(pv
 p2 = df_avg_plot %>% filter(chr == 19) %>% ggplot() + geom_point(aes(x = -log(pval_avg), y = -log(pval_other), color = impute_other), alpha = 0.3) + facet_grid(method~impute_other, scales = 'free') + ggtitle('Avg log p vs my log p') + geom_abline(slope = 1, intercept = 0, color = 'gray') # + coord_cartesian(xlim = c(0,25), ylim = c(0,25))
 p1 / p2
 ```
+
+
 
 # HD
 
@@ -183,5 +211,54 @@ p1 = df_avg_plot %>% filter(chr == 16) %>% ggplot() + geom_point(aes(x = -log(pv
 p2 = df_avg_plot %>% filter(chr == 19) %>% ggplot() + geom_point(aes(x = -log(pval_avg), y = -log(pval_other), color = impute_other), alpha = 0.3) + facet_grid(method~impute_other, scales = 'free') + ggtitle('Avg log p vs my log p') + geom_abline(slope = 1, intercept = 0, color = 'gray')
 p1 / p2
 ```
+
+
+# HT
+
+```{r ht}
+df_ht = df %>% filter(trait == 'HT') %>% mutate(pval = beta2pval(beta, se))
+```
+
+## Neale lab GWAS
+
+```{r neale}
+gwas_self = fread('zcat < ~/Desktop/tmp/haplotype-po/20002_1065.gwas.imputed_v3.both_sexes.tsv.bgz | grep "^16:\\|^19:"', header = F, sep = '\t', data.table = F)
+gwas_parent = fread('zcat < ~/Desktop/tmp/haplotype-po/20107_8.gwas.imputed_v3.both_sexes.tsv.bgz | grep "^16:\\|^19:"', header = F, sep = '\t', data.table = F)
+gwas_self = gwas_self %>% mutate(snp = get_id(V1))
+gwas_parent = gwas_parent %>% mutate(snp = get_id(V1))
+gwas_self = gwas_self %>% filter(snp %in% unique(paste0(df_ht$chr, ':', df_ht$position)))
+gwas_parent = gwas_parent %>% filter(snp %in% unique(paste0(df_ht$chr, ':', df_ht$position)))
+gwas_ht = inner_join(gwas_self, gwas_parent, by = 'snp', suffix = c('.self', '.parent'))
+gwas_ht %>% filter(V12.self < 0.01, V12.parent < 0.01, !V5.self, !V5.parent) %>% ggplot() + geom_point(aes(x = V9.self, y = V9.parent)) 
+gwas_ht %>% filter(V12.self < 0.01, V12.parent < 0.01, !V5.self, !V5.parent) %>% ggplot() + geom_point(aes(x = -log(V12.self), y = -log(V12.parent))) 
+gwas_ht_bonferroni = gwas_ht %>% filter(V12.self < 0.01 / n() | V12.parent < 0.01 / n(), !V5.self, !V5.parent)
+df_ht %>% filter(paste0(chr, ':', position) %in% gwas_ht_bonferroni$snp) %>% reshape2::dcast(position + chr + method ~ impute, value.var = 'pval') %>% ggplot() + geom_point(aes(x = -log(avg), y = -log(flip), color = 'flip')) + geom_point(aes(x = -log(avg), y = -log(imp), color = 'imp')) + geom_abline(slope = 1, intercept = 0) + facet_grid(method~chr)
+```
+
+<!-- ## Effect size -->
+
+<!-- ```{r hd_beta} -->
+<!-- df_em_avg = df_ht %>% filter(impute == 'avg') -->
+<!-- df_em_avg_plot = df_em_avg %>% inner_join(df_ht, by = c('position', 'chr'), suffix = c('_em_avg', '_other')) -->
+<!-- df_em_avg_plot %>% ggplot() + geom_point(aes(x = beta_em_avg, y = beta_other), alpha = .2) + facet_grid(chr~impute_other) + ggtitle('em avg beta vs my beta') + geom_abline(slope = 1, intercept = 0, color = 'gray') -->
+<!-- df_em_avg_plot %>% ggplot() + geom_point(aes(x = se_em_avg, y = se_other), alpha = .2) + facet_grid(chr~impute_other) + ggtitle('em avg se vs my se') + geom_abline(slope = 1, intercept = 0, color = 'gray') -->
+<!-- ``` -->
+
+## P-value
+
+```{r hd_qq}
+df_ht_qq = df_ht %>% group_by(method, impute, chr) %>% mutate(p_exp = rank(pval) / (n() + 1))
+df_ht_qq %>% ggplot() + geom_point(aes(x = -log(p_exp), y = -log(pval), color = impute)) + facet_grid(method~chr, scales = 'free_y') + ggtitle('QQ-plot by chromsome')
+```
+
+<!-- ```{r hd_pval, fig.height=8, fig.width=6} -->
+<!-- df_avg = df_hd_qq %>% filter(impute == 'avg') -->
+<!-- df_avg_plot = df_avg %>% inner_join(df_hd_qq %>% filter(impute != 'avg'), by = c('position', 'chr', 'method'), suffix = c('_avg', '_other')) -->
+
+<!-- p1 = df_avg_plot %>% filter(chr == 16) %>% ggplot() + geom_point(aes(x = -log(pval_avg), y = -log(pval_other), color = impute_other), alpha = 0.3) + facet_grid(method~impute_other, scales = 'free') + ggtitle('Avg log p vs my log p') + geom_abline(slope = 1, intercept = 0, color = 'gray') -->
+<!-- p2 = df_avg_plot %>% filter(chr == 19) %>% ggplot() + geom_point(aes(x = -log(pval_avg), y = -log(pval_other), color = impute_other), alpha = 0.3) + facet_grid(method~impute_other, scales = 'free') + ggtitle('Avg log p vs my log p') + geom_abline(slope = 1, intercept = 0, color = 'gray') -->
+<!-- p1 / p2 -->
+<!-- ``` -->
+
 
 # References

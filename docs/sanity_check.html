@@ -382,7 +382,7 @@ div.tocify {
 
 
 <h1 class="title toc-ignore">Sanity check on first pass effort</h1>
-<h4 class="date">Last update: May 10, 2020</h4>
+<h4 class="date">Last update: May 13, 2020</h4>
 
 </div>
 
@@ -443,7 +443,7 @@ signed_beta = function(beta, allele_ids, a1, a2) {
 <pre class="r"><code>snp_map = fread(&#39;zcat &lt; ~/Desktop/tmp/haplotype-po/snp_map_for_neale_lab_gwas.with_sign.tsv.gz&#39;, header = TRUE, sep = &#39;\t&#39;)
 gwas_father = fread(&#39;~/Downloads/2_UKB_AD_paternal_summary_output_June2019.txt&#39;, sep = &#39; &#39;)
 
-methods = data.frame(method = c(&#39;em&#39;, &#39;em_deg&#39;, &#39;em_otf&#39;), prefix = c(&#39;test_sanity_imputer_chr&#39;, &#39;test_sanity_imputer_deg_chr&#39;, &#39;test_sanity_imputer_otf_chr&#39;))
+methods = data.frame(method = c(&#39;em&#39;, &#39;em_deg&#39;, &#39;em_otf&#39;, &#39;em_otf_w_covar&#39;), prefix = c(&#39;test_sanity_imputer_chr&#39;, &#39;test_sanity_imputer_deg_chr&#39;, &#39;test_sanity_imputer_otf_chr&#39;, &#39;test_sanity_imputer_otf_w_covar_chr&#39;))
 dl = list()
 dl[[1]] = list()
 dl[[2]] = list()
@@ -486,9 +486,9 @@ df_ad = rbind(
   extract_snp %&gt;% select(beta, SE, pos, impute, chrom, method) %&gt;% rename(se = SE, position = pos, chr = chrom)
 )
 df_ad %&gt;% group_by(method, impute) %&gt;% summarize(nsnp = n()) %&gt;% pander</code></pre>
-<table style="width:38%;">
+<table style="width:49%;">
 <colgroup>
-<col width="12%" />
+<col width="23%" />
 <col width="12%" />
 <col width="12%" />
 </colgroup>
@@ -546,6 +546,21 @@ df_ad %&gt;% group_by(method, impute) %&gt;% summarize(nsnp = n()) %&gt;% pander
 <td align="center">37484</td>
 </tr>
 <tr class="even">
+<td align="center">em_otf_w_covar</td>
+<td align="center">avg</td>
+<td align="center">37484</td>
+</tr>
+<tr class="odd">
+<td align="center">em_otf_w_covar</td>
+<td align="center">flip</td>
+<td align="center">37484</td>
+</tr>
+<tr class="even">
+<td align="center">em_otf_w_covar</td>
+<td align="center">imp</td>
+<td align="center">37484</td>
+</tr>
+<tr class="odd">
 <td align="center">paper</td>
 <td align="center">avg</td>
 <td align="center">36869</td>

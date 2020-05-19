@@ -8,9 +8,24 @@ beta_f = matrix(rnorm(k * p), ncol = p, nrow = k)
 beta_m = matrix(rnorm(k * p), ncol = p, nrow = k)
 yf = h1 %*% beta_f + matrix(rnorm(n * p), ncol = p, nrow = n) * 10
 ym = h2 %*% beta_m + matrix(rnorm(n * p), ncol = p, nrow = n) * 10
+# # 
+# library(reticulate)
+# np <- import("numpy")
+# h1 = np$load('notebook/h1.npy')
+# h2 = np$load('notebook/h2.npy')
+# yf = np$load('notebook/yf.npy')
+# ym = np$load('notebook/ym.npy')
 
 source('code/rlib_em_per_snp.R')
-o = em_per_snp(yf, ym, h1, h2)
+o = em_per_snp(yf, ym, h1[, 1:5], h2[, 1:5])
+o$inter
+o$beta
+o$lld
+o$sigma2
+
+hist(o$prob_z)
+
+# o$lld[20:68] + 972676
 
 l1f = NULL
 l0f = 0

@@ -72,10 +72,11 @@ em_per_snp = function(yf, ym, h1, h2, prior_prob_z = 0.5, maxiter = 1000, tol = 
 }
 
 get_lld = function(lf, lm, prior, sigma2f, sigma2m) {
-  l1 = sum(lf$l1 + lm$l1) + log(prior)
-  l0 = sum(lf$l0 + lm$l0) + log(1 - prior)
-  o = .logsum(l1, l0)
-  o - nrow(lf$l1) * (sum(log(sigma2f)) + sum(log(sigma2m)))
+  l1 = rowSums(lf$l1 + lm$l1) + log(prior)
+  l0 = rowSums(lf$l0 + lm$l0) + log(1 - prior)
+  lld = .logsum(l1, l0)
+  o = sum(lld)
+  o - nrow(lf$l1) / 2 * (sum(log(sigma2f)) + sum(log(sigma2m)))
 }
 
 get_l = function(y, hh1, hh2, beta, inter, sigma2) {
