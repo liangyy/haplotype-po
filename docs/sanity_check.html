@@ -382,7 +382,7 @@ div.tocify {
 
 
 <h1 class="title toc-ignore">Sanity check on first pass effort</h1>
-<h4 class="date">Last update: May 13, 2020</h4>
+<h4 class="date">Last update: May 18, 2020</h4>
 
 </div>
 
@@ -439,14 +439,20 @@ signed_beta = function(beta, allele_ids, a1, a2) {
   obeta[ref == a2 &amp; alt == a1] = beta[ref == a2 &amp; alt == a1]
   obeta[ref == a1 &amp; alt == a2] = -beta[ref == a1 &amp; alt == a2]
   return(obeta)
+}
+get_id = function(id) {
+  unlist(lapply(strsplit(id, &#39;:&#39;), function(x) {
+    paste0(x[1], &#39;:&#39;, x[2])
+  }))
 }</code></pre>
 <pre class="r"><code>snp_map = fread(&#39;zcat &lt; ~/Desktop/tmp/haplotype-po/snp_map_for_neale_lab_gwas.with_sign.tsv.gz&#39;, header = TRUE, sep = &#39;\t&#39;)
 gwas_father = fread(&#39;~/Downloads/2_UKB_AD_paternal_summary_output_June2019.txt&#39;, sep = &#39; &#39;)
 
-methods = data.frame(method = c(&#39;em&#39;, &#39;em_deg&#39;, &#39;em_otf&#39;, &#39;em_otf_w_covar&#39;), prefix = c(&#39;test_sanity_imputer_chr&#39;, &#39;test_sanity_imputer_deg_chr&#39;, &#39;test_sanity_imputer_otf_chr&#39;, &#39;test_sanity_imputer_otf_w_covar_chr&#39;))
+methods = data.frame(method = c(&#39;em&#39;, &#39;em_deg&#39;, &#39;em_otf&#39;, &#39;em_otf_w_covar&#39;, &#39;em_otf_w_covar_hypertension&#39;, &#39;em_per_snp_w_covar_hypertension&#39;), prefix = c(&#39;test_sanity_imputer_chr&#39;, &#39;test_sanity_imputer_deg_chr&#39;, &#39;test_sanity_imputer_otf_chr&#39;, &#39;test_sanity_imputer_otf_w_covar_chr&#39;, &#39;test_sanity_imputer_otf_w_covar_hypertension_chr&#39;, &#39;test_sanity_imputer_otf_per_snp_w_covar_hypertension_chr&#39;))
 dl = list()
 dl[[1]] = list()
 dl[[2]] = list()
+dl[[3]] = list()
 for(chr_num in c(16, 19)) {
   pos = snp_map %&gt;% filter(chrom == chr_num) %&gt;% pull(pos)
   for(m in 1 : nrow(methods)) {
@@ -462,10 +468,22 @@ for(chr_num in c(16, 19)) {
       df = df %&gt;% mutate(chr = chr_num, method = methods$method[m])
       dl[[i]][[length(dl[[i]]) + 1]] = df
     }
+    if(methods$method[m] %in% c(&#39;em_otf_w_covar_hypertension&#39;, &#39;em_per_snp_w_covar_hypertension&#39;)) {
+      if(!file.exists(paste0(&#39;/Users/yanyul/Desktop/tmp/haplotype-po/&#39;, methods$prefix[m], chr_num, &#39;.npy&#39;))) {
+        next
+      }
+      df = read_from_npy(
+        paste0(&#39;/Users/yanyul/Desktop/tmp/haplotype-po/&#39;, methods$prefix[m], chr_num, &#39;.npy&#39;),
+        pos, 
+        3
+      )
+      df = df %&gt;% mutate(chr = chr_num, method = methods$method[m])
+      dl[[3]][[length(dl[[3]]) + 1]] = df
+    }
   }
 }
 df = list()
-info = c(&#39;HD&#39;, &#39;AD&#39;)
+info = c(&#39;HD&#39;, &#39;AD&#39;, &#39;HT&#39;)
 for(i in 1 : length(info)) {
   df[[i]] = do.call(rbind, dl[[i]]) %&gt;% mutate(trait = info[i])
 }
@@ -486,9 +504,9 @@ df_ad = rbind(
   extract_snp %&gt;% select(beta, SE, pos, impute, chrom, method) %&gt;% rename(se = SE, position = pos, chr = chrom)
 )
 df_ad %&gt;% group_by(method, impute) %&gt;% summarize(nsnp = n()) %&gt;% pander</code></pre>
-<table style="width:49%;">
+<table style="width:72%;">
 <colgroup>
-<col width="23%" />
+<col width="47%" />
 <col width="12%" />
 <col width="12%" />
 </colgroup>
@@ -561,6 +579,36 @@ df_ad %&gt;% group_by(method, impute) %&gt;% summarize(nsnp = n()) %&gt;% pander
 <td align="center">37484</td>
 </tr>
 <tr class="odd">
+<td align="center">em_otf_w_covar_hypertension</td>
+<td align="center">avg</td>
+<td align="center">37484</td>
+</tr>
+<tr class="even">
+<td align="center">em_otf_w_covar_hypertension</td>
+<td align="center">flip</td>
+<td align="center">37484</td>
+</tr>
+<tr class="odd">
+<td align="center">em_otf_w_covar_hypertension</td>
+<td align="center">imp</td>
+<td align="center">37484</td>
+</tr>
+<tr class="even">
+<td align="center">em_per_snp_w_covar_hypertension</td>
+<td align="center">avg</td>
+<td align="center">37511</td>
+</tr>
+<tr class="odd">
+<td align="center">em_per_snp_w_covar_hypertension</td>
+<td align="center">flip</td>
+<td align="center">37511</td>
+</tr>
+<tr class="even">
+<td align="center">em_per_snp_w_covar_hypertension</td>
+<td align="center">imp</td>
+<td align="center">37510</td>
+</tr>
+<tr class="odd">
 <td align="center">paper</td>
 <td align="center">avg</td>
 <td align="center">36869</td>
@@ -573,7 +621,7 @@ df_ad %&gt;% group_by(method, impute) %&gt;% summarize(nsnp = n()) %&gt;% pander
 <pre class="r"><code>df_paper = df_ad %&gt;% filter(method == &#39;paper&#39;)
 df_paper_plot = df_paper %&gt;% inner_join(df_ad %&gt;% filter(method != &#39;paper&#39;), by = c(&#39;position&#39;, &#39;chr&#39;), suffix = c(&#39;_paper&#39;, &#39;_other&#39;))
 df_paper_plot %&gt;% ggplot() + geom_point(aes(x = beta_paper, y = beta_other), alpha = .2) + facet_grid(method_other~impute_other) + ggtitle(&#39;paper beta vs my beta&#39;) + geom_abline(slope = 1, intercept = 0, color = &#39;gray&#39;)</code></pre>
-<p><img src="sanity_check_files/figure-html/ad_beta-1.png" width="672" /></p>
+<p><img src="sanity_check_files/figure-html/ad_beta-1.png" width="480" /></p>
 <pre class="r"><code># compare em vs em_deg
 df_ad_plot = df_ad %&gt;% filter(method %in% c(&#39;em&#39;, &#39;em_deg&#39;)) %&gt;% reshape2::dcast(position + impute + chr ~ method, value.var = &#39;beta&#39;)
 df_ad_plot %&gt;% ggplot() + geom_point(aes(x = em, y = em_deg), alpha = 0.2) + facet_wrap(~impute) + ggtitle(&#39;compare em vs em_deg: beta&#39;)</code></pre>
@@ -583,6 +631,15 @@ df_ad_plot %&gt;% ggplot() + geom_point(aes(x = em, y = em_deg), alpha = 0.2) + 
 df_ad_plot %&gt;% ggplot() + geom_point(aes(x = em, y = em_deg), alpha = 0.2) + facet_wrap(~impute) + ggtitle(&#39;compare em vs em_deg: se&#39;)</code></pre>
 <pre><code>## Warning: Removed 81 rows containing missing values (geom_point).</code></pre>
 <p><img src="sanity_check_files/figure-html/ad_beta2-2.png" width="480" /></p>
+<pre class="r"><code># compare em vs em_deg
+df_ad_plot = df_ad %&gt;% filter(method %in% c(&#39;em_otf_w_covar_hypertension&#39;, &#39;em_per_snp_w_covar_hypertension&#39;)) %&gt;% reshape2::dcast(position + impute + chr ~ method, value.var = &#39;beta&#39;)
+df_ad_plot %&gt;% ggplot() + geom_point(aes(x = em_otf_w_covar_hypertension, y = em_per_snp_w_covar_hypertension), alpha = 0.2) + facet_wrap(~impute) + ggtitle(&#39;compare em vs em_deg: beta&#39;)</code></pre>
+<pre><code>## Warning: Removed 82 rows containing missing values (geom_point).</code></pre>
+<p><img src="sanity_check_files/figure-html/ad_beta22-1.png" width="480" /></p>
+<pre class="r"><code>df_ad_plot = df_ad %&gt;% filter(method %in% c(&#39;em_otf_w_covar_hypertension&#39;, &#39;em_per_snp_w_covar_hypertension&#39;)) %&gt;% reshape2::dcast(position + impute + chr ~ method, value.var = &#39;se&#39;)
+df_ad_plot %&gt;% ggplot() + geom_point(aes(x = em_otf_w_covar_hypertension, y = em_per_snp_w_covar_hypertension), alpha = 0.2) + facet_wrap(~impute) + ggtitle(&#39;compare em vs em_deg: se&#39;)</code></pre>
+<pre><code>## Warning: Removed 82 rows containing missing values (geom_point).</code></pre>
+<p><img src="sanity_check_files/figure-html/ad_beta22-2.png" width="480" /></p>
 </div>
 <div id="p-value" class="section level2">
 <h2><span class="header-section-number">3.3</span> P-value</h2>
@@ -622,6 +679,47 @@ p1 = df_avg_plot %&gt;% filter(chr == 16) %&gt;% ggplot() + geom_point(aes(x = -
 p2 = df_avg_plot %&gt;% filter(chr == 19) %&gt;% ggplot() + geom_point(aes(x = -log(pval_avg), y = -log(pval_other), color = impute_other), alpha = 0.3) + facet_grid(method~impute_other, scales = &#39;free&#39;) + ggtitle(&#39;Avg log p vs my log p&#39;) + geom_abline(slope = 1, intercept = 0, color = &#39;gray&#39;)
 p1 / p2</code></pre>
 <p><img src="sanity_check_files/figure-html/hd_pval-1.png" width="576" /></p>
+</div>
+</div>
+<div id="ht" class="section level1">
+<h1><span class="header-section-number">5</span> HT</h1>
+<pre class="r"><code>df_ht = df %&gt;% filter(trait == &#39;HT&#39;) %&gt;% mutate(pval = beta2pval(beta, se))</code></pre>
+<div id="neale-lab-gwas" class="section level2">
+<h2><span class="header-section-number">5.1</span> Neale lab GWAS</h2>
+<pre class="r"><code>gwas_self = fread(&#39;zcat &lt; ~/Desktop/tmp/haplotype-po/20002_1065.gwas.imputed_v3.both_sexes.tsv.bgz | grep &quot;^16:\\|^19:&quot;&#39;, header = F, sep = &#39;\t&#39;, data.table = F)
+gwas_parent = fread(&#39;zcat &lt; ~/Desktop/tmp/haplotype-po/20107_8.gwas.imputed_v3.both_sexes.tsv.bgz | grep &quot;^16:\\|^19:&quot;&#39;, header = F, sep = &#39;\t&#39;, data.table = F)
+gwas_self = gwas_self %&gt;% mutate(snp = get_id(V1))
+gwas_parent = gwas_parent %&gt;% mutate(snp = get_id(V1))
+gwas_self = gwas_self %&gt;% filter(snp %in% unique(paste0(df_ht$chr, &#39;:&#39;, df_ht$position)))
+gwas_parent = gwas_parent %&gt;% filter(snp %in% unique(paste0(df_ht$chr, &#39;:&#39;, df_ht$position)))
+gwas_ht = inner_join(gwas_self, gwas_parent, by = &#39;snp&#39;, suffix = c(&#39;.self&#39;, &#39;.parent&#39;))
+gwas_ht %&gt;% filter(V12.self &lt; 0.01, V12.parent &lt; 0.01, !V5.self, !V5.parent) %&gt;% ggplot() + geom_point(aes(x = V9.self, y = V9.parent)) </code></pre>
+<p><img src="sanity_check_files/figure-html/neale-1.png" width="672" /></p>
+<pre class="r"><code>gwas_ht %&gt;% filter(V12.self &lt; 0.01, V12.parent &lt; 0.01, !V5.self, !V5.parent) %&gt;% ggplot() + geom_point(aes(x = -log(V12.self), y = -log(V12.parent))) </code></pre>
+<p><img src="sanity_check_files/figure-html/neale-2.png" width="672" /></p>
+<pre class="r"><code>gwas_ht_bonferroni = gwas_ht %&gt;% filter(V12.self &lt; 0.01 / n() | V12.parent &lt; 0.01 / n(), !V5.self, !V5.parent)
+df_ht %&gt;% filter(paste0(chr, &#39;:&#39;, position) %in% gwas_ht_bonferroni$snp) %&gt;% reshape2::dcast(position + chr + method ~ impute, value.var = &#39;pval&#39;) %&gt;% ggplot() + geom_point(aes(x = -log(avg), y = -log(flip), color = &#39;flip&#39;)) + geom_point(aes(x = -log(avg), y = -log(imp), color = &#39;imp&#39;)) + geom_abline(slope = 1, intercept = 0) + facet_grid(method~chr)</code></pre>
+<p><img src="sanity_check_files/figure-html/neale-3.png" width="672" /></p>
+<!-- ## Effect size -->
+<!-- ```{r hd_beta} -->
+<!-- df_em_avg = df_ht %>% filter(impute == 'avg') -->
+<!-- df_em_avg_plot = df_em_avg %>% inner_join(df_ht, by = c('position', 'chr'), suffix = c('_em_avg', '_other')) -->
+<!-- df_em_avg_plot %>% ggplot() + geom_point(aes(x = beta_em_avg, y = beta_other), alpha = .2) + facet_grid(chr~impute_other) + ggtitle('em avg beta vs my beta') + geom_abline(slope = 1, intercept = 0, color = 'gray') -->
+<!-- df_em_avg_plot %>% ggplot() + geom_point(aes(x = se_em_avg, y = se_other), alpha = .2) + facet_grid(chr~impute_other) + ggtitle('em avg se vs my se') + geom_abline(slope = 1, intercept = 0, color = 'gray') -->
+<!-- ``` -->
+</div>
+<div id="p-value-2" class="section level2">
+<h2><span class="header-section-number">5.2</span> P-value</h2>
+<pre class="r"><code>df_ht_qq = df_ht %&gt;% group_by(method, impute, chr) %&gt;% mutate(p_exp = rank(pval) / (n() + 1))
+df_ht_qq %&gt;% ggplot() + geom_point(aes(x = -log(p_exp), y = -log(pval), color = impute)) + facet_grid(method~chr, scales = &#39;free_y&#39;) + ggtitle(&#39;QQ-plot by chromsome&#39;)</code></pre>
+<p><img src="sanity_check_files/figure-html/ht_qq-1.png" width="672" /></p>
+<!-- ```{r hd_pval, fig.height=8, fig.width=6} -->
+<!-- df_avg = df_hd_qq %>% filter(impute == 'avg') -->
+<!-- df_avg_plot = df_avg %>% inner_join(df_hd_qq %>% filter(impute != 'avg'), by = c('position', 'chr', 'method'), suffix = c('_avg', '_other')) -->
+<!-- p1 = df_avg_plot %>% filter(chr == 16) %>% ggplot() + geom_point(aes(x = -log(pval_avg), y = -log(pval_other), color = impute_other), alpha = 0.3) + facet_grid(method~impute_other, scales = 'free') + ggtitle('Avg log p vs my log p') + geom_abline(slope = 1, intercept = 0, color = 'gray') -->
+<!-- p2 = df_avg_plot %>% filter(chr == 19) %>% ggplot() + geom_point(aes(x = -log(pval_avg), y = -log(pval_other), color = impute_other), alpha = 0.3) + facet_grid(method~impute_other, scales = 'free') + ggtitle('Avg log p vs my log p') + geom_abline(slope = 1, intercept = 0, color = 'gray') -->
+<!-- p1 / p2 -->
+<!-- ``` -->
 </div>
 </div>
 <div id="references" class="section level1 unnumbered">

@@ -155,7 +155,7 @@ df_ad_plot = df_ad %>% filter(method %in% c('em', 'em_deg')) %>% reshape2::dcast
 df_ad_plot %>% ggplot() + geom_point(aes(x = em, y = em_deg), alpha = 0.2) + facet_wrap(~impute) + ggtitle('compare em vs em_deg: se')
 ```
 
-```{r ad_beta2, fig.height=3, fig.width=5}
+```{r ad_beta22, fig.height=3, fig.width=5}
 # compare em vs em_deg
 df_ad_plot = df_ad %>% filter(method %in% c('em_otf_w_covar_hypertension', 'em_per_snp_w_covar_hypertension')) %>% reshape2::dcast(position + impute + chr ~ method, value.var = 'beta')
 df_ad_plot %>% ggplot() + geom_point(aes(x = em_otf_w_covar_hypertension, y = em_per_snp_w_covar_hypertension), alpha = 0.2) + facet_wrap(~impute) + ggtitle('compare em vs em_deg: beta')
@@ -246,7 +246,7 @@ df_ht %>% filter(paste0(chr, ':', position) %in% gwas_ht_bonferroni$snp) %>% res
 
 ## P-value
 
-```{r hd_qq}
+```{r ht_qq}
 df_ht_qq = df_ht %>% group_by(method, impute, chr) %>% mutate(p_exp = rank(pval) / (n() + 1))
 df_ht_qq %>% ggplot() + geom_point(aes(x = -log(p_exp), y = -log(pval), color = impute)) + facet_grid(method~chr, scales = 'free_y') + ggtitle('QQ-plot by chromsome')
 ```
