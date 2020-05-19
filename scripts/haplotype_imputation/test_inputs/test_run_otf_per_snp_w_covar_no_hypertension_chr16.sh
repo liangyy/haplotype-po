@@ -6,7 +6,7 @@ PHENO_M=test_inputs/test_mother_phenotype_no_hypertension.yaml
 COVAR=test_inputs/test_shared_covariate.yaml
 MODE=per_snp_em
 OUT=test_run_otf_per_snp_w_covar_no_hypertension_chr16.tsv.gz
-NTHREAD=12
+NTHREAD=8
 
 python impute_po_otf.py \
   --genotype-in-hdf5 $GENO \
@@ -17,4 +17,4 @@ python impute_po_otf.py \
   --shared-covariate-yaml $COVAR \
   --impute-mode $MODE \
   --nthread $NTHREAD \
-  --output $OUT > test_run_otf_w_covar_no_hypertension_chr16.log 2>&1
+  --output $OUT > test_run_otf_per_snp_w_covar_no_hypertension_chr16.log 2>&1

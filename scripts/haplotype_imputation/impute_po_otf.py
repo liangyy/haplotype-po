@@ -71,6 +71,10 @@ parser.add_argument('--output', help='''
 parser.add_argument('--nthread', default=None, type=int, help='''
     Number of threads to use.
 ''')
+parser.add_argument('--imputer-output', type=str, help='''
+    Pickle GZ imputer output
+''')
+
 args = parser.parse_args()
 
 
@@ -81,6 +85,7 @@ import table_reader
 import geno_hdf5_reader
 import snp_list_reader
 import haplotype_imputer
+import gzip, pickle
 
 # configing util
 logging.basicConfig(
@@ -125,7 +130,7 @@ h1, h2, hap_indiv_df, hap_pos_df = geno_hdf5_reader.load_haplotypes_by_position(
 
 logging.info('Run imputation: mode = {}'.format(args.impute_mode))
 imputer = haplotype_imputer.HaploImputer()
-_, _, out, lld = imputer.impute_otf(
+beta, sigma2, out, lld = imputer.impute_otf(
     df_father, df_mother, 
     h1, h2, hap_indiv_df, hap_pos_df,
     mode=args.impute_mode,
@@ -133,7 +138,12 @@ _, _, out, lld = imputer.impute_otf(
 )
 # lld_ = [ l.numpy()[0] for l in lld ]
 # logging.info('lld = ', ' '.join(lld))
-print(lld)
+# print(lld)
+
+logging.info('Save imputer output')
+with gzip.open(args.imputer_output, 'w') as f:
+    pickle.dump((beta, sigma2, lld), f)
+
 
 logging.info('Output')
 out.to_csv(args.output, compression='gzip', sep='\t', index=False)

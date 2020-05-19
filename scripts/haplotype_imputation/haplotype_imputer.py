@@ -694,7 +694,7 @@ class HaploImputer:
                 how='left'
             ).fillna(0.5)
         
-        return beta, sigma2, out_df, lld
+        return (beta, beta_c), sigma2, out_df, lld
         
     def _otf_basic_em(self, father, mother, h1, h2, df_indiv, df_pos, df_covar=None, return_all=False):
         '''
