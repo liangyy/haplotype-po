@@ -4,8 +4,8 @@
 # ARGS4: suffix of imputation files
 
 # args
-chrArray=`IFS=',' read -r -a array <<< "$1"`
-gpuArray=`IFS=',' read -r -a array <<< "$2"`
+IFS=',' read -r -a chrArray <<< $1
+IFS=',' read -r -a gpuArray <<< $2
 
 
 # some inputs
@@ -17,10 +17,10 @@ impSuffix=$4
 
 outdir=/lambda_stor/data/yanyul/UKB/haplotype_imputation/gwas
 
-for index in "${!array[@]}"
+for index in "${!chrArray[@]}"
 do
   chrom="${chrArray[index]}"
   gpuidx="${gpuArray[index]}"
-  screen -dmS gwas-$i bash -c "bash run.sh $genodir/ukb_hap_v2_to_hdf5.chr$chrom.h5 $phenof $covar $impPrefix$chrom$impSuffix $outdir/chr$chrom $gpuidx"
+  screen -dmS gwas-$chrom bash -c "bash run.sh $genodir/ukb_hap_v2_to_hdf5.chr$chrom.h5 $phenof $covar $impPrefix$chrom$impSuffix $outdir/chr$chrom $gpuidx"
 done
 
