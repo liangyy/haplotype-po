@@ -658,9 +658,9 @@ class HaploImputer:
         
         # remove SNPs with constant dosage in any haplotype
         non_const_dos_ind = self._get_constant_snp([hh1, hh2])
-        hh1 = hh1[, non_const_dos_ind]
-        hh2 = hh2[, non_const_dos_ind]
-        posmat = posmat[non_const_dos_ind, ]
+        hh1 = hh1[:, non_const_dos_ind]
+        hh2 = hh2[:, non_const_dos_ind]
+        posmat = posmat[non_const_dos_ind].reset_index(drop=True)
         
         # solve EM
         if debug_cache is not None:
