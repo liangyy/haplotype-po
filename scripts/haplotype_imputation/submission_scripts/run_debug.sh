@@ -30,4 +30,6 @@ python impute_po_otf.py \
   --impute-mode $MODE \
   --nthread $NTHREAD \
   --output $OUT \
-  --imputer-output $PKLOUT > $MYLOG 2>&1
+  --imputer-output $PKLOUT \
+  --debug-cache-prefix $6 > $MYLOG 2>&1
+
