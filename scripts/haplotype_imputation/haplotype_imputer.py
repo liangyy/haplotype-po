@@ -656,6 +656,12 @@ class HaploImputer:
                   [ff, mm, cc, df_pos]
             )
         
+        # remove SNPs with constant dosage in any haplotype
+        non_const_dos_ind = self._get_constant_snp([hh1, hh2])
+        hh1 = hh1[, non_const_dos_ind]
+        hh2 = hh2[, non_const_dos_ind]
+        posmat = posmat[non_const_dos_ind, ]
+        
         # solve EM
         if debug_cache is not None:
         # breakpoint()
@@ -823,6 +829,17 @@ class HaploImputer:
         )
         
         return impute_method(df_f, df_m, df_1, df_2, **kwargs)
+    
+    @staticmethod
+    def __is_non_const_col(mat):
+        mat.std(axis=0) != 0
+    
+    def _get_constant_snp(self, geno_list):
+        out = self.__is_non_const_col(geno_list[0])
+        if len(geno_list) > 0:
+            for i in range(1, len(geno_list)):
+                out = np.logical_and(out, self.__is_non_const_col(geno_list[i]))
+        return out
     
     @staticmethod
     def _drop_individual_id(dflist):
