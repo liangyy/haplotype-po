@@ -1,7 +1,7 @@
 # ARGS1: input hdf5 genotype
 # ARGS2: phenotype of father (this script only do one parent)
 # ARGS3: covariate of father
-# ARGS4: imputation input
+# ARGS4: imputation table
 # ARGS5: output prefix
 # ARGS6: GPU index
 
@@ -16,10 +16,15 @@ COVAR_F=$3
 PROBZ=$4
 GPUindex=$6
 
+# generate prob z YAML
+PROBZyaml=$5.prob_z.yaml
+cat prob_z_template.yaml |sed "s#PLACEHOLDER#$PROBZ#" > $PROBZyaml
+
 # output
 OUT=$5.npy
 MYLOG=$5.log
 
+cd ../
 
 python run_haplo_logistic_solver.py \
   --genotype-in-hdf5 $HDF5 \
@@ -28,5 +33,5 @@ python run_haplo_logistic_solver.py \
   --gpu-index $GPUindex \
   --father-phenotype-yaml $PHENO_F \
   --father-covariate-yaml $COVAR_F \
-  --haplotype-imputation-yaml $PROBZ \
+  --haplotype-imputation-yaml $PROBZyaml \
   --out-npy $OUT > $MYLOG 2>&1

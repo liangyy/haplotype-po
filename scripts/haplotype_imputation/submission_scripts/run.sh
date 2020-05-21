@@ -40,3 +40,4 @@ if [[ ! -f $OUTADD ]]
 then
   python add_baseline.py --input $OUT --output $OUTADD
 fi
+

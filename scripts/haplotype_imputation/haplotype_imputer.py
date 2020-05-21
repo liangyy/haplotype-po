@@ -832,7 +832,7 @@ class HaploImputer:
     
     @staticmethod
     def __is_non_const_col(mat):
-        mat.std(axis=0) != 0
+        return mat.std(axis=0) != 0
     
     def _get_constant_snp(self, geno_list):
         out = self.__is_non_const_col(geno_list[0])
