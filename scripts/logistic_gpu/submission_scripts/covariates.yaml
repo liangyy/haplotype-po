@@ -1,0 +1,16 @@
+path: '/lambda_stor/data/yanyul/UKB/ptrs_ukb/output/query_phenotypes_cleaned_up.csv'
+param:
+  header: 0
+  sep: ','
+col:
+  - "pc1"
+  - "pc2"
+  - "pc3"
+  - "pc4"
+  - "pc5"
+  - "pc6"
+  - "pc7"
+  - "pc8"
+  - "pc9"
+  - "pc10"
+indiv_col: 'eid'
