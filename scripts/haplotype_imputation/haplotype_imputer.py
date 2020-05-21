@@ -660,7 +660,6 @@ class HaploImputer:
         non_const_dos_ind = self._get_constant_snp([hh1, hh2])
         hh1 = hh1[:, non_const_dos_ind]
         hh2 = hh2[:, non_const_dos_ind]
-        breakpoint()
         posmat = posmat[non_const_dos_ind].reset_index(drop=True)
         
         # solve EM

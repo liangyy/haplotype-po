@@ -6,6 +6,7 @@ PHENO_F=test_inputs/test_father_phenotype.yaml
 PHENO_M=test_inputs/test_mother_phenotype.yaml
 MODE=basic_em
 OUT=test_run_otf_w_covar.tsv.gz
+OUTPKL=test_run_otf_w_covar.pkl.gz
 
 python impute_po_otf.py \
   --genotype-in-hdf5 $GENO \
@@ -15,4 +16,6 @@ python impute_po_otf.py \
   --mother-phenotype-yaml $PHENO_M \
   --shared-covariate-yaml $COVAR \
   --impute-mode $MODE \
-  --output $OUT
+  --output $OUT \
+  --imputer-output $OUTPKL 
+
