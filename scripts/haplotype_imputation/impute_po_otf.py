@@ -138,7 +138,7 @@ beta, sigma2, out, lld = imputer.impute_otf(
     h1, h2, hap_indiv_df, hap_pos_df,
     mode=args.impute_mode,
     df_covar=df_covar,
-    debug_cache=args.debug_cache_prefix
+    kwargs={'debug_cache': args.debug_cache_prefix}
 )
 # lld_ = [ l.numpy()[0] for l in lld ]
 # logging.info('lld = ', ' '.join(lld))

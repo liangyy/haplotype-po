@@ -1,0 +1,9 @@
+path: ../haplotype_imputation/test_run_chr19_w_baseline.tsv.gz 
+param:
+  header: 0
+  sep: '\t'
+col:
+  - "prob_z"
+  - "baseline"
+  - "flip"
+indiv_col: 'individual_id'

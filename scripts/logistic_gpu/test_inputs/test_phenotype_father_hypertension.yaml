@@ -1,0 +1,10 @@
+path: '/vol/bmd/yanyul/GitHub/haplotype-po/notebook/ukb_eur.father.csv.gzip'
+param:
+  header: 0
+  sep: ','
+  compression: 'gzip'
+col:
+  - "Heart disease"
+  - "Alzheimer's disease/dementia"
+  - "High blood pressure"
+indiv_col: 'eid'

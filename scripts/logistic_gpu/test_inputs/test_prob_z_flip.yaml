@@ -1,0 +1,7 @@
+path: ../../analysis_output/test_em_flip_output.tsv
+param:
+  header: 0
+  sep: '\t'
+col:
+  - "prob_z"
+indiv_col: 'eid'
