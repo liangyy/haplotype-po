@@ -1,0 +1,41 @@
+---
+title: "Heritability of parental illness in UKB (from Neale lab)"
+date: "`r paste0('Last update: ', format(Sys.time(), '%b %d, %Y'))`"    
+---
+
+
+```{r setup}
+rm(list = ls())
+library(pander)
+panderOptions('table.split.table', Inf)
+library(ggplot2)
+library(dplyr)
+library(data.table)
+options(datatable.fread.datatable = FALSE)
+theme_set(theme_bw(base_size=15))
+set.seed(2020)
+
+get_field_code = function(s) {
+  unlist(lapply(strsplit(s, '_'), function(x) {x[1]}))
+}
+get_trait = function(s) {
+  unlist(lapply(strsplit(s, ': '), function(x) {x[2]}))
+}
+get_parent = function(s) {
+  stringr::str_remove(unlist(lapply(strsplit(s, ': '), function(x) {x[1]})), 'Illnesses of ')
+}
+```
+
+
+Source: [https://www.dropbox.com/s/8vca84rsslgbsua/ukb31063_h2_topline.02Oct2019.tsv.gz?dl=1](https://www.dropbox.com/s/8vca84rsslgbsua/ukb31063_h2_topline.02Oct2019.tsv.gz?dl=1).
+
+```{r}
+df = read.delim2('~/Downloads/ukb31063_h2_topline.02Oct2019.tsv.gz', header = T, sep = '\t', stringsAsFactors = F)
+df$field_code = get_field_code(df$phenotype)
+df_parental = df %>% filter(field_code %in% c('20110', '20107')) %>% mutate(trait = get_trait(description)) %>% filter(!trait %in% c('None of the above (group 1)', 'None of the above (group 2)')) %>% mutate(parent = get_parent(description)) %>% mutate(h2_liability = as.numeric(h2_liability), h2_liability_se = as.numeric(h2_liability_se))
+p = df_parental %>% ggplot() + 
+  geom_bar(aes(x = trait, y = h2_liability, fill = parent), stat = 'identity', position = 'dodge') + 
+  geom_errorbar(aes(x = trait, ymax = h2_liability + 1.96 * h2_liability_se, ymin = h2_liability - 1.96 * h2_liability_se, group = parent), width = 0.1, position = position_dodge(1)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) 
+ggsave('../analysis_output/heritability_neale_lab.png', p, width = 7, height = 6)
+```

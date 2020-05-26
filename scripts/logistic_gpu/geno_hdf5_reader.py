@@ -20,6 +20,9 @@ def _get_all_snp_pos(snp_dict):
         pos_list = pos_list.union(set(snp_dict[i]))
     return list(pos_list)
 
+def load_indiv_as_df(hdf5):
+    return pd.DataFrame({'individual_id': get_individual_list(hdf5)})
+
 def load_haplotypes_by_position(hdf5, position_dict):
     '''
     return h1, h2, indiv_df, pos_df

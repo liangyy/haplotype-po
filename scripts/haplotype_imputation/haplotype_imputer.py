@@ -756,9 +756,100 @@ class HaploImputer:
             return_all=return_all
         )
         
+    def impute_preload_genotype(self, h1, h2, indiv_df, pos_df, phenotypes, individual_ids, output_prefix):
+        df_pos = self._extract_by_cols(
+            [pos_df],
+            phenotypes
+        )
+        
+        rearrange_idx = self._get_match_idx(indiv_df, individual_ids)
+        hh1 = h1.T[rearrange_idx, :]
+        hh2 = h2.T[rearrange_idx, :]
+
+        # drop eid
+        posmat = self._drop_individual_id(
+            [ff, mm, df_pos]
+        )
+        
+        # remove SNPs with constant dosage in any haplotype
+        non_const_dos_ind = self._get_constant_snp([hh1, hh2])
+        hh1 = hh1[:, non_const_dos_ind]
+        hh2 = hh2[:, non_const_dos_ind]
+        posmat = posmat[non_const_dos_ind].reset_index(drop=True)
+        
+        # save
+        np.save(f'{output_prefix}.hh1.npy', np.int8(hh1))
+        np.save(f'{output_prefix}.hh2.npy', np.int8(hh2))
+        np.save(f'{output_prefix}.posmat.npy', posmat.values)
         
         
         
+    def impute_preload_pheno_and_covar(self, df_father, df_mother, indiv_df, output_prefix, df_covar=None):
+        
+        # stage 1
+        phenotypes = self._get_common_phenotypes(
+            [df_father, df_mother]
+        )
+        df_f, df_m = self._extract_by_cols(
+            [df_father, df_mother],
+            phenotypes
+        )
+        individuals_hap = indiv_df.individual_id.tolist()
+        
+        if df_covar is None:
+            df_f, df_m, df_indiv = self._extract_and_arrange_rows(
+                [df_f, df_m, indiv_df],
+                individuals_hap
+            )
+            df_c = None
+        else:
+            df_f, df_m, df_c, df_indiv = self._extract_and_arrange_rows(
+                [df_f, df_m, df_covar, indiv_df],
+                individuals_hap
+            )
+        
+        # stage 2
+        non_miss_in_father = self._missing_checker(
+            df_f.drop('individual_id', axis=1),
+            desired_values=[0, 1]
+        )
+        non_miss_in_mother = self._missing_checker(
+            df_m.drop('individual_id', axis=1),
+            desired_values=[0, 1]
+        )
+            
+        to_keep_ind = np.logical_and(non_miss_in_father, non_miss_in_mother)
+        
+        if df_c is None:
+            ff, mm = self._extract_by_rows_binary(
+                [df_f, df_m],
+                to_keep_ind 
+            )
+            cc = None
+        else:
+            ff, mm, cc = self._extract_by_rows_binary(
+                [df_f, df_m, df_c],
+                to_keep_ind 
+            )
+
+        # drop eid
+        if cc is None:
+            fmat, mmat = self._drop_individual_id(
+                  [ff, mm]
+            )
+            cmat = None
+        else:
+            fmat, mmat, cmat = self._drop_individual_id(
+                  [ff, mm, cc]
+            )
+            np.save(cmat, f'{output_prefix}.cmat.npy')
+        np.save(fmat.values, f'{output_prefix}.fmat.npy')
+        np.save(mmat.values, f'{output_prefix}.mmat.npy')
+        np.save(ff['individual_id'].values, f'{output_prefix}.individual_id.npy')
+        np.save(fmat.columns.tolist(), f'{output_prefix}.phenotype.npy')    
+
+            
+           
         
     def impute_otf(self, df_father, df_mother, h1, h2, indiv_df, pos_df, mode, df_covar=None, kwargs={}):
         '''
@@ -829,6 +920,19 @@ class HaploImputer:
         )
         
         return impute_method(df_f, df_m, df_1, df_2, **kwargs)
+    
+    @staticmethod
+    def _get_match_idx(indiv_df, individual_ids):
+        target_df = pd.DataFrame({'individual_id': individual_ids})
+        indiv_df['idx'] = [ i for i in range(indiv_df.shape[0])]
+        target_df = pd.merge(
+            target_df,
+            indiv_df,
+            left_on='individual_id',
+            right_on='individual_id',
+            how='left'
+        )
+        return target_df['idx'].values
     
     @staticmethod
     def __is_non_const_col(mat):
