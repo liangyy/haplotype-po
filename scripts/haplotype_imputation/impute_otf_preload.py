@@ -120,10 +120,9 @@ if args.load_mode == 'phenotype':
         # breakpoint()
         df_covar = table_reader.standardize_columns(df_covar, except_cols=['individual_id'])
 elif args.load_mode == 'genotype':
+    logging.info('Loading phenotype and individual list')
     phenotypes = np.load(args.pheno_npy)
     individuals = np.load(args.indiv_npy)
-
-if args.load_mode == 'genotype'
     logging.info('Loading variant list')
     snp_loader = snp_list_reader.snpLoader(args.snp_list_yaml)
     snp_loader.load(args.snp_list_cache)
