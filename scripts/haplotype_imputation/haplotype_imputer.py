@@ -755,26 +755,32 @@ class HaploImputer:
             rscript_and_func=('rlib_em_degenerate.R', 'em_algorithm_deg'), 
             return_all=return_all
         )
-        
+    
+    def _check_if_trait_in_list(self, traits, mylist):
+        for trait in traits:
+            if trait not in mylist:
+                return False
+        return True
     def impute_preload_genotype(self, h1, h2, indiv_df, pos_df, phenotypes, individual_ids, output_prefix):
-        df_pos = self._extract_by_cols(
+        # breakpoint()
+        if not self._check_if_trait_in_list(pos_df.columns.tolist(), phenotypes):
+            print('Some phenotypes in corresponding pre-loaded NPY are missed in the input variant dict.')
+            return None
+
+        posmat = self._extract_by_cols(
             [pos_df],
             phenotypes
-        )
+        )[0]
         
         rearrange_idx = self._get_match_idx(indiv_df, individual_ids)
         hh1 = h1.T[rearrange_idx, :]
         hh2 = h2.T[rearrange_idx, :]
 
-        # drop eid
-        posmat = self._drop_individual_id(
-            [ff, mm, df_pos]
-        )
-        
         # remove SNPs with constant dosage in any haplotype
         non_const_dos_ind = self._get_constant_snp([hh1, hh2])
         hh1 = hh1[:, non_const_dos_ind]
         hh2 = hh2[:, non_const_dos_ind]
+        # breakpoint()
         posmat = posmat[non_const_dos_ind].reset_index(drop=True)
         
         # save
@@ -842,11 +848,11 @@ class HaploImputer:
             fmat, mmat, cmat = self._drop_individual_id(
                   [ff, mm, cc]
             )
-            np.save(cmat, f'{output_prefix}.cmat.npy')
-        np.save(fmat.values, f'{output_prefix}.fmat.npy')
-        np.save(mmat.values, f'{output_prefix}.mmat.npy')
-        np.save(ff['individual_id'].values, f'{output_prefix}.individual_id.npy')
-        np.save(fmat.columns.tolist(), f'{output_prefix}.phenotype.npy')    
+            np.save(f'{output_prefix}.cmat.npy', cmat.values)
+        np.save(f'{output_prefix}.fmat.npy', fmat.values)
+        np.save(f'{output_prefix}.mmat.npy', mmat.values)
+        np.save(f'{output_prefix}.individual_id.npy', ff['individual_id'].values)
+        np.save(f'{output_prefix}.phenotype.npy', fmat.columns.tolist())    
 
             
            

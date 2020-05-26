@@ -2,8 +2,8 @@ GENO=/vol/bmd/yanyul/UKB/ukb_hap_v2_to_hdf5/ukb_hap_v2_to_hdf5.chr16.h5
 SNPyaml=test_inputs/test_snp_list.yaml
 SNPcache=test_inputs/test_snp_list.pgz
 COVAR=test_inputs/test_shared_covariate.yaml
-PHENO_F=test_inputs/test_father_phenotype.yaml
-PHENO_M=test_inputs/test_mother_phenotype.yaml
+PHENO_F=test_inputs/test_preload_father_phenotype.yaml
+PHENO_M=test_inputs/test_preload_mother_phenotype.yaml
 OUTPRE=test_preload_otf
 
 python impute_otf_preload.py \

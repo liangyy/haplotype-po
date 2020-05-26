@@ -121,8 +121,8 @@ if args.load_mode == 'phenotype':
         df_covar = table_reader.standardize_columns(df_covar, except_cols=['individual_id'])
 elif args.load_mode == 'genotype':
     logging.info('Loading phenotype and individual list')
-    phenotypes = np.load(args.pheno_npy)
-    individuals = np.load(args.indiv_npy)
+    phenotypes = np.load(args.pheno_npy, allow_pickle=True)
+    individuals = np.load(args.indiv_npy, allow_pickle=True)
     logging.info('Loading variant list')
     snp_loader = snp_list_reader.snpLoader(args.snp_list_yaml)
     snp_loader.load(args.snp_list_cache)
@@ -141,10 +141,11 @@ imputer = haplotype_imputer.HaploImputer()
 if args.load_mode == 'phenotype':
     imputer.impute_preload_pheno_and_covar(
         df_father, df_mother, hap_indiv_df,
-        arge.output_prefix,
+        args.output_prefix,
         df_covar=df_covar
     )
 elif args.load_mode == 'genotype':
     imputer.impute_preload_genotype(
-        h1, h2, hap_indiv_df, hap_pos_df, phenotypes, individuals, arge.output_prefix
+        h1, h2, hap_indiv_df, hap_pos_df, phenotypes, individuals, args.output_prefix
     )
+
