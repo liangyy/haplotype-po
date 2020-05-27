@@ -1,0 +1,24 @@
+heart_disease:
+  name: '20002_1066.gwas.imputed_v3.both_sexes'
+  pval: 0.05
+stroke:
+  name: '6150_3.gwas.imputed_v3.both_sexes'
+  pval: 0.05
+diabetes:
+  name: '2443.gwas.imputed_v3.both_sexes'
+  pval: 0.05
+emphysema:
+  name: '20002_1113.gwas.imputed_v3.both_sexes'
+  pval: 0.05
+parkinson:
+  name: '20002_1262.gwas.imputed_v3.both_sexes'
+  pval: 0.05
+depression:
+  name: '20544_11.gwas.imputed_v3.both_sexes'
+  pval: 0.05
+lung_cancer:
+  name: '22140.gwas.imputed_v3.both_sexes'
+  pval: 0.05
+bowel_cancer:
+  name: '20001_1020.gwas.imputed_v3.both_sexes'
+  pval: 0.05
