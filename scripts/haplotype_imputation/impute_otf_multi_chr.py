@@ -20,6 +20,7 @@ parser.add_argument('--chromosomes', default=None, help='''
 ''')
 parser.add_argument('--npy-prefix', type=str, help='''
     Prefix of preloaded NPY for phenotypes and covariates.
+    And individual list.
 ''')
 parser.add_argument('--output-prefix', help='''
     Prefix of output in TSV.GZ format.
@@ -86,6 +87,8 @@ with gzip.open(args.imputer_output, 'w') as f:
 
 
 logging.info('Output')
+indiv_list = np.load(args.npy_prefix + '.individual_id.npy', allow_pickle=True)
 for chrom in chroms:
+    out[chrom]['individual_id'] = indiv_list
     out[chrom].to_csv(args.output_prefix + chrom + '.tsv.gz', compression='gzip', sep='\t', index=False)
 
