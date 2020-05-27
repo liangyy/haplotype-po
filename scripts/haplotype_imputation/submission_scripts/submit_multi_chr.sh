@@ -8,6 +8,7 @@ genotypePREFIX=$2
 preloadNPY=$3
 OUT=$4
 
+cd ../
 
 python impute_otf_multi_chr.py \
   --genotype-prefix-pattern $genotypePREFIX.chr{chr_num} \
