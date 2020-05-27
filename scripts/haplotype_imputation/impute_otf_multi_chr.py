@@ -21,8 +21,8 @@ parser.add_argument('--chromosomes', default=None, help='''
 parser.add_argument('--npy-prefix', type=str, help='''
     Prefix of preloaded NPY for phenotypes and covariates.
 ''')
-parser.add_argument('--output', help='''
-    Output in TSV.GZ format.
+parser.add_argument('--output-prefix', help='''
+    Prefix of output in TSV.GZ format.
 ''')
 parser.add_argument('--nthread', default=None, type=int, help='''
     Number of threads to use.
@@ -56,9 +56,9 @@ if args.nthread is not None:
     torch.set_num_threads(args.nthread)
 
 logging.info('Loading preloaded phenotypes and covariates')
-    fmat = np.load(args.npy_prefix + '.fmat.npy')
-    mmat = np.load(args.npy_prefix + '.mmat.npy')
-    cmat = np.load(args.npy_prefix + '.cmat.npy')
+fmat = np.load(args.npy_prefix + '.fmat.npy')
+mmat = np.load(args.npy_prefix + '.mmat.npy')
+cmat = np.load(args.npy_prefix + '.cmat.npy')
 
 logging.info('Loading posmat')
 # load all posmat into memory since it does not take too much
@@ -71,7 +71,7 @@ for chrom in chroms:
     posmat_dic[chrom] = np.load(args.genotype_prefix_pattern.format(chr_num=chrom) + '.posmat.npy')
 
 
-logging.info('Run imputation: mode = multi-chromosome OTF'.format(args.impute_mode))
+logging.info('Run imputation: mode = multi-chromosome OTF')
 imputer = haplotype_imputer.HaploImputer()
 beta, sigma2, out, lld = imputer.impute_otf_multi_chr(
     fmat, mmat, 
@@ -86,5 +86,6 @@ with gzip.open(args.imputer_output, 'w') as f:
 
 
 logging.info('Output')
-out.to_csv(args.output, compression='gzip', sep='\t', index=False)
+for chrom in chroms:
+    out[chrom].to_csv(args.output_prefix + chrom + '.tsv.gz', compression='gzip', sep='\t', index=False)
 
