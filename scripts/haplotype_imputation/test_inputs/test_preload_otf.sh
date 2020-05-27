@@ -21,5 +21,5 @@ python impute_otf_preload.py \
   --indiv-npy $OUTPRE.individual_id.npy \
   --pheno-npy $OUTPRE.phenotype.npy \
   --load-mode genotype \
-  --output-prefix $OUTPRE 
+  --output-prefix $OUTPRE.chr16 
 

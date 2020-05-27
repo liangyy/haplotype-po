@@ -761,6 +761,7 @@ class HaploImputer:
             if trait not in mylist:
                 return False
         return True
+    
     def impute_preload_genotype(self, h1, h2, indiv_df, pos_df, phenotypes, individual_ids, output_prefix):
         # breakpoint()
         if not self._check_if_trait_in_list(pos_df.columns.tolist(), phenotypes):
@@ -855,7 +856,144 @@ class HaploImputer:
         np.save(f'{output_prefix}.phenotype.npy', fmat.columns.tolist())    
 
             
-           
+    def impute_otf_multi_chr(self, yf, ym, pos_dict, chroms, genotype1_pattern, genotype2_pattern, cmat=None, device='cpu', tol=1e-5, maxiter=100):
+        # initialize
+        ## add intercept and covariates
+        covar1 = np.ones((fmat.shape[0], 1))
+        covar2 = np.ones((fmat.shape[0], 1))
+        pos_covar = np.ones((1, fmat.shape[1]))
+        if cmat is not None:
+            covar1 = np.concatenate(
+                (covar1, cmat),
+                axis=1
+            )
+            covar2 = np.concatenate(
+                (covar2, cmat),
+                axis=1
+            )
+            pos_covar = np.concatenate( 
+                (pos_covar, np.ones((cmat.shape[1], pos.shape[1]))), 
+                axis=0 
+            )
+        
+        ## push everything to torch Tensor
+        yf = self._to_torch_tensor(yf, device)
+        ym = self._to_torch_tensor(ym, device)
+        for chrom in chroms:
+            pos_dict[chrom] = self._to_torch_tensor(pos_dict[chrom], device)
+        pos_covar = self._to_torch_tensor(pos_covar, device)
+        
+        ## getting and checking dimensions
+        p = yf.shape[1]
+        n = yf.shape[0]
+        k_dict = { chrom: pos_dict[chrom].shape[1] for chrom in chroms.keys() }
+        kcovar = pos_covar.shape[1]
+        self._check_dim(yf, n, p)
+        self._check_dim(ym, n, p)
+        self._check_dim(pos_covar, kcovar, p)
+        for chrom in chroms:
+            self._check_dim(pos[chrom], k, p)
+        
+        ## combine pos
+        for chrom in chroms:
+            pos_dict[chrom] = torch.cat((pos_dict[chrom] == 1, pos_covar == 1), axis=0)
+        
+        ## parameters
+        beta = { 
+            chrom: [
+                torch.zeros((k_dict[chrom] + kcovar, p)),  # father
+                torch.zeros((k_dict[chrom] + kcovar, p)),  # mother
+            ] for chrom in chroms
+        }
+        sigma2 = { 
+            chrom: [
+                torch.ones((1, p)),  # father
+                torch.ones((1, p)),  # mother
+            ] for chrom in chroms
+        }
+        
+        ## initialize leave-one-chromsome-out residual (LOCOR)
+        ## importantly, we initialized betas as zeros so that LOCOR equals to observed phenotype
+        locorf = yf
+        locorm = ym 
+        
+        # END of initilization
+        
+        
+        diff = tol + 1
+        niter = 0
+        # here we maintain per chromosome lld since the all-chromosome lld is not tractable
+        # FIXME: will it always decrease?
+        lld = { chrom: [] for chrom in chroms }
+        
+        while diff > tol and niter < maxiter:
+            
+            diff_b = 0
+            diff_s = 0
+            for chrom in chroms:
+                # load haplotype
+                h1 = self._load_haplotype_from_preloaded(genotype1_pattern.format(chr_num=chrom), device)
+                h2 = self._load_haplotype_from_preloaded(genotype1_pattern.format(chr_num=chrom), device)
+                
+                # add back genetic effect of current chromosome
+                locorf = locorf + self._get_avg_genetic_effect(h1, h2, beta[chrom][0][:k_dict[chrom], :])
+                locorm = locorm + self._get_avg_genetic_effect(h1, h2, beta[chrom][1][:k_dict[chrom], :])
+                
+                # E step
+                l0, l1 = self._calc_l(locorf, locorm, h1, h2, beta[chrom], sigma2[chrom])
+                # breakpoint()
+                lld_curr = self._eval_lld(l0, l1, sigma2[chrom], n)
+                gamma = self._calc_gamma(l0, l1)
+                lld[chrom].append(lld_curr)
+                
+                # M step
+                
+                ## to save memory we don't keep these variables but do inline calculation
+                # HtH = torch.matmul(h1.T, h1) + torch.matmul(h2.T, h2)
+                # H = h1 + h2
+                
+                ## prepare M, N
+                d_gamma_h1 = self._mat_vec_mul_by_col(h1, gamma)
+                d_ngamma_h2 = self._mat_vec_mul_by_col(h2, (1 - gamma))
+                M = d_gamma_h1 + d_ngamma_h2
+                N = torch.matmul(h1.T, d_gamma_h1) + torch.matmul(h2.T, d_ngamma_h2)
+                tilde_M = h1 + h2 - M
+                tilde_N = torch.matmul(h1.T, h1) + torch.matmul(h2.T, h2) - N
+                
+                ## update
+                beta_old = deepcopy(beta[chrom])
+                sigma2_old = deepcopy(sigma2[chrom])
+                self._update_beta(N, M, locorf, pos_dict[chrom], beta[chrom][0])
+                self._update_beta(tilde_N, tilde_M, locorm, pos_dict[chrom], beta[chrom][1])
+                self._update_sigma2(n, locorf, N, beta[chrom][0], sigma2[chrom][0])
+                self._update_sigma2(n, locorm, tilde_N, beta[chrom][1], sigma2[chrom][1])
+                
+                # subtract genetic effect of current chromosome
+                locorf = locorf - self._get_avg_genetic_effect(h1, h2, beta[chrom][0][:k_dict[chrom], :])
+                locorm = locorm - self._get_avg_genetic_effect(h1, h2, beta[chrom][1][:k_dict[chrom], :])
+                
+                # diff
+                diff_b += self._calc_diff_in_list(beta_old, beta[chrom])
+                diff_s += self._calc_diff_in_list(sigma2_old, sigma2[chrom])
+            
+            diff = diff_b + diff_s
+            # niter
+            niter += 1
+        
+        # last update
+        l0, l1 = self._calc_l(yf, ym, h1, h2, beta, sigma2)
+        lld_curr = self._eval_lld(l0, l1, sigma2, n)
+        gamma = self._calc_gamma(l0, l1)
+        lld.append(lld_curr)
+        
+        return beta, sigma2, gamma, lld
+        
+    def _load_haplotype_from_preloaded(self, path, device):
+        return self._to_torch_tensor(np.load(path), device)
+        
+    def _get_avg_genetic_effect(self, beta, h1, h2):
+        return 0.5 * torch.matmul(h1, beta) + 0.5 * torch.matmul(h2, beta)    
+        
         
     def impute_otf(self, df_father, df_mother, h1, h2, indiv_df, pos_df, mode, df_covar=None, kwargs={}):
         '''
