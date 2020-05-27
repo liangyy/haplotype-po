@@ -19,5 +19,5 @@ python impute_otf_preload.py \
   --indiv-npy $INPRE.individual_id.npy \
   --pheno-npy $INPRE.phenotype.npy \
   --load-mode genotype \
-  --output-prefix $OUTPRE
+  --output-prefix $OUTPRE > $OUTPRE.log 2>&1
   
