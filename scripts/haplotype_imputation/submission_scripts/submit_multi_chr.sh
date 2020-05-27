@@ -1,19 +1,16 @@
 # ARGS1: chromosomes (separated by ,)
-# ARGS2: genotype prefix pattern
-# ARGS3: prefix of other npy preloaded files
-# ARGS4: output prefix
+# ARGS2: number of threads
+# ARGS3: if testing, specify output prefix
 
-CHROMS=$1
-genotypePREFIX=$2
-preloadNPY=$3
-OUT=$4
+chromosomes=$1
+genoprefix=/lambda_stor/data/yanyul/UKB/haplotype_imputation/haplotype_impute_otf_multi_chr/preload/no_hypertension
+npyprefix=/lambda_stor/data/yanyul/UKB/haplotype_imputation/haplotype_impute_otf_multi_chr/preload/no_hypertension
+nthread=$2
 
-cd ../
+outprefix=$3
+if [[ -z $outptprefix ]]
+then
+  outprefix=/lambda_stor/data/yanyul/UKB/haplotype_imputation/haplotype_impute_otf_multi_chr/results/no_hypertension
+fi
 
-python impute_otf_multi_chr.py \
-  --genotype-prefix-pattern $genotypePREFIX.chr{chr_num} \
-  --chromosomes $CHROMS \
-  --npy-prefix $preloadNPY \
-  --output-prefix $OUT.chr \
-  --imputer-output $OUT.pkl.gz 
-  
+screen -dmS impute-$i bash -c "bash run_multi_chr.sh $chromosomes $genoprefix $npyprefix $outprefix $nthread"
