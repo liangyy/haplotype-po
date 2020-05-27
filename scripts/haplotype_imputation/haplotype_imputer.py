@@ -931,7 +931,7 @@ class HaploImputer:
             for chrom in chroms:
                 # load haplotype
                 h1 = self._load_haplotype_from_preloaded(genotype1_pattern.format(chr_num=chrom), device)
-                h2 = self._load_haplotype_from_preloaded(genotype1_pattern.format(chr_num=chrom), device)
+                h2 = self._load_haplotype_from_preloaded(genotype2_pattern.format(chr_num=chrom), device)
                 h1 = torch.cat((h1, covar), axis=1)
                 h2 = torch.cat((h2, covar), axis=1)
                 # breakpoint()
@@ -969,7 +969,7 @@ class HaploImputer:
                 self._update_beta(tilde_N, tilde_M, locorm, pos_dict[chrom], beta[chrom][1])
                 self._update_sigma2(n, locorf, N, beta[chrom][0], sigma2[chrom][0])
                 self._update_sigma2(n, locorm, tilde_N, beta[chrom][1], sigma2[chrom][1])
-                breakpoint()
+                # breakpoint()
 
                 # subtract genetic effect of current chromosome
                 locorf = locorf - self._get_avg_genetic_effect(h1[:, :k_dict[chrom]], h2[:, :k_dict[chrom]], beta[chrom][0][:k_dict[chrom], :])
