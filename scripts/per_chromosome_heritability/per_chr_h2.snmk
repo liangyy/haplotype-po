@@ -22,7 +22,7 @@ rule munge_sumstat:
     output:
         '{outdir}/{gwas_id}.sumstats.gz'
     shell:
-        '{munge_sumstat_cmd} --sumstats {input[0]} \
+        '{config[munge_sumstat_cmd]} --sumstats {input[0]} \
             --N-col {config[munge_sumstat][sample_size_colname]} \
             --a1 effect_allele \
             --a2 non_effect_allele \
@@ -42,7 +42,7 @@ rule ldsc_by_chromosome:
     output:
         '{outdir}/h2.{gwas_id}.chr{chr_num}.log'
     shell:
-        '{ldsc_cmd} \
+        '{config[ldsc_cmd]} \
             --h2 scz.sumstats.gz \
             --ref-ld {input.ref_ld} \
             --w-ld {input.ref_ld} \
