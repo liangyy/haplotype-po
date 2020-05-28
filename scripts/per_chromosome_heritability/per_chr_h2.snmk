@@ -5,7 +5,8 @@ gwas_dict = config['gwas']
 
 rule all:
     input:
-        [ [ '{outdir}/h2.{gwas_id}.chr{chr_num}.log'.format(outdir=config['outdir'], gwas_id=gwas_id, chr_num=i) for i in range(1, 23) ] for gwas_id in gwas_dict.keys() ]
+        [ [ '{outdir}/h2.{gwas_id}.chr{chr_num}.log'.format(outdir=config['outdir'], gwas_id=gwas_id, chr_num=i) for i in range(1, 23) ] for gwas_id in gwas_dict.keys() ],
+        [ '{outdir}/h2.{gwas_id}.gw.log'.format(outdir=config['outdir'], gwas_id=gwas_id) for gwas_id in gwas_dict.keys() ]
 
 rule annot_rsid:
     input:
@@ -47,5 +48,22 @@ rule ldsc_by_chromosome:
             --h2 {input.sumstat} \
             --ref-ld {params.ldsc} \
             --w-ld {params.ldsc} \
+            --out {params.out}'
+
+ldsc_folder = os.path.dirname(config['ref_ldsc'])
+
+rule ldsc_gw:
+    input:
+        sumstat = '{outdir}/{gwas_id}.sumstats.gz'
+    params:
+        out = '{outdir}/h2.{gwas_id}.gw',
+        ldsc = ldsc_folder
+    output:
+        '{outdir}/h2.{gwas_id}.gw.log'
+    shell:
+        '{config[ldsc_cmd]} \
+            --h2 {input.sumstat} \
+            --ref-ld-chr {params.ldsc} \
+            --w-ld-chr {params.ldsc} \
             --out {params.out}'
 

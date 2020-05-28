@@ -1,0 +1,48 @@
+outdir: '/lambda_stor/data/yanyul/UKB/haplotype_imputation/per_chr_heritability/per_chr_ldsc_output'
+gwas:
+  father_heart_disease: /lambda_stor/data/yanyul/UKB/neale_lab_gwas/20107_1.gwas.imputed_v3.both_sexes.tsv.bgz
+  father_alzheimer: /lambda_stor/data/yanyul/UKB/neale_lab_gwas/20107_10.gwas.imputed_v3.both_sexes.tsv.bgz
+  father_parkinson: /lambda_stor/data/yanyul/UKB/neale_lab_gwas/20107_11.gwas.imputed_v3.both_sexes.tsv.bgz
+  father_depression: /lambda_stor/data/yanyul/UKB/neale_lab_gwas/20107_12.gwas.imputed_v3.both_sexes.tsv.bgz
+  father_stroke: /lambda_stor/data/yanyul/UKB/neale_lab_gwas/20107_2.gwas.imputed_v3.both_sexes.tsv.bgz
+  father_lung_cancer: /lambda_stor/data/yanyul/UKB/neale_lab_gwas/20107_3.gwas.imputed_v3.both_sexes.tsv.bgz
+  father_bowel_cancer: /lambda_stor/data/yanyul/UKB/neale_lab_gwas/20107_4.gwas.imputed_v3.both_sexes.tsv.bgz
+  father_emphysema: /lambda_stor/data/yanyul/UKB/neale_lab_gwas/20107_6.gwas.imputed_v3.both_sexes.tsv.bgz
+  father_diabetes: /lambda_stor/data/yanyul/UKB/neale_lab_gwas/20107_9.gwas.imputed_v3.both_sexes.tsv.bgz
+  mother_heart_disease: /lambda_stor/data/yanyul/UKB/neale_lab_gwas/20110_1.gwas.imputed_v3.both_sexes.tsv.bgz
+  mother_alzheimer: /lambda_stor/data/yanyul/UKB/neale_lab_gwas/20110_10.gwas.imputed_v3.both_sexes.tsv.bgz
+  mother_parkinson: /lambda_stor/data/yanyul/UKB/neale_lab_gwas/20110_11.gwas.imputed_v3.both_sexes.tsv.bgz
+  mother_depression: /lambda_stor/data/yanyul/UKB/neale_lab_gwas/20110_12.gwas.imputed_v3.both_sexes.tsv.bgz
+  mother_stroke: /lambda_stor/data/yanyul/UKB/neale_lab_gwas/20110_2.gwas.imputed_v3.both_sexes.tsv.bgz
+  mother_lung_cancer: /lambda_stor/data/yanyul/UKB/neale_lab_gwas/20110_3.gwas.imputed_v3.both_sexes.tsv.bgz
+  mother_bowel_cancer: /lambda_stor/data/yanyul/UKB/neale_lab_gwas/20110_4.gwas.imputed_v3.both_sexes.tsv.bgz
+  mother_emphysema: /lambda_stor/data/yanyul/UKB/neale_lab_gwas/20110_6.gwas.imputed_v3.both_sexes.tsv.bgz
+  mother_diabetes: /lambda_stor/data/yanyul/UKB/neale_lab_gwas/20110_9.gwas.imputed_v3.both_sexes.tsv.bgz
+  father_heart_disease: /lambda_stor/data/yanyul/UKB/neale_lab_gwas/20107_1.gwas.imputed_v3.both_sexes.v2.tsv.bgz
+  father_alzheimer: /lambda_stor/data/yanyul/UKB/neale_lab_gwas/20107_10.gwas.imputed_v3.both_sexes.v2.tsv.bgz
+  father_parkinson: /lambda_stor/data/yanyul/UKB/neale_lab_gwas/20107_11.gwas.imputed_v3.both_sexes.v2.tsv.bgz
+  father_depression: /lambda_stor/data/yanyul/UKB/neale_lab_gwas/20107_12.gwas.imputed_v3.both_sexes.v2.tsv.bgz
+  father_stroke: /lambda_stor/data/yanyul/UKB/neale_lab_gwas/20107_2.gwas.imputed_v3.both_sexes.v2.tsv.bgz
+  father_lung_cancer: /lambda_stor/data/yanyul/UKB/neale_lab_gwas/20107_3.gwas.imputed_v3.both_sexes.v2.tsv.bgz
+  father_bowel_cancer: /lambda_stor/data/yanyul/UKB/neale_lab_gwas/20107_4.gwas.imputed_v3.both_sexes.v2.tsv.bgz
+  father_emphysema: /lambda_stor/data/yanyul/UKB/neale_lab_gwas/20107_6.gwas.imputed_v3.both_sexes.v2.tsv.bgz
+  father_diabetes: /lambda_stor/data/yanyul/UKB/neale_lab_gwas/20107_9.gwas.imputed_v3.both_sexes.v2.tsv.bgz
+  mother_heart_disease: /lambda_stor/data/yanyul/UKB/neale_lab_gwas/20110_1.gwas.imputed_v3.both_sexes.v2.tsv.bgz
+  mother_alzheimer: /lambda_stor/data/yanyul/UKB/neale_lab_gwas/20110_10.gwas.imputed_v3.both_sexes.v2.tsv.bgz
+  mother_parkinson: /lambda_stor/data/yanyul/UKB/neale_lab_gwas/20110_11.gwas.imputed_v3.both_sexes.v2.tsv.bgz
+  mother_depression: /lambda_stor/data/yanyul/UKB/neale_lab_gwas/20110_12.gwas.imputed_v3.both_sexes.v2.tsv.bgz
+  mother_stroke: /lambda_stor/data/yanyul/UKB/neale_lab_gwas/20110_2.gwas.imputed_v3.both_sexes.v2.tsv.bgz
+  mother_lung_cancer: /lambda_stor/data/yanyul/UKB/neale_lab_gwas/20110_3.gwas.imputed_v3.both_sexes.v2.tsv.bgz
+  mother_bowel_cancer: /lambda_stor/data/yanyul/UKB/neale_lab_gwas/20110_4.gwas.imputed_v3.both_sexes.v2.tsv.bgz
+  mother_emphysema: /lambda_stor/data/yanyul/UKB/neale_lab_gwas/20110_6.gwas.imputed_v3.both_sexes.v2.tsv.bgz
+  mother_diabetes: /lambda_stor/data/yanyul/UKB/neale_lab_gwas/20110_9.gwas.imputed_v3.both_sexes.v2.tsv.bgz
+munge_sumstat:
+  sample_size_colname: 'n_complete_samples'
+  chunksize: 10000
+  pvalue_colname: 'pval'
+  signed_sumstats_colname: 'tstat'
+variant_meta: '/lambda_stor/data/yanyul/UKB/neale_lab_gwas/variants.tsv.bgz'
+ref_ldsc: '/lambda_stor/data/yanyul/misc_data/1000G_Phase3_weights_hm3_no_MHC/weights.hm3_noMHC.{chr_num}.l2.ldscore.gz'
+
+munge_sumstat_cmd: '/lambda_stor/data/yanyul/softwares/miniconda3/envs/ldsc/bin/python /lambda_stor/data/yanyul/GitHub/ldsc/munge_sumstats.py'  
+ldsc_cmd: '/lambda_stor/data/yanyul/softwares/miniconda3/envs/ldsc/bin/python /lambda_stor/data/yanyul/GitHub/ldsc/ldsc.py'
