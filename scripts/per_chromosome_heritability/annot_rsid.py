@@ -40,5 +40,5 @@ gwas.rename(
     inplace = True
 )
 logging.info('Output')
-gwas.to_csv(args.output, sep='\t', compression='gzip', index=False)
+gwas.to_csv(args.output, sep='\t', compression='gzip', na_rep='NaN', index=False)
 

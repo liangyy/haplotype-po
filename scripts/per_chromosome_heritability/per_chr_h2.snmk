@@ -24,26 +24,28 @@ rule munge_sumstat:
     shell:
         '{config[munge_sumstat_cmd]} --sumstats {input[0]} \
             --N-col {config[munge_sumstat][sample_size_colname]} \
-            --a1 effect_allele \
-            --a2 non_effect_allele \
+            --a1 non_effect_allele \
+            --a2 effect_allele \
             --chunksize {config[munge_sumstat][chunksize]} \
             --p {config[munge_sumstat][pvalue_colname]} \
             --snp rsid \
             --signed-sumstats {config[munge_sumstat][signed_sumstats_colname]} \
             --out {wildcards.outdir}/{wildcards.gwas_id} \
-            '
+            --merge-alleles {config[munge_sumstat][merge_alleles]}'
 
 rule ldsc_by_chromosome:
     input:
         sumstat = '{outdir}/{gwas_id}.sumstats.gz',
-        ref_ld = config['ref_ldsc']  # containing {chr_num} as place-holder
+        ref_ld = config['ref_ldsc'] + '.l2.ldscore.gz'  # containing {chr_num} as place-holder
     params:
-        '{outdir}/h2.{gwas_id}.chr{chr_num}'
+        out = '{outdir}/h2.{gwas_id}.chr{chr_num}',
+        ldsc = config['ref_ldsc']
     output:
         '{outdir}/h2.{gwas_id}.chr{chr_num}.log'
     shell:
         '{config[ldsc_cmd]} \
-            --h2 scz.sumstats.gz \
-            --ref-ld {input.ref_ld} \
-            --w-ld {input.ref_ld} \
-            --out {params[0]}'
+            --h2 {input.sumstat} \
+            --ref-ld {params.ldsc} \
+            --w-ld {params.ldsc} \
+            --out {params.out}'
+
