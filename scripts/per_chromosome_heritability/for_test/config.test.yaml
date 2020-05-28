@@ -7,4 +7,6 @@ munge_sumstat:
   signed_sumstats_colname: 'tstat'
 variant_meta: '/lambda_stor/data/yanyul/UKB/neale_lab_gwas/variants.tsv.bgz'
 ref_ldsc: '/lambda_stor/data/yanyul/misc_data/1000G_Phase3_weights_hm3_no_MHC/weights.hm3_noMHC.{chr_num}.l2.ldscore.gz'
-  
+
+munge_sumstat_cmd: '/lambda_stor/data/yanyul/softwares/miniconda3/envs/ldsc/bin/python /lambda_stor/data/yanyul/GitHub/ldsc/munge_sumstats.py'  
+ldsc_cmd: '/lambda_stor/data/yanyul/softwares/miniconda3/envs/ldsc/bin/python /lambda_stor/data/yanyul/GitHub/ldsc/ldsc.py'
