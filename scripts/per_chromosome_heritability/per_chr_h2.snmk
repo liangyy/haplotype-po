@@ -1,0 +1,49 @@
+if 'outdir' not in config:
+    config['outdir'] = 'output'
+
+gwas_dict = config['gwas']
+
+rule all:
+    input:
+        [ [ '{outdir}/h2.{gwas_id}.chr{chr_num}.log'.format(outdir=config['outdir'], gwas_id=gwas_id, chr_num=i) for i in range(1, 23) ] for gwas_id in gwas_dict.keys() ]
+
+rule annot_rsid:
+    input:
+        gwas = lambda wildcards: gwas_dict[wildcards.gwas_id],
+        variant_meta = config['variant_meta']
+    output:
+        '{outdir}/annot_rsid.{gwas_id}.tsv.gz'
+    shell:
+        'python annot_rsid.py --gwas {input.gwas} --variant-meta {input.variant_meta} --output {output[0]}'
+
+rule munge_sumstat:
+    input:
+        temp('{outdir}/annot_rsid.{gwas_id}.tsv.gz')
+    output:
+        '{outdir}/{gwas_id}.sumstats.gz'
+    shell:
+        '{munge_sumstat_cmd} --sumstats {input[0]} \
+            --N-col {config[munge_sumstat][sample_size_colname]} \
+            --a1 effect_allele \
+            --a2 non_effect_allele \
+            --chunksize {config[munge_sumstat][chunksize]} \
+            --p {config[munge_sumstat][pvalue_colname]} \
+            --snp rsid \
+            --signed-sumstats {config[munge_sumstat][signed_sumstats_colname]} \
+            --out {wildcards.outdir}/{wildcards.gwas_id} \
+            '
+
+rule ldsc_by_chromosome:
+    input:
+        sumstat = '{outdir}/{gwas_id}.sumstats.gz',
+        ref_ld = config['ref_ldsc']  # containing {chr_num} as place-holder
+    params:
+        '{outdir}/h2.{gwas_id}.chr{chr_num}'
+    output:
+        '{outdir}/h2.{gwas_id}.chr{chr_num}.log'
+    shell:
+        '{ldsc_cmd} \
+            --h2 scz.sumstats.gz \
+            --ref-ld {input.ref_ld} \
+            --w-ld {input.ref_ld} \
+            --out {params[0]}'

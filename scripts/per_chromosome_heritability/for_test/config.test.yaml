@@ -1,0 +1,10 @@
+gwas:
+  heart_disease: '/lambda_stor/data/yanyul/UKB/neale_lab_gwas/20002_1066.gwas.imputed_v3.both_sexes.tsv.bgz'
+munge_sumstat:
+  sample_size_colname: 'n_complete_samples'
+  chunksize: 10000
+  pvalue_colname: 'pval'
+  signed_sumstats_colname: 'tstat'
+variant_meta: '/lambda_stor/data/yanyul/UKB/neale_lab_gwas/variants.tsv.bgz'
+ref_ldsc: '/lambda_stor/data/yanyul/misc_data/1000G_Phase3_weights_hm3_no_MHC/weights.hm3_noMHC.{chr_num}.l2.ldscore.gz'
+  
