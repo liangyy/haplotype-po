@@ -18,5 +18,5 @@ python impute_otf_multi_chr.py \
   --npy-prefix $preloadNPY \
   --output-prefix $OUT.chr \
   --imputer-output $OUT.pkl.gz \
-  --nthread $NTHREAD > $out.log 2>&1 
+  --nthread $NTHREAD > $OUT.log 2>&1 
   

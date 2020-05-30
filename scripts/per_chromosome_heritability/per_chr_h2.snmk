@@ -50,7 +50,7 @@ rule ldsc_by_chromosome:
             --w-ld {params.ldsc} \
             --out {params.out}'
 
-ldsc_folder = os.path.dirname(config['ref_ldsc'])
+ldsc_folder = os.path.dirname(config['ref_ldsc']) + '/'
 
 rule ldsc_gw:
     input:
