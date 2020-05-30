@@ -2,6 +2,7 @@
 # ARGS2: list of gpu index
 # ARGS3: prefix of imputation files
 # ARGS4: suffix of imputation files
+# ARGS5: outdir (if not specified, set to /lambda_stor/data/yanyul/UKB/haplotype_imputation/gwas)
 
 # args
 IFS=',' read -r -a chrArray <<< $1
@@ -15,7 +16,12 @@ covar=/lambda_stor/data/yanyul/GitHub/haplotype-po/scripts/logistic_gpu/submissi
 impPrefix=$3
 impSuffix=$4
 
-outdir=/lambda_stor/data/yanyul/UKB/haplotype_imputation/gwas
+if [[ -z $5 ]]
+then
+  outdir=/lambda_stor/data/yanyul/UKB/haplotype_imputation/gwas
+else
+  outdir=$5
+fi
 
 for index in "${!chrArray[@]}"
 do
