@@ -1,0 +1,31 @@
+if 'outdir' not in config:
+    config['outdir'] = 'output'
+
+def get_genotypes(pattern):
+    prefix, suffix = pattern.split('*')
+    return [ f'{prefix}{i}{suffix}' for i in range(1, 23) ]
+
+genotype_files = get_genotypes(config['genotype_vcf_pattern'])
+
+rule predict:
+    input:
+        genotypes = genotype_files,
+        pred_model = config['predictdb'],
+        liftover_chain = config['liftover_chain']
+    output:
+        '{outdir}/{prefix}.pred_expr.txt',
+        '{outdir}/{prefix}.summary.txt'
+    log:
+        '{outdir}/{prefix}.log'
+    shell:
+        'python {config[predict_script_path]} \
+          --model_db_path {input.pred_model} \
+          --model_db_snp_key varID \
+          --vcf_genotypes {config[genotype_vcf_pattern]} \
+          --vcf_mode {config[predict_mode]} \
+          --liftover {input.liftover_chain} \
+          --on_the_fly_mapping METADATA "chr{}_{}_{}_{}_b38" \
+          --prediction_output {output[0]} \
+          --prediction_summary_output {output[1]} \
+          --verbosity 9 \
+          --throw > {log} 2>&1'

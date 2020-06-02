@@ -1,0 +1,6 @@
+genotype_vcf_pattern: /lambda_stor/data/yanyul/Framingham/imputed_hrc1.1/chr*.dose.vcf.gz
+predictdb: /lambda_stor/data/yanyul/misc_data/gtex_v8_pred_models/eqtl/elastic_net_models_dapgw/dapgw_Whole_Blood.db
+liftover_chain: /lambda_stor/data/yanyul/misc_data/liftover_chains/hg19ToHg38.over.chain.gz
+predict_mode: 'haplotyped'
+predict_script_path: '/lambda_stor/data/yanyul/GitHub/MetaXcan/software/Predict.py'
+prefix: gtex_v8_Whole_Blood_en
