@@ -1,0 +1,32 @@
+INFO - Loading samples
+INFO - Loading model
+INFO - Acquiring on-the-fly mapping
+INFO - Preparing genotype dosages
+INFO - Acquiring liftover conversion
+INFO - Setting whitelist from available models
+INFO - Processing genotypes
+INFO - Preparing prediction
+INFO - Couldn't import h5py_cache. Anyway, this dependency should be removed. It has been folded into h5py
+Level 9 - Processing vcfs
+Level 9 - Processing vcf /lambda_stor/data/yanyul/Framingham/imputed_hrc1.1/chr22.dose.vcf.gz
+INFO - 2 % of models' snps used
+INFO - Storing prediction
+INFO - Saving prediction as a text file
+INFO - Saving summary
+INFO - Successfully predicted expression in 1501.9997188390698 seconds
+INFO - Loading samples
+INFO - Loading model
+INFO - Acquiring on-the-fly mapping
+INFO - Preparing genotype dosages
+INFO - Acquiring liftover conversion
+INFO - Setting whitelist from available models
+INFO - Processing genotypes
+INFO - Preparing prediction
+INFO - Couldn't import h5py_cache. Anyway, this dependency should be removed. It has been folded into h5py
+Level 9 - Processing vcfs
+Level 9 - Processing vcf /lambda_stor/data/yanyul/Framingham/imputed_hrc1.1/chr22.dose.vcf.gz
+INFO - 2 % of models' snps used
+INFO - Storing prediction
+INFO - Saving prediction as a text file
+INFO - Saving summary
+INFO - Successfully predicted expression in 1509.1840774521697 seconds
