@@ -11,7 +11,7 @@
 
 
 
-<title>Genome-wide run</title>
+<title>Genome-wide run (multi-chromosome imputation)</title>
 
 <script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -381,7 +381,7 @@ div.tocify {
 
 
 
-<h1 class="title toc-ignore">Genome-wide run</h1>
+<h1 class="title toc-ignore">Genome-wide run (multi-chromosome imputation)</h1>
 <h4 class="date">Last update: May 30, 2020</h4>
 
 </div>
@@ -415,12 +415,13 @@ source(&#39;../code/rlib_misc.R&#39;)</code></pre>
 <pre class="r"><code>snp_map = fread(&#39;zcat &lt; ~/Desktop/tmp/haplotype-po/snp_map_for_neale_lab_gwas.with_sign.tsv.gz&#39;, header = TRUE, sep = &#39;\t&#39;)
 
 dl = list()
+dl2 = list()
 chromosomes = 1 : 22
 traits = c(&#39;HD&#39;, &#39;AD&#39;, &#39;HT&#39;)
 for(chr_num in chromosomes) {
   pos = snp_map %&gt;% filter(chrom == chr_num) %&gt;% pull(pos)
   for(i in 1 : length(traits)) {
-    filename = paste0(&#39;/Users/yanyul/Desktop/tmp/haplotype-po/from_lambda/gwas/chr&#39;, chr_num, &#39;.npy&#39;)
+    filename = paste0(&#39;/Users/yanyul/Desktop/tmp/haplotype-po/from_lambda/gwas_multi_chr/chr&#39;, chr_num, &#39;.npy&#39;)
     df = read_from_npy(
       paste0(filename),
       pos, 
@@ -429,8 +430,20 @@ for(chr_num in chromosomes) {
     df = df %&gt;% mutate(chr = chr_num, trait = traits[i])
     dl[[length(dl) + 1]] = df
   }
+  for(i in 1 : length(traits)) {
+    filename = paste0(&#39;/Users/yanyul/Desktop/tmp/haplotype-po/from_lambda/gwas/chr&#39;, chr_num, &#39;.npy&#39;)
+    df = read_from_npy(
+      paste0(filename),
+      pos, 
+      i
+    )
+    df = df %&gt;% mutate(chr = chr_num, trait = traits[i])
+    dl2[[length(dl2) + 1]] = df
+  }
 }
-df = do.call(rbind, dl)</code></pre>
+df = do.call(rbind, dl)
+df2 = do.call(rbind, dl2)
+df = rbind(df %&gt;% mutate(impute_scheme = &#39;all_chr&#39;), df2 %&gt;% mutate(impute_scheme = &#39;per_chr&#39;))</code></pre>
 </div>
 <div id="ht" class="section level1">
 <h1><span class="header-section-number">3</span> HT</h1>
@@ -442,32 +455,54 @@ df = do.call(rbind, dl)</code></pre>
 gwas_self = gwas_self %&gt;% mutate(snp = `variant:`)
 gwas_self = gwas_self %&gt;% filter(snp %in% unique(paste0(df_ht$chr, &#39;:&#39;, df_ht$position)))
 
-gwas_ht_bonferroni = gwas_self %&gt;% filter(pval &lt; 0.1 / n(), !low_confidence_variant)
-df_ht %&gt;% filter(paste0(chr, &#39;:&#39;, position) %in% gwas_ht_bonferroni$snp) %&gt;% reshape2::dcast(position + chr ~ impute, value.var = &#39;pval&#39;) %&gt;% ggplot() + geom_point(aes(x = -log(avg), y = -log(flip), color = &#39;flip&#39;), alpha = .3) + geom_point(aes(x = -log(avg), y = -log(imp), color = &#39;imp&#39;), alpha = .3) + geom_abline(slope = 1, intercept = 0) + coord_equal() #+ facet_wrap(~chr)</code></pre>
-<p><img src="genomewide_check_files/figure-html/neale-1.png" width="672" /></p>
-<pre class="r"><code>df_ht %&gt;% filter(paste0(chr, &#39;:&#39;, position) %in% gwas_ht_bonferroni$snp) %&gt;% reshape2::dcast(position + chr ~ impute, value.var = &#39;pval&#39;) %&gt;% ggplot() + geom_point(aes(x = -log(flip), y = -log(imp))) + geom_density2d(aes(x = -log(flip), y = -log(imp))) + geom_abline(slope = 1, intercept = 0, color = &#39;gray&#39;) + coord_equal() #+ facet_wrap(~chr)</code></pre>
-<p><img src="genomewide_check_files/figure-html/neale-2.png" width="672" /></p>
-<pre class="r"><code>df_ht %&gt;% filter(paste0(chr, &#39;:&#39;, position) %in% gwas_ht_bonferroni$snp) %&gt;% reshape2::dcast(position + chr ~ impute, value.var = &#39;pval&#39;) %&gt;% ggplot() + geom_point(aes(x = -log(avg), y = -log(imp))) + geom_density2d(aes(x = -log(avg), y = -log(imp))) + geom_abline(slope = 1, intercept = 0, color = &#39;gray&#39;) + coord_equal() #+ facet_wrap(~chr)</code></pre>
-<p><img src="genomewide_check_files/figure-html/neale-3.png" width="672" /></p>
-<pre class="r"><code>df_ht  %&gt;% filter(chr %in% c(&#39;21&#39;, &#39;22&#39;)) %&gt;% reshape2::dcast(position + chr ~ impute, value.var = &#39;pval&#39;) %&gt;% ggplot() + geom_point(aes(x = -log(avg), y = -log(imp))) + geom_density2d(aes(x = -log(avg), y = -log(imp))) + geom_abline(slope = 1, intercept = 0, color = &#39;gray&#39;) + coord_equal() + facet_wrap(~chr)</code></pre>
-<pre><code>## Warning: Removed 1 rows containing non-finite values (stat_density2d).</code></pre>
-<pre><code>## Warning: Removed 1 rows containing missing values (geom_point).</code></pre>
-<p><img src="genomewide_check_files/figure-html/unnamed-chunk-1-1.png" width="672" /></p>
-<pre class="r"><code>df_ht  %&gt;% filter(chr %in% c(&#39;1&#39;, &#39;2&#39;, &#39;3&#39;, &#39;4&#39;, &#39;5&#39;)) %&gt;% reshape2::dcast(position + chr ~ impute, value.var = &#39;pval&#39;) %&gt;% ggplot() + geom_point(aes(x = -log(avg), y = -log(imp))) + geom_density2d(aes(x = -log(avg), y = -log(imp))) + geom_abline(slope = 1, intercept = 0, color = &#39;gray&#39;) + coord_equal() + facet_wrap(~chr)</code></pre>
-<p><img src="genomewide_check_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
-<pre class="r"><code>df_ht  %&gt;% filter(chr %in% c(&#39;6&#39;, &#39;7&#39;, &#39;8&#39;, &#39;9&#39;, &#39;10&#39;)) %&gt;% reshape2::dcast(position + chr ~ impute, value.var = &#39;pval&#39;) %&gt;% ggplot() + geom_point(aes(x = -log(avg), y = -log(imp))) + geom_density2d(aes(x = -log(avg), y = -log(imp))) + geom_abline(slope = 1, intercept = 0, color = &#39;gray&#39;) + coord_equal() + facet_wrap(~chr)</code></pre>
-<p><img src="genomewide_check_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
-<pre class="r"><code>df_ht  %&gt;% filter(chr %in% c(&#39;11&#39;, &#39;12&#39;, &#39;13&#39;, &#39;14&#39;, &#39;15&#39;)) %&gt;% reshape2::dcast(position + chr ~ impute, value.var = &#39;pval&#39;) %&gt;% ggplot() + geom_point(aes(x = -log(avg), y = -log(imp))) + geom_density2d(aes(x = -log(avg), y = -log(imp))) + geom_abline(slope = 1, intercept = 0, color = &#39;gray&#39;) + coord_equal() + facet_wrap(~chr)</code></pre>
-<p><img src="genomewide_check_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
-<pre class="r"><code>df_ht  %&gt;% filter(chr %in% c(&#39;16&#39;, &#39;17&#39;, &#39;18&#39;, &#39;19&#39;, &#39;20&#39;)) %&gt;% reshape2::dcast(position + chr ~ impute, value.var = &#39;pval&#39;) %&gt;% ggplot() + geom_point(aes(x = -log(avg), y = -log(imp))) + geom_density2d(aes(x = -log(avg), y = -log(imp))) + geom_abline(slope = 1, intercept = 0, color = &#39;gray&#39;) + coord_equal() + facet_wrap(~chr)</code></pre>
-<p><img src="genomewide_check_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+gwas_ht_bonferroni = gwas_self %&gt;% filter(pval &lt; 0.1 / n(), !low_confidence_variant)</code></pre>
+<pre class="r"><code>df_ht %&gt;% filter(paste0(chr, &#39;:&#39;, position) %in% gwas_ht_bonferroni$snp) %&gt;% reshape2::dcast(position + chr + impute_scheme ~ impute, value.var = &#39;pval&#39;) %&gt;% ggplot() + geom_point(aes(x = -log(avg), y = -log(flip), color = &#39;flip&#39;), alpha = .3) + geom_point(aes(x = -log(avg), y = -log(imp), color = &#39;imp&#39;), alpha = .3) + geom_abline(slope = 1, intercept = 0) + coord_equal() + facet_wrap(~impute_scheme)</code></pre>
+<p><img src="genomewide_check_multi_chr_files/figure-html/unnamed-chunk-69-1.png" width="672" /></p>
+<pre class="r"><code>df_ht %&gt;% filter(paste0(chr, &#39;:&#39;, position) %in% gwas_ht_bonferroni$snp) %&gt;% reshape2::dcast(position + chr + impute_scheme ~ impute, value.var = &#39;pval&#39;) %&gt;% ggplot() + geom_point(aes(x = -log(flip), y = -log(imp))) + geom_density2d(aes(x = -log(flip), y = -log(imp))) + geom_abline(slope = 1, intercept = 0, color = &#39;gray&#39;) + coord_equal() + facet_wrap(~impute_scheme)</code></pre>
+<p><img src="genomewide_check_multi_chr_files/figure-html/unnamed-chunk-69-2.png" width="672" /></p>
+<pre class="r"><code>df_ht %&gt;% filter(paste0(chr, &#39;:&#39;, position) %in% gwas_ht_bonferroni$snp) %&gt;% reshape2::dcast(position + chr + impute_scheme ~ impute, value.var = &#39;pval&#39;) %&gt;% ggplot() + geom_point(aes(x = -log(avg), y = -log(imp))) + geom_density2d(aes(x = -log(avg), y = -log(imp))) + geom_abline(slope = 1, intercept = 0, color = &#39;gray&#39;) + coord_equal() + facet_wrap(~impute_scheme)</code></pre>
+<p><img src="genomewide_check_multi_chr_files/figure-html/unnamed-chunk-69-3.png" width="672" /></p>
+<pre class="r"><code>df_ht %&gt;% filter(paste0(chr, &#39;:&#39;, position) %in% gwas_ht_bonferroni$snp) %&gt;% filter(chr %in% c(&#39;21&#39;, &#39;22&#39;), impute == &#39;imp&#39;) %&gt;% reshape2::dcast(position + chr ~ impute_scheme, value.var = &#39;pval&#39;) %&gt;% ggplot() + geom_point(aes(x = -log(per_chr), y = -log(all_chr))) + geom_abline(slope = 1, intercept = 0, color = &#39;gray&#39;) + coord_equal() + facet_wrap(~chr)</code></pre>
+<p><img src="genomewide_check_multi_chr_files/figure-html/unnamed-chunk-70-1.png" width="672" /></p>
+<pre class="r"><code>df_ht  %&gt;% filter(paste0(chr, &#39;:&#39;, position) %in% gwas_ht_bonferroni$snp) %&gt;% filter(chr %in% c(&#39;1&#39;, &#39;2&#39;, &#39;3&#39;, &#39;4&#39;, &#39;5&#39;), impute == &#39;imp&#39;) %&gt;% reshape2::dcast(position + chr ~ impute_scheme, value.var = &#39;pval&#39;) %&gt;% ggplot() + geom_point(aes(x = -log(per_chr), y = -log(all_chr))) + geom_abline(slope = 1, intercept = 0, color = &#39;gray&#39;) + coord_equal() + facet_wrap(~chr)</code></pre>
+<p><img src="genomewide_check_multi_chr_files/figure-html/unnamed-chunk-71-1.png" width="672" /></p>
+<pre class="r"><code>df_ht  %&gt;% filter(paste0(chr, &#39;:&#39;, position) %in% gwas_ht_bonferroni$snp) %&gt;% filter(chr %in% c(&#39;6&#39;, &#39;7&#39;, &#39;8&#39;, &#39;9&#39;, &#39;10&#39;), impute == &#39;imp&#39;) %&gt;% reshape2::dcast(position + chr ~ impute_scheme, value.var = &#39;pval&#39;) %&gt;% ggplot() + geom_point(aes(x = -log(per_chr), y = -log(all_chr))) + geom_abline(slope = 1, intercept = 0, color = &#39;gray&#39;) + coord_equal() + facet_wrap(~chr)</code></pre>
+<p><img src="genomewide_check_multi_chr_files/figure-html/unnamed-chunk-72-1.png" width="672" /></p>
+<pre class="r"><code>df_ht  %&gt;% filter(paste0(chr, &#39;:&#39;, position) %in% gwas_ht_bonferroni$snp) %&gt;% filter(chr %in% c(&#39;11&#39;, &#39;12&#39;, &#39;13&#39;, &#39;14&#39;, &#39;15&#39;), impute == &#39;imp&#39;) %&gt;% reshape2::dcast(position + chr ~ impute_scheme, value.var = &#39;pval&#39;) %&gt;% ggplot() + geom_point(aes(x = -log(per_chr), y = -log(all_chr))) + geom_abline(slope = 1, intercept = 0, color = &#39;gray&#39;) + coord_equal() + facet_wrap(~chr)</code></pre>
+<p><img src="genomewide_check_multi_chr_files/figure-html/unnamed-chunk-73-1.png" width="672" /></p>
+<pre class="r"><code>df_ht  %&gt;% filter(paste0(chr, &#39;:&#39;, position) %in% gwas_ht_bonferroni$snp) %&gt;% filter(chr %in% c(&#39;16&#39;, &#39;17&#39;, &#39;18&#39;, &#39;19&#39;, &#39;20&#39;), impute == &#39;imp&#39;) %&gt;% reshape2::dcast(position + chr ~ impute_scheme, value.var = &#39;pval&#39;) %&gt;% ggplot() + geom_point(aes(x = -log(per_chr), y = -log(all_chr))) + geom_abline(slope = 1, intercept = 0, color = &#39;gray&#39;) + coord_equal() + facet_wrap(~chr)</code></pre>
+<p><img src="genomewide_check_multi_chr_files/figure-html/unnamed-chunk-74-1.png" width="672" /></p>
 </div>
 <div id="power-gain" class="section level2">
 <h2><span class="header-section-number">3.2</span> Power gain</h2>
 <p>Evaluate as the median of ratio of <span class="math inline">\(\log(p)\)</span> among genome-wide significant SNPs (Bonferroni correction: 0.1 / nsnp) and the SNPs should have pval &lt; 0.1 in both avg and imp. Another measure: ratio of abs z-score.</p>
-<pre class="r"><code>tmp = df_ht %&gt;% filter(paste0(chr, &#39;:&#39;, position) %in% gwas_ht_bonferroni$snp) %&gt;% reshape2::dcast(position + chr ~ impute, value.var = &#39;pval&#39;)
-tmp %&gt;% filter(imp &lt; 0.1, avg &lt; 0.1) %&gt;% mutate(ratio_logp = log(imp) / log(avg), z_imp = qnorm(imp, lower.tail = F), z_avg = qnorm(avg, lower.tail = F)) %&gt;% mutate(ratio_z = z_imp / z_avg) %&gt;% group_by(chr) %&gt;% summarize(median_ratio_logp = median(ratio_logp), mean_ratio_logp = mean(ratio_logp), nsnp = n(), median_ratio_z = median(ratio_z), mean_ratio_z = mean(ratio_z)) %&gt;% write.csv(&#39;../analysis_output/gw_check.power.csv&#39;, row.names = F)</code></pre>
+<pre class="r"><code>tmp = df_ht %&gt;% filter(paste0(chr, &#39;:&#39;, position) %in% gwas_ht_bonferroni$snp, impute_scheme == &#39;all_chr&#39;) %&gt;% reshape2::dcast(position + chr ~ impute, value.var = &#39;pval&#39;)
+tmp %&gt;% filter(imp &lt; 0.1, avg &lt; 0.1) %&gt;% mutate(ratio_logp = log(imp) / log(avg), z_imp = qnorm(imp, lower.tail = F), z_avg = qnorm(avg, lower.tail = F)) %&gt;% mutate(ratio_z = z_imp / z_avg) %&gt;% group_by(chr) %&gt;% summarize(median_ratio_logp = median(ratio_logp), mean_ratio_logp = mean(ratio_logp), nsnp = n(), median_ratio_z = median(ratio_z), mean_ratio_z = mean(ratio_z)) %&gt;% write.csv(&#39;../analysis_output/gw_check_multi_chr.power.csv&#39;, row.names = F)</code></pre>
 </div>
+<div id="compare-with-per-chromosome-fit-in-terms-of-power" class="section level2">
+<h2><span class="header-section-number">3.3</span> Compare with per-chromosome fit (in terms of power)</h2>
+<pre class="r"><code>d1 = read.csv(&#39;../analysis_output/gw_check_multi_chr.power.csv&#39;)
+d2 = read.csv(&#39;../analysis_output/gw_check.power.csv&#39;)
+plot(d1$mean_ratio_z, d2$mean_ratio_z); abline(a = 0, b = 1)</code></pre>
+<p><img src="genomewide_check_multi_chr_files/figure-html/unnamed-chunk-76-1.png" width="672" /></p>
+</div>
+</div>
+<div id="ad" class="section level1">
+<h1><span class="header-section-number">4</span> AD</h1>
+<pre class="r"><code>df_ad = df %&gt;% filter(trait == &#39;AD&#39;) %&gt;% mutate(pval = beta2pval(beta, se))</code></pre>
+<pre class="r"><code>gwas_ad = fread(&#39;cat ~/Downloads/4_UKB_IGAP_AD_meta_summary_output_June2019.txt|awk \&#39;{print $0&quot; &quot;$1&quot;:&quot;$2}\&#39;&#39;, header = T, sep = &#39; &#39;, data.table = F)
+gwas_ad = gwas_ad %&gt;% mutate(snp = `CHR:BP`)
+gwas_ad = gwas_ad %&gt;% filter(snp %in% unique(paste0(df_ht$chr, &#39;:&#39;, df_ht$position)))
+
+gwas_ad_bonferroni = gwas_ad %&gt;% filter(P &lt; 0.1 / n())</code></pre>
+<pre class="r"><code>gwas_ad %&gt;% filter(CHR != 19) %&gt;% mutate(pexp = rank(P) / (n() + 1)) %&gt;% ggplot() + geom_point(aes(x = -log(pexp), y = -log(P))) + ggtitle(&#39;QQ-plot of external AD GWAS: \n meta analysis of UKB parental AD + IGAP (exclude chr19)&#39;)</code></pre>
+<p><img src="genomewide_check_multi_chr_files/figure-html/unnamed-chunk-78-1.png" width="672" /></p>
+<pre class="r"><code>df_ad %&gt;% filter(chr != 19) %&gt;% filter(paste0(chr, &#39;:&#39;, position) %in% gwas_ad_bonferroni$snp) %&gt;% reshape2::dcast(position + chr + impute_scheme ~ impute, value.var = &#39;pval&#39;) %&gt;% ggplot() + geom_point(aes(x = -log(avg), y = -log(flip), color = &#39;flip&#39;), alpha = .3) + geom_point(aes(x = -log(avg), y = -log(imp), color = &#39;imp&#39;), alpha = .3) + geom_abline(slope = 1, intercept = 0) + coord_equal(xlim = c(0, 25), ylim = c(0, 25)) + facet_wrap(~impute_scheme) </code></pre>
+<p><img src="genomewide_check_multi_chr_files/figure-html/unnamed-chunk-79-1.png" width="672" /></p>
+<pre class="r"><code>df_ad %&gt;% filter(chr != 19) %&gt;% filter(paste0(chr, &#39;:&#39;, position) %in% gwas_ad_bonferroni$snp) %&gt;% reshape2::dcast(position + chr + impute_scheme ~ impute, value.var = &#39;pval&#39;) %&gt;% ggplot() + geom_point(aes(x = -log(flip), y = -log(imp))) + geom_density2d(aes(x = -log(flip), y = -log(imp))) + geom_abline(slope = 1, intercept = 0, color = &#39;gray&#39;) + coord_equal() + facet_wrap(~impute_scheme) + lims(x = c(0, 25), y = c(0, 25))</code></pre>
+<p><img src="genomewide_check_multi_chr_files/figure-html/unnamed-chunk-79-2.png" width="672" /></p>
+<pre class="r"><code>df_ad %&gt;% filter(chr != 19) %&gt;% filter(paste0(chr, &#39;:&#39;, position) %in% gwas_ad_bonferroni$snp) %&gt;% reshape2::dcast(position + chr + impute_scheme ~ impute, value.var = &#39;pval&#39;) %&gt;% ggplot() + geom_point(aes(x = -log(avg), y = -log(imp))) + geom_density2d(aes(x = -log(avg), y = -log(imp))) + geom_abline(slope = 1, intercept = 0, color = &#39;gray&#39;)  + coord_equal() + facet_wrap(~impute_scheme) + lims(x = c(0, 25), y = c(0, 25))</code></pre>
+<p><img src="genomewide_check_multi_chr_files/figure-html/unnamed-chunk-79-3.png" width="672" /></p>
 </div>
 <div id="references" class="section level1 unnumbered">
 <h1>References</h1>

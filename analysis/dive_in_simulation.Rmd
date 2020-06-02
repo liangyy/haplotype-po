@@ -1,0 +1,186 @@
+---
+title: "Dive in simulation for haplotype imputation"
+date: "`r paste0('Last update: ', format(Sys.time(), '%b %d, %Y'))`"    
+---
+
+```{r setup}
+rm(list = ls())
+library(dplyr)
+library(ggplot2)
+theme_set(theme_bw(base_size = 15)) 
+```
+
+# About
+
+In this document, we focus on the simulation for haplotype imputation. 
+In particular, we mainly want to address the following questions:
+
+1. For heritability at 0.1%, 0.5%, 1% 5% (which is quite typical in real data analysis), how the imputation quality depends on the number of phenotypes. 
+2. For the "bad imputation", what is the source of it and how it depends on the number of phenotypes.
+
+For the sake of simplicity, we plug in the true $\beta$ and $\sigma^2$ when evaluating the posterior of $Z$. 
+In this sense, we are seeking the "best" we could get out of the model and data.
+
+# Simulation scheme
+
+I will take a slightly different approach as comparing to the previous simulation for the preliminary runs on imputation scheme. 
+Since here we work with the true $\beta$ and $\sigma$, I skip simulation the genotype and $\beta$ but treat $H\beta$ as a whole. 
+Essentially, the things that we need to simulate are just: 1) genetic effect (for each parent, and they are transmitted to the child); 2) environmental effect (for both parents and child).
+The **simulation procedure** is as follow:
+
+1. Simulate genetic effect, $G^{p,1}$ and $G^{p,2}$, for each parent of each individual.
+2. Simulate environmental effect, $E^p$, for each parent of each individual.
+3. Observed phenotype of parents is calculated as $Y^p = G^{p,1} + G^{p,2} + E^p$. 
+4. Simulate the transmission of genetic effect from parents to child for each individual, which gives $G^1$ and $G^2$ for each individuals.
+5. At the end, what we do observe is $Y^f, Y^m, G^1, G^2$.
+
+The followings are some parameters used in the simulation.
+
+```{r simulation parameters}
+heritability = c(0.001, 0.005, 0.01, 0.05)
+nsample = 10000
+max_npheno = 100
+```
+
+* Number of samples (for each sample, we will simulate the father and mother): $`r nsample`$.
+* Heritability: $h^2 = `r heritability`$ (we will take phenotype as variance = 1 so that $\sigma^2 = 1 - h^2$).
+* Max number of phenotypes: `r max_npheno`
+
+# Simulation
+
+This section is just code. 
+I did the very explicit coding to make it as readable as possible.
+The short notice is that $G^1$ comes from father and $G^2$ comes from mother in this simulation.
+Skip if you're comfortable with skipping.
+
+```{r simulation}
+G1_by_h2 = list()
+G2_by_h2 = list()
+Yf_by_h2 = list()
+Ym_by_h2 = list()
+
+# loop over all heritabilities
+for(h2 in heritability) {
+  G1_list = list()
+  G2_list = list()
+  Yf_list = list()
+  Ym_list = list()
+  
+  # loop over phenotypes
+  for(pp in 1 : max_npheno) {
+    # parental variables
+    Gf1 = rnorm(nsample, sd = sqrt(h2 / 2))
+    Gf2 = rnorm(nsample, sd = sqrt(h2 / 2))
+    Gm1 = rnorm(nsample, sd = sqrt(h2 / 2))
+    Gm2 = rnorm(nsample, sd = sqrt(h2 / 2))
+    Ef = rnorm(nsample, sd = sqrt(1 - h2))
+    Em = rnorm(nsample, sd = sqrt(1 - h2))
+    Yf_list[[length(Yf_list) + 1]] = Gf1 + Gf2 + Ef
+    Ym_list[[length(Ym_list) + 1]] = Gm1 + Gm2 + Em
+    # transmission to child
+    G1_list[[length(G1_list) + 1]] = Gf1
+    G2_list[[length(G2_list) + 1]] = Gm1
+  }
+  
+  # collecting results
+  Yf = do.call(cbind, Yf_list)
+  Ym = do.call(cbind, Ym_list)
+  G1 = do.call(cbind, G1_list)
+  G2 = do.call(cbind, G2_list)
+  
+  # add to *_by_h2 
+  Yf_by_h2[[as.character(h2)]] = Yf
+  Ym_by_h2[[as.character(h2)]] = Ym
+  G1_by_h2[[as.character(h2)]] = G1
+  G2_by_h2[[as.character(h2)]] = G2
+}
+
+```
+
+# "Best" imputation
+
+With many simplification due to the setup (knowing true $\beta$ and $\sigma^2$ and both sexes share the same model), the "best" imputation of $Z$ (indicating $G^1$ is from father) is:
+
+$$\begin{aligned}
+  \gamma &:= \Pr(Z = 1 | Y^f, Y^m, G^1, G^2) \\
+  &= \frac{1}{1 + e^{-\frac{L_0 - L_1}{2\sigma^2}}} \\
+  L_1 &:= \sum_j (Y^{f, j} - G^{1, j})^2 + (Y^{m, j} - G^{2, j})^2 \\
+  L_0 &:= \sum_j (Y^{f, j} - G^{2, j})^2 + (Y^{m, j} - G^{1, j})^2
+\end{aligned}$$
+where $j$ indicates phenotype.
+
+```{r best imputation}
+slice_m = function(mat, p) {
+  mat[, 1 : p, drop = FALSE]
+}
+
+sq_diff = function(y, g) {
+  rowSums((g - y) ^ 2)
+}
+eval_gamma = function(yf, ym, g1, g2, sigma2) {
+  L1 = sq_diff(yf, g1) + sq_diff(ym, g2)
+  L0 = sq_diff(yf, g2) + sq_diff(ym, g1)
+  1 / (1 + exp(- (L0 - L1) / 2 / sigma2))
+}
+
+# loop over all heritabilities
+gamma_list = list()
+for(h2 in heritability) {
+  Yf = Yf_by_h2[[as.character(h2)]]
+  Ym = Ym_by_h2[[as.character(h2)]]
+  G1 = G1_by_h2[[as.character(h2)]]
+  G2 = G2_by_h2[[as.character(h2)]]
+  # loop over the number of phenotypes
+  for(pp in 1 : max_npheno) {
+    gamma_list[[length(gamma_list) + 1]] = data.frame(
+      gamma = eval_gamma(slice_m(Yf, pp), slice_m(Ym, pp), slice_m(G1, pp), slice_m(G2, pp), 1 - h2), 
+      npheno = pp,
+      heritability = h2
+    )
+  }
+}
+gamma_df = do.call(rbind, gamma_list)
+```
+
+We visualize by plotting the $\gamma$'s at each number of phenotypes.
+Additionally, we calculate the mean, the variance, and the $S$ quantity at each number of phentoypes.
+
+
+```{r best imputation vis scatter, fig.width=15, fig.height=10}
+gamma_df %>% filter(npheno %in% seq(1,100, by = 5)) %>% ggplot() + geom_jitter(aes(x = npheno, y = gamma), alpha = 0.05, height = 0, width = 0.5) + facet_wrap(~heritability)
+```
+
+```{r best imputation vis violin, fig.width=15, fig.height=10}
+gamma_df %>% filter(npheno %in% seq(1,100, by = 5)) %>% ggplot() + 
+  geom_violin(aes(x = npheno, y = gamma, group = npheno), scale = 'width') +
+  geom_boxplot(aes(x = npheno, y = gamma, group = npheno)) +
+  facet_wrap(~heritability)
+```
+
+```{r best imputation curve}
+get_sval = function(gamma) {
+  mean(gamma ^ 2 + (1 - gamma) ^ 2)
+}
+gamma_df %>% group_by(npheno, heritability) %>% 
+  summarise(mean_gamma = mean(gamma), var_gamma = var(gamma), sval = get_sval(gamma)) %>% 
+  ungroup() %>% mutate(power_against_avg = mean_gamma / sqrt(sval) * sqrt(2), power_against_optimal = mean_gamma / sqrt(sval)) %>%
+  ggplot() + geom_path(aes(x = npheno, y = mean_gamma, color = 'mean_gamma')) + 
+  geom_path(aes(x = npheno, y = var_gamma, color = 'var_gamma')) +
+  geom_path(aes(x = npheno, y = sval, color = 'sval')) + 
+  geom_path(aes(x = npheno, y = power_against_avg, color = 'power_against_avg')) + 
+  geom_path(aes(x = npheno, y = power_against_optimal, color = 'power_against_optimal')) +
+  facet_wrap(~heritability)
+```
+
+**One not so important but good to know observation** is that `sval` is very close to `mean_gamma`. 
+The difference between $S$ and $\gamma^\star$ is $\delta = 2 (\gamma - 0.5) (\gamma - 1)$ which is a quadratic function (here I use $\star$ to denote that the $\gamma$ is the probability of correct but not the imputation output).
+If we plot this function, we will see that it is close to zero when $\gamma^\star \in [0.5, 1]$. 
+
+```{r vis diff sval vs gamma}
+diff_sval_mean_gamma = function(g) {
+  2 * (g - 0.5) * (g - 1) 
+}
+plot(seq(0, 1, by = 0.01),diff_sval_mean_gamma(seq(0, 1, by = 0.01)))
+```
+
+This means that if the imputation is not so off, in the sense that $\gamma^\star \in [0.5, 1]$, $\bar{S}$ should be close to $\bar{\gamma^\star}$.

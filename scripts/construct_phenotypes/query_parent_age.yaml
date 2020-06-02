@@ -1,0 +1,33 @@
+samples_filters:
+- eid > 0
+- eid not in (select eid from withdrawals)
+father_still_alive:
+  father_still_alive_0_0: c1797_0_0
+  father_still_alive_1_0: c1797_1_0
+  father_still_alive_2_0: c1797_2_0
+  father_still_alive_3_0: c1797_3_0
+mother_still_alive:
+  mother_still_alive_0_0: c1835_0_0
+  mother_still_alive_1_0: c1835_1_0
+  mother_still_alive_2_0: c1835_2_0
+  mother_still_alive_3_0: c1835_3_0
+father_age:
+  father_age_0_0: c2946_0_0
+  father_age_1_0: c2946_1_0
+  father_age_2_0: c2946_2_0
+  father_age_3_0: c2946_3_0
+father_age_at_death:
+  father_age_at_death_0_0: c1807_0_0
+  father_age_at_death_1_0: c1807_1_0
+  father_age_at_death_2_0: c1807_2_0
+  father_age_at_death_3_0: c1807_3_0
+mother_age:
+  mother_age_0_0: c1845_0_0
+  mother_age_1_0: c1845_1_0
+  mother_age_2_0: c1845_2_0
+  mother_age_3_0: c1845_3_0
+mother_age_at_death:
+  mother_age_at_death_0_0: c3526_0_0
+  mother_age_at_death_1_0: c3526_1_0
+  mother_age_at_death_2_0: c3526_2_0
+  mother_age_at_death_3_0: c3526_3_0

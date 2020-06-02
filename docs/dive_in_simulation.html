@@ -11,7 +11,7 @@
 
 
 
-<title>Genome-wide run</title>
+<title>Dive in simulation for haplotype imputation</title>
 
 <script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -381,101 +381,156 @@ div.tocify {
 
 
 
-<h1 class="title toc-ignore">Genome-wide run</h1>
-<h4 class="date">Last update: May 30, 2020</h4>
+<h1 class="title toc-ignore">Dive in simulation for haplotype imputation</h1>
+<h4 class="date">Last update: May 29, 2020</h4>
 
 </div>
 
 
 <pre class="r"><code>rm(list = ls())
-library(ggplot2)
 library(dplyr)
-library(patchwork)
-library(data.table)
-library(reticulate)
-library(pander)
-options(datatable.fread.datatable = FALSE)
-np &lt;- import(&quot;numpy&quot;)
-set.seed(2020)
-source(&#39;../code/rlib_misc.R&#39;)</code></pre>
+library(ggplot2)
+theme_set(theme_bw(base_size = 15)) </code></pre>
 <div id="about" class="section level1">
 <h1><span class="header-section-number">1</span> About</h1>
-<p>I’ve implemented a pipeline doing the haplotype imputation based GWAS which includes three major scripts:</p>
-<ul>
-<li><strong>Calculate PRS</strong>: <code>scripts/prs/naive_prs.py</code></li>
-<li><strong>Imputation</strong>: <code>scripts/haplotype_imputation/impute_parent_of_origin.py</code></li>
-<li><strong>Run GWAS</strong>: <code>scripts/logistic_gpu/run_haplo_logistic_solver.py</code></li>
-</ul>
-<p>As first pass effort, I run GWAS on paternal phenotype with imputed haplotype (Alzheimer’s disease, AD). The result is directly comparable to the paternal GWAS on AD reported in <span class="citation">Marioni et al. (2018)</span>. I tested on chromosome 16 and 19.</p>
-<p>Two imputation (labeled as <code>imp</code>) approaches are tested: 1) sex-specific EM (labeled as <code>em</code>); 2) non sex-specific EM (as <code>em_deg</code>). Besides, I include <span class="math inline">\(\Pr(Z) = 0.5\)</span> as <code>avg</code>, and <code>flip</code> which flip the imputation by using <span class="math inline">\(1 - Pr(Z)\)</span>.</p>
-<p>Besides, I also run on heart disease (HD) on the side, though I don’t have an existing GWAS to compare to.</p>
+<p>In this document, we focus on the simulation for haplotype imputation. In particular, we mainly want to address the following questions:</p>
+<ol style="list-style-type: decimal">
+<li>For heritability at 0.1%, 0.5%, 1% 5% (which is quite typical in real data analysis), how the imputation quality depends on the number of phenotypes.</li>
+<li>For the “bad imputation”, what is the source of it and how it depends on the number of phenotypes.</li>
+</ol>
+<p>For the sake of simplicity, we plug in the true <span class="math inline">\(\beta\)</span> and <span class="math inline">\(\sigma^2\)</span> when evaluating the posterior of <span class="math inline">\(Z\)</span>. In this sense, we are seeking the “best” we could get out of the model and data.</p>
 </div>
-<div id="load-results" class="section level1">
-<h1><span class="header-section-number">2</span> Load results</h1>
-<pre class="r"><code>snp_map = fread(&#39;zcat &lt; ~/Desktop/tmp/haplotype-po/snp_map_for_neale_lab_gwas.with_sign.tsv.gz&#39;, header = TRUE, sep = &#39;\t&#39;)
+<div id="simulation-scheme" class="section level1">
+<h1><span class="header-section-number">2</span> Simulation scheme</h1>
+<p>I will take a slightly different approach as comparing to the previous simulation for the preliminary runs on imputation scheme. Since here we work with the true <span class="math inline">\(\beta\)</span> and <span class="math inline">\(\sigma\)</span>, I skip simulation the genotype and <span class="math inline">\(\beta\)</span> but treat <span class="math inline">\(H\beta\)</span> as a whole. Essentially, the things that we need to simulate are just: 1) genetic effect (for each parent, and they are transmitted to the child); 2) environmental effect (for both parents and child). The <strong>simulation procedure</strong> is as follow:</p>
+<ol style="list-style-type: decimal">
+<li>Simulate genetic effect, <span class="math inline">\(G^{p,1}\)</span> and <span class="math inline">\(G^{p,2}\)</span>, for each parent of each individual.</li>
+<li>Simulate environmental effect, <span class="math inline">\(E^p\)</span>, for each parent of each individual.</li>
+<li>Observed phenotype of parents is calculated as <span class="math inline">\(Y^p = G^{p,1} + G^{p,2} + E^p\)</span>.</li>
+<li>Simulate the transmission of genetic effect from parents to child for each individual, which gives <span class="math inline">\(G^1\)</span> and <span class="math inline">\(G^2\)</span> for each individuals.</li>
+<li>At the end, what we do observe is <span class="math inline">\(Y^f, Y^m, G^1, G^2\)</span>.</li>
+</ol>
+<p>The followings are some parameters used in the simulation.</p>
+<pre class="r"><code>heritability = c(0.001, 0.005, 0.01, 0.05)
+nsample = 10000
+max_npheno = 100</code></pre>
+<ul>
+<li>Number of samples (for each sample, we will simulate the father and mother): <span class="math inline">\(10^{4}\)</span>.</li>
+<li>Heritability: <span class="math inline">\(h^2 = 0.001, 0.005, 0.01, 0.05\)</span> (we will take phenotype as variance = 1 so that <span class="math inline">\(\sigma^2 = 1 - h^2\)</span>).</li>
+<li>Max number of phenotypes: 100</li>
+</ul>
+</div>
+<div id="simulation" class="section level1">
+<h1><span class="header-section-number">3</span> Simulation</h1>
+<p>This section is just code. I did the very explicit coding to make it as readable as possible. The short notice is that <span class="math inline">\(G^1\)</span> comes from father and <span class="math inline">\(G^2\)</span> comes from mother in this simulation. Skip if you’re comfortable with skipping.</p>
+<pre class="r"><code>G1_by_h2 = list()
+G2_by_h2 = list()
+Yf_by_h2 = list()
+Ym_by_h2 = list()
 
-dl = list()
-chromosomes = 1 : 22
-traits = c(&#39;HD&#39;, &#39;AD&#39;, &#39;HT&#39;)
-for(chr_num in chromosomes) {
-  pos = snp_map %&gt;% filter(chrom == chr_num) %&gt;% pull(pos)
-  for(i in 1 : length(traits)) {
-    filename = paste0(&#39;/Users/yanyul/Desktop/tmp/haplotype-po/from_lambda/gwas/chr&#39;, chr_num, &#39;.npy&#39;)
-    df = read_from_npy(
-      paste0(filename),
-      pos, 
-      i
+# loop over all heritabilities
+for(h2 in heritability) {
+  G1_list = list()
+  G2_list = list()
+  Yf_list = list()
+  Ym_list = list()
+  
+  # loop over phenotypes
+  for(pp in 1 : max_npheno) {
+    # parental variables
+    Gf1 = rnorm(nsample, sd = sqrt(h2 / 2))
+    Gf2 = rnorm(nsample, sd = sqrt(h2 / 2))
+    Gm1 = rnorm(nsample, sd = sqrt(h2 / 2))
+    Gm2 = rnorm(nsample, sd = sqrt(h2 / 2))
+    Ef = rnorm(nsample, sd = sqrt(1 - h2))
+    Em = rnorm(nsample, sd = sqrt(1 - h2))
+    Yf_list[[length(Yf_list) + 1]] = Gf1 + Gf2 + Ef
+    Ym_list[[length(Ym_list) + 1]] = Gm1 + Gm2 + Em
+    # transmission to child
+    G1_list[[length(G1_list) + 1]] = Gf1
+    G2_list[[length(G2_list) + 1]] = Gm1
+  }
+  
+  # collecting results
+  Yf = do.call(cbind, Yf_list)
+  Ym = do.call(cbind, Ym_list)
+  G1 = do.call(cbind, G1_list)
+  G2 = do.call(cbind, G2_list)
+  
+  # add to *_by_h2 
+  Yf_by_h2[[as.character(h2)]] = Yf
+  Ym_by_h2[[as.character(h2)]] = Ym
+  G1_by_h2[[as.character(h2)]] = G1
+  G2_by_h2[[as.character(h2)]] = G2
+}</code></pre>
+</div>
+<div id="best-imputation" class="section level1">
+<h1><span class="header-section-number">4</span> “Best” imputation</h1>
+<p>With many simplification due to the setup (knowing true <span class="math inline">\(\beta\)</span> and <span class="math inline">\(\sigma^2\)</span> and both sexes share the same model), the “best” imputation of <span class="math inline">\(Z\)</span> (indicating <span class="math inline">\(G^1\)</span> is from father) is:</p>
+<p><span class="math display">\[\begin{aligned}
+  \gamma &amp;:= \Pr(Z = 1 | Y^f, Y^m, G^1, G^2) \\
+  &amp;= \frac{1}{1 + e^{-\frac{L_0 - L_1}{2\sigma^2}}} \\
+  L_1 &amp;:= \sum_j (Y^{f, j} - G^{1, j})^2 + (Y^{m, j} - G^{2, j})^2 \\
+  L_0 &amp;:= \sum_j (Y^{f, j} - G^{2, j})^2 + (Y^{m, j} - G^{1, j})^2
+\end{aligned}\]</span> where <span class="math inline">\(j\)</span> indicates phenotype.</p>
+<pre class="r"><code>slice_m = function(mat, p) {
+  mat[, 1 : p, drop = FALSE]
+}
+
+sq_diff = function(y, g) {
+  rowSums((g - y) ^ 2)
+}
+eval_gamma = function(yf, ym, g1, g2, sigma2) {
+  L1 = sq_diff(yf, g1) + sq_diff(ym, g2)
+  L0 = sq_diff(yf, g2) + sq_diff(ym, g1)
+  1 / (1 + exp(- (L0 - L1) / 2 / sigma2))
+}
+
+# loop over all heritabilities
+gamma_list = list()
+for(h2 in heritability) {
+  Yf = Yf_by_h2[[as.character(h2)]]
+  Ym = Ym_by_h2[[as.character(h2)]]
+  G1 = G1_by_h2[[as.character(h2)]]
+  G2 = G2_by_h2[[as.character(h2)]]
+  # loop over the number of phenotypes
+  for(pp in 1 : max_npheno) {
+    gamma_list[[length(gamma_list) + 1]] = data.frame(
+      gamma = eval_gamma(slice_m(Yf, pp), slice_m(Ym, pp), slice_m(G1, pp), slice_m(G2, pp), 1 - h2), 
+      npheno = pp,
+      heritability = h2
     )
-    df = df %&gt;% mutate(chr = chr_num, trait = traits[i])
-    dl[[length(dl) + 1]] = df
   }
 }
-df = do.call(rbind, dl)</code></pre>
-</div>
-<div id="ht" class="section level1">
-<h1><span class="header-section-number">3</span> HT</h1>
-<pre class="r"><code>df_ht = df %&gt;% filter(trait == &#39;HT&#39;) %&gt;% mutate(pval = beta2pval(beta, se))</code></pre>
-<div id="neale-lab-gwas" class="section level2">
-<h2><span class="header-section-number">3.1</span> Neale lab GWAS</h2>
-<pre class="r"><code>gwas_self = fread(&#39;zcat &lt; ~/Desktop/tmp/haplotype-po/20002_1065.gwas.imputed_v3.both_sexes.tsv.bgz|awk \&#39;{split($1,a,&quot;:&quot;); print $0&quot;\t&quot;a[1]&quot;:&quot;a[2]}\&#39;&#39;, header = T, sep = &#39;\t&#39;, data.table = F)
-# gwas_parent = fread(&#39;zcat &lt; ~/Desktop/tmp/haplotype-po/20107_8.gwas.imputed_v3.both_sexes.tsv.bgz | grep &quot;^16:\\|^19:&quot;&#39;, header = F, sep = &#39;\t&#39;, data.table = F)
-gwas_self = gwas_self %&gt;% mutate(snp = `variant:`)
-gwas_self = gwas_self %&gt;% filter(snp %in% unique(paste0(df_ht$chr, &#39;:&#39;, df_ht$position)))
-
-gwas_ht_bonferroni = gwas_self %&gt;% filter(pval &lt; 0.1 / n(), !low_confidence_variant)
-df_ht %&gt;% filter(paste0(chr, &#39;:&#39;, position) %in% gwas_ht_bonferroni$snp) %&gt;% reshape2::dcast(position + chr ~ impute, value.var = &#39;pval&#39;) %&gt;% ggplot() + geom_point(aes(x = -log(avg), y = -log(flip), color = &#39;flip&#39;), alpha = .3) + geom_point(aes(x = -log(avg), y = -log(imp), color = &#39;imp&#39;), alpha = .3) + geom_abline(slope = 1, intercept = 0) + coord_equal() #+ facet_wrap(~chr)</code></pre>
-<p><img src="genomewide_check_files/figure-html/neale-1.png" width="672" /></p>
-<pre class="r"><code>df_ht %&gt;% filter(paste0(chr, &#39;:&#39;, position) %in% gwas_ht_bonferroni$snp) %&gt;% reshape2::dcast(position + chr ~ impute, value.var = &#39;pval&#39;) %&gt;% ggplot() + geom_point(aes(x = -log(flip), y = -log(imp))) + geom_density2d(aes(x = -log(flip), y = -log(imp))) + geom_abline(slope = 1, intercept = 0, color = &#39;gray&#39;) + coord_equal() #+ facet_wrap(~chr)</code></pre>
-<p><img src="genomewide_check_files/figure-html/neale-2.png" width="672" /></p>
-<pre class="r"><code>df_ht %&gt;% filter(paste0(chr, &#39;:&#39;, position) %in% gwas_ht_bonferroni$snp) %&gt;% reshape2::dcast(position + chr ~ impute, value.var = &#39;pval&#39;) %&gt;% ggplot() + geom_point(aes(x = -log(avg), y = -log(imp))) + geom_density2d(aes(x = -log(avg), y = -log(imp))) + geom_abline(slope = 1, intercept = 0, color = &#39;gray&#39;) + coord_equal() #+ facet_wrap(~chr)</code></pre>
-<p><img src="genomewide_check_files/figure-html/neale-3.png" width="672" /></p>
-<pre class="r"><code>df_ht  %&gt;% filter(chr %in% c(&#39;21&#39;, &#39;22&#39;)) %&gt;% reshape2::dcast(position + chr ~ impute, value.var = &#39;pval&#39;) %&gt;% ggplot() + geom_point(aes(x = -log(avg), y = -log(imp))) + geom_density2d(aes(x = -log(avg), y = -log(imp))) + geom_abline(slope = 1, intercept = 0, color = &#39;gray&#39;) + coord_equal() + facet_wrap(~chr)</code></pre>
-<pre><code>## Warning: Removed 1 rows containing non-finite values (stat_density2d).</code></pre>
-<pre><code>## Warning: Removed 1 rows containing missing values (geom_point).</code></pre>
-<p><img src="genomewide_check_files/figure-html/unnamed-chunk-1-1.png" width="672" /></p>
-<pre class="r"><code>df_ht  %&gt;% filter(chr %in% c(&#39;1&#39;, &#39;2&#39;, &#39;3&#39;, &#39;4&#39;, &#39;5&#39;)) %&gt;% reshape2::dcast(position + chr ~ impute, value.var = &#39;pval&#39;) %&gt;% ggplot() + geom_point(aes(x = -log(avg), y = -log(imp))) + geom_density2d(aes(x = -log(avg), y = -log(imp))) + geom_abline(slope = 1, intercept = 0, color = &#39;gray&#39;) + coord_equal() + facet_wrap(~chr)</code></pre>
-<p><img src="genomewide_check_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
-<pre class="r"><code>df_ht  %&gt;% filter(chr %in% c(&#39;6&#39;, &#39;7&#39;, &#39;8&#39;, &#39;9&#39;, &#39;10&#39;)) %&gt;% reshape2::dcast(position + chr ~ impute, value.var = &#39;pval&#39;) %&gt;% ggplot() + geom_point(aes(x = -log(avg), y = -log(imp))) + geom_density2d(aes(x = -log(avg), y = -log(imp))) + geom_abline(slope = 1, intercept = 0, color = &#39;gray&#39;) + coord_equal() + facet_wrap(~chr)</code></pre>
-<p><img src="genomewide_check_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
-<pre class="r"><code>df_ht  %&gt;% filter(chr %in% c(&#39;11&#39;, &#39;12&#39;, &#39;13&#39;, &#39;14&#39;, &#39;15&#39;)) %&gt;% reshape2::dcast(position + chr ~ impute, value.var = &#39;pval&#39;) %&gt;% ggplot() + geom_point(aes(x = -log(avg), y = -log(imp))) + geom_density2d(aes(x = -log(avg), y = -log(imp))) + geom_abline(slope = 1, intercept = 0, color = &#39;gray&#39;) + coord_equal() + facet_wrap(~chr)</code></pre>
-<p><img src="genomewide_check_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
-<pre class="r"><code>df_ht  %&gt;% filter(chr %in% c(&#39;16&#39;, &#39;17&#39;, &#39;18&#39;, &#39;19&#39;, &#39;20&#39;)) %&gt;% reshape2::dcast(position + chr ~ impute, value.var = &#39;pval&#39;) %&gt;% ggplot() + geom_point(aes(x = -log(avg), y = -log(imp))) + geom_density2d(aes(x = -log(avg), y = -log(imp))) + geom_abline(slope = 1, intercept = 0, color = &#39;gray&#39;) + coord_equal() + facet_wrap(~chr)</code></pre>
-<p><img src="genomewide_check_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
-</div>
-<div id="power-gain" class="section level2">
-<h2><span class="header-section-number">3.2</span> Power gain</h2>
-<p>Evaluate as the median of ratio of <span class="math inline">\(\log(p)\)</span> among genome-wide significant SNPs (Bonferroni correction: 0.1 / nsnp) and the SNPs should have pval &lt; 0.1 in both avg and imp. Another measure: ratio of abs z-score.</p>
-<pre class="r"><code>tmp = df_ht %&gt;% filter(paste0(chr, &#39;:&#39;, position) %in% gwas_ht_bonferroni$snp) %&gt;% reshape2::dcast(position + chr ~ impute, value.var = &#39;pval&#39;)
-tmp %&gt;% filter(imp &lt; 0.1, avg &lt; 0.1) %&gt;% mutate(ratio_logp = log(imp) / log(avg), z_imp = qnorm(imp, lower.tail = F), z_avg = qnorm(avg, lower.tail = F)) %&gt;% mutate(ratio_z = z_imp / z_avg) %&gt;% group_by(chr) %&gt;% summarize(median_ratio_logp = median(ratio_logp), mean_ratio_logp = mean(ratio_logp), nsnp = n(), median_ratio_z = median(ratio_z), mean_ratio_z = mean(ratio_z)) %&gt;% write.csv(&#39;../analysis_output/gw_check.power.csv&#39;, row.names = F)</code></pre>
-</div>
-</div>
-<div id="references" class="section level1 unnumbered">
-<h1>References</h1>
-<div id="refs" class="references">
-<div id="ref-marioni:2018">
-<p>Marioni, Riccardo E, Sarah E Harris, Qian Zhang, Allan F McRae, Saskia P Hagenaars, W David Hill, Gail Davies, et al. 2018. “GWAS on Family History of Alzheimer’s Disease.” <em>Translational Psychiatry</em> 8 (1). Nature Publishing Group: 1–7.</p>
-</div>
-</div>
+gamma_df = do.call(rbind, gamma_list)</code></pre>
+<p>We visualize by plotting the <span class="math inline">\(\gamma\)</span>’s at each number of phenotypes. Additionally, we calculate the mean, the variance, and the <span class="math inline">\(S\)</span> quantity at each number of phentoypes.</p>
+<pre class="r"><code>gamma_df %&gt;% filter(npheno %in% seq(1,100, by = 5)) %&gt;% ggplot() + geom_jitter(aes(x = npheno, y = gamma), alpha = 0.05, height = 0, width = 0.5) + facet_wrap(~heritability)</code></pre>
+<p><img src="dive_in_simulation_files/figure-html/best%20imputation%20vis%20scatter-1.png" width="1440" /></p>
+<pre class="r"><code>gamma_df %&gt;% filter(npheno %in% seq(1,100, by = 5)) %&gt;% ggplot() + 
+  geom_violin(aes(x = npheno, y = gamma, group = npheno), scale = &#39;width&#39;) +
+  geom_boxplot(aes(x = npheno, y = gamma, group = npheno)) +
+  facet_wrap(~heritability)</code></pre>
+<p><img src="dive_in_simulation_files/figure-html/best%20imputation%20vis%20violin-1.png" width="1440" /></p>
+<pre class="r"><code>get_sval = function(gamma) {
+  mean(gamma ^ 2 + (1 - gamma) ^ 2)
+}
+gamma_df %&gt;% group_by(npheno, heritability) %&gt;% 
+  summarise(mean_gamma = mean(gamma), var_gamma = var(gamma), sval = get_sval(gamma)) %&gt;% 
+  ungroup() %&gt;% mutate(power_against_avg = mean_gamma / sqrt(sval) * sqrt(2), power_against_optimal = mean_gamma / sqrt(sval)) %&gt;%
+  ggplot() + geom_path(aes(x = npheno, y = mean_gamma, color = &#39;mean_gamma&#39;)) + 
+  geom_path(aes(x = npheno, y = var_gamma, color = &#39;var_gamma&#39;)) +
+  geom_path(aes(x = npheno, y = sval, color = &#39;sval&#39;)) + 
+  geom_path(aes(x = npheno, y = power_against_avg, color = &#39;power_against_avg&#39;)) + 
+  geom_path(aes(x = npheno, y = power_against_optimal, color = &#39;power_against_optimal&#39;)) +
+  facet_wrap(~heritability)</code></pre>
+<p><img src="dive_in_simulation_files/figure-html/best%20imputation%20curve-1.png" width="672" /></p>
+<p><strong>One not so important but good to know observation</strong> is that <code>sval</code> is very close to <code>mean_gamma</code>. The difference between <span class="math inline">\(S\)</span> and <span class="math inline">\(\gamma^\star\)</span> is <span class="math inline">\(\delta = 2 (\gamma - 0.5) (\gamma - 1)\)</span> which is a quadratic function (here I use <span class="math inline">\(\star\)</span> to denote that the <span class="math inline">\(\gamma\)</span> is the probability of correct but not the imputation output). If we plot this function, we will see that it is close to zero when <span class="math inline">\(\gamma^\star \in [0.5, 1]\)</span>.</p>
+<pre class="r"><code>diff_sval_mean_gamma = function(g) {
+  2 * (g - 0.5) * (g - 1) 
+}
+plot(seq(0, 1, by = 0.01),diff_sval_mean_gamma(seq(0, 1, by = 0.01)))</code></pre>
+<p><img src="dive_in_simulation_files/figure-html/vis%20diff%20sval%20vs%20gamma-1.png" width="672" /></p>
+<p>This means that if the imputation is not so off, in the sense that <span class="math inline">\(\gamma^\star \in [0.5, 1]\)</span>, <span class="math inline">\(\bar{S}\)</span> should be close to <span class="math inline">\(\bar{\gamma^\star}\)</span>.</p>
 </div>
 
 

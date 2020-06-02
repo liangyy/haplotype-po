@@ -1,0 +1,41 @@
+phenotype_long,filename,id,phenotype,parent,phenotype_id
+Illnesses of father: Heart disease,20107_1.gwas.imputed_v3.both_sexes.tsv.bgz,20107_1.gwas.imputed_v3.both_sexes,Heart disease,father,heart_disease
+Illnesses of father: Alzheimer's disease/dementia,20107_10.gwas.imputed_v3.both_sexes.tsv.bgz,20107_10.gwas.imputed_v3.both_sexes,Alzheimer's disease/dementia,father,alzheimer
+Illnesses of father: Parkinson's disease,20107_11.gwas.imputed_v3.both_sexes.tsv.bgz,20107_11.gwas.imputed_v3.both_sexes,Parkinson's disease,father,parkinson
+Illnesses of father: Severe depression,20107_12.gwas.imputed_v3.both_sexes.tsv.bgz,20107_12.gwas.imputed_v3.both_sexes,Severe depression,father,depression
+Illnesses of father: Stroke,20107_2.gwas.imputed_v3.both_sexes.tsv.bgz,20107_2.gwas.imputed_v3.both_sexes,Stroke,father,stroke
+Illnesses of father: Lung cancer,20107_3.gwas.imputed_v3.both_sexes.tsv.bgz,20107_3.gwas.imputed_v3.both_sexes,Lung cancer,father,lung_cancer
+Illnesses of father: Bowel cancer,20107_4.gwas.imputed_v3.both_sexes.tsv.bgz,20107_4.gwas.imputed_v3.both_sexes,Bowel cancer,father,bowel_cancer
+Illnesses of father: Chronic bronchitis/emphysema,20107_6.gwas.imputed_v3.both_sexes.tsv.bgz,20107_6.gwas.imputed_v3.both_sexes,Chronic bronchitis/emphysema,father,emphysema
+Illnesses of father: High blood pressure,20107_8.gwas.imputed_v3.both_sexes.tsv.bgz,20107_8.gwas.imputed_v3.both_sexes,High blood pressure,father,high_blood_pressure
+Illnesses of father: Diabetes,20107_9.gwas.imputed_v3.both_sexes.tsv.bgz,20107_9.gwas.imputed_v3.both_sexes,Diabetes,father,diabetes
+Illnesses of mother: Heart disease,20110_1.gwas.imputed_v3.both_sexes.tsv.bgz,20110_1.gwas.imputed_v3.both_sexes,Heart disease,mother,heart_disease
+Illnesses of mother: Alzheimer's disease/dementia,20110_10.gwas.imputed_v3.both_sexes.tsv.bgz,20110_10.gwas.imputed_v3.both_sexes,Alzheimer's disease/dementia,mother,alzheimer
+Illnesses of mother: Parkinson's disease,20110_11.gwas.imputed_v3.both_sexes.tsv.bgz,20110_11.gwas.imputed_v3.both_sexes,Parkinson's disease,mother,parkinson
+Illnesses of mother: Severe depression,20110_12.gwas.imputed_v3.both_sexes.tsv.bgz,20110_12.gwas.imputed_v3.both_sexes,Severe depression,mother,depression
+Illnesses of mother: Stroke,20110_2.gwas.imputed_v3.both_sexes.tsv.bgz,20110_2.gwas.imputed_v3.both_sexes,Stroke,mother,stroke
+Illnesses of mother: Lung cancer,20110_3.gwas.imputed_v3.both_sexes.tsv.bgz,20110_3.gwas.imputed_v3.both_sexes,Lung cancer,mother,lung_cancer
+Illnesses of mother: Bowel cancer,20110_4.gwas.imputed_v3.both_sexes.tsv.bgz,20110_4.gwas.imputed_v3.both_sexes,Bowel cancer,mother,bowel_cancer
+Illnesses of mother: Chronic bronchitis/emphysema,20110_6.gwas.imputed_v3.both_sexes.tsv.bgz,20110_6.gwas.imputed_v3.both_sexes,Chronic bronchitis/emphysema,mother,emphysema
+Illnesses of mother: High blood pressure,20110_8.gwas.imputed_v3.both_sexes.tsv.bgz,20110_8.gwas.imputed_v3.both_sexes,High blood pressure,mother,high_blood_pressure
+Illnesses of mother: Diabetes,20110_9.gwas.imputed_v3.both_sexes.tsv.bgz,20110_9.gwas.imputed_v3.both_sexes,Diabetes,mother,diabetes
+Illnesses of father: Heart disease,20107_1.gwas.imputed_v3.both_sexes.v2.tsv.bgz,20107_1.gwas.imputed_v3.both_sexes.v2,Heart disease,father,heart_disease
+Illnesses of father: Alzheimer's disease/dementia,20107_10.gwas.imputed_v3.both_sexes.v2.tsv.bgz,20107_10.gwas.imputed_v3.both_sexes.v2,Alzheimer's disease/dementia,father,alzheimer
+Illnesses of father: Parkinson's disease,20107_11.gwas.imputed_v3.both_sexes.v2.tsv.bgz,20107_11.gwas.imputed_v3.both_sexes.v2,Parkinson's disease,father,parkinson
+Illnesses of father: Severe depression,20107_12.gwas.imputed_v3.both_sexes.v2.tsv.bgz,20107_12.gwas.imputed_v3.both_sexes.v2,Severe depression,father,depression
+Illnesses of father: Stroke,20107_2.gwas.imputed_v3.both_sexes.v2.tsv.bgz,20107_2.gwas.imputed_v3.both_sexes.v2,Stroke,father,stroke
+Illnesses of father: Lung cancer,20107_3.gwas.imputed_v3.both_sexes.v2.tsv.bgz,20107_3.gwas.imputed_v3.both_sexes.v2,Lung cancer,father,lung_cancer
+Illnesses of father: Bowel cancer,20107_4.gwas.imputed_v3.both_sexes.v2.tsv.bgz,20107_4.gwas.imputed_v3.both_sexes.v2,Bowel cancer,father,bowel_cancer
+Illnesses of father: Chronic bronchitis/emphysema,20107_6.gwas.imputed_v3.both_sexes.v2.tsv.bgz,20107_6.gwas.imputed_v3.both_sexes.v2,Chronic bronchitis/emphysema,father,emphysema
+Illnesses of father: High blood pressure,20107_8.gwas.imputed_v3.both_sexes.v2.tsv.bgz,20107_8.gwas.imputed_v3.both_sexes.v2,High blood pressure,father,high_blood_pressure
+Illnesses of father: Diabetes,20107_9.gwas.imputed_v3.both_sexes.v2.tsv.bgz,20107_9.gwas.imputed_v3.both_sexes.v2,Diabetes,father,diabetes
+Illnesses of mother: Heart disease,20110_1.gwas.imputed_v3.both_sexes.v2.tsv.bgz,20110_1.gwas.imputed_v3.both_sexes.v2,Heart disease,mother,heart_disease
+Illnesses of mother: Alzheimer's disease/dementia,20110_10.gwas.imputed_v3.both_sexes.v2.tsv.bgz,20110_10.gwas.imputed_v3.both_sexes.v2,Alzheimer's disease/dementia,mother,alzheimer
+Illnesses of mother: Parkinson's disease,20110_11.gwas.imputed_v3.both_sexes.v2.tsv.bgz,20110_11.gwas.imputed_v3.both_sexes.v2,Parkinson's disease,mother,parkinson
+Illnesses of mother: Severe depression,20110_12.gwas.imputed_v3.both_sexes.v2.tsv.bgz,20110_12.gwas.imputed_v3.both_sexes.v2,Severe depression,mother,depression
+Illnesses of mother: Stroke,20110_2.gwas.imputed_v3.both_sexes.v2.tsv.bgz,20110_2.gwas.imputed_v3.both_sexes.v2,Stroke,mother,stroke
+Illnesses of mother: Lung cancer,20110_3.gwas.imputed_v3.both_sexes.v2.tsv.bgz,20110_3.gwas.imputed_v3.both_sexes.v2,Lung cancer,mother,lung_cancer
+Illnesses of mother: Bowel cancer,20110_4.gwas.imputed_v3.both_sexes.v2.tsv.bgz,20110_4.gwas.imputed_v3.both_sexes.v2,Bowel cancer,mother,bowel_cancer
+Illnesses of mother: Chronic bronchitis/emphysema,20110_6.gwas.imputed_v3.both_sexes.v2.tsv.bgz,20110_6.gwas.imputed_v3.both_sexes.v2,Chronic bronchitis/emphysema,mother,emphysema
+Illnesses of mother: High blood pressure,20110_8.gwas.imputed_v3.both_sexes.v2.tsv.bgz,20110_8.gwas.imputed_v3.both_sexes.v2,High blood pressure,mother,high_blood_pressure
+Illnesses of mother: Diabetes,20110_9.gwas.imputed_v3.both_sexes.v2.tsv.bgz,20110_9.gwas.imputed_v3.both_sexes.v2,Diabetes,mother,diabetes

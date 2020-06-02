@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+
+
+<title>Per chromosome LDSC of parental illness (based on Neale’s lab GWAS)</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<link href="site_libs/font-awesome-5.1.0/css/all.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-5.1.0/css/v4-shims.css" rel="stylesheet" />
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+</style>
+
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 51px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h2 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h3 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h4 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h5 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h6 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #ffffff;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row-fluid">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Imputing parent of origin of haplotype</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="https://github.com/liangyy/haplotype-po">
+    <span class="fa fa-github"></span>
+     
+  </a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+<div class="btn-group pull-right">
+<button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">Per chromosome LDSC of parental illness (based on Neale’s lab GWAS)</h1>
+<h4 class="date">Last update: Jun 01, 2020</h4>
+
+</div>
+
+
+<pre class="r"><code>rm(list = ls())
+library(pander)
+panderOptions(&#39;table.split.table&#39;, Inf)
+library(ggplot2)
+library(dplyr)
+library(data.table)
+library(patchwork)
+options(datatable.fread.datatable = FALSE)
+theme_set(theme_bw(base_size=15))
+set.seed(2020)
+
+get_field_code = function(s) {
+  unlist(lapply(strsplit(s, &#39;_&#39;), function(x) {x[1]}))
+}
+get_trait = function(s) {
+  unlist(lapply(strsplit(s, &#39;: &#39;), function(x) {x[2]}))
+}
+get_code = function(s) {
+  stringr::str_remove(s, &#39;.tsv.bgz&#39;)
+}
+get_parent = function(s) {
+  stringr::str_remove(unlist(lapply(strsplit(s, &#39;: &#39;), function(x) {x[1]})), &#39;Illnesses of &#39;)
+}
+get_map = function() {
+  f = yaml::read_yaml(&#39;../scripts/haplotype_imputation/submission_scripts/father_phenotype_no_hypertension.yaml&#39;)$col
+  m = yaml::read_yaml(&#39;../scripts/haplotype_imputation/submission_scripts/mother_phenotype_no_hypertension.yaml&#39;)$col
+  df = rbind(
+    data.frame(phenotype = names(f), phenotype_id = unlist(f)),
+    data.frame(phenotype = names(m), phenotype_id = unlist(m))
+  )
+  df = df %&gt;% mutate(phenotype = stringr::str_remove(phenotype, &#39; \\([12]\\)&#39;))
+  df = df %&gt;% distinct()
+  df = rbind(df, data.frame(phenotype = &quot;Alzheimer&#39;s disease/dementia&quot;, phenotype_id = &#39;alzheimer&#39;))
+  rbind(df, data.frame(phenotype = &quot;High blood pressure&quot;, phenotype_id = &#39;high_blood_pressure&#39;))
+}
+.get_nsnp = function(filename) {
+  cmd = paste0(&#39;cat &#39;, filename, &#39; | grep &quot;After merging with regression SNP LD,&quot;&#39;)
+  out = system(cmd, intern = TRUE)
+  nsnp = as.numeric(stringr::str_match(out, &#39;LD, ([0-9]+) SNPs remain&#39;)[, 2])
+  nsnp
+}
+.get_h2 = function(filename) {
+  cmd = paste0(&#39;cat &#39;, filename, &#39; | grep &quot;Total Observed scale h2&quot;&#39;)
+  out = system(cmd, intern = TRUE)
+  tmp_ = stringr::str_match(out, &#39;Total Observed scale h2: ([-0-9e.]+) \\(([-0-9e.]+)\\)&#39;)[, 2:3]
+  h2 = as.numeric(tmp_[1])
+  h2_se = as.numeric(tmp_[2])
+  list(h2 = h2, h2_se = h2_se)
+}
+parse_ldsc_log = function(logfile) {
+  nsnp = .get_nsnp(logfile)
+  h2 = .get_h2(logfile)
+  data.frame(nsnp = nsnp, h2 = h2$h2, h2_se = h2$h2_se)
+}
+get_nsnp_per_chr = function() {
+  dd = list()
+  for(i in 1 : 22) {
+    n = read.table(paste0(&#39;/Users/yanyul/Desktop/tmp/haplotype-po/eur_w_ld_chr/&#39;, i, &#39;.l2.M_5_50&#39;), header = FALSE)$V1[1]
+    dd[[length(dd) + 1]] = data.frame(nsnp_5_50 = n, chr = paste0(&#39;chr&#39;, i))
+  }
+  do.call(rbind, dd)
+}</code></pre>
+<div id="about" class="section level1">
+<h1><span class="header-section-number">1</span> About</h1>
+<p>Here we are interested in estimating the per-chromosome heritability of parental illness phenotypes in UKBB (using summary statistics shared by Neale lab).</p>
+</div>
+<div id="extract-parental-illness-gwass" class="section level1">
+<h1><span class="header-section-number">2</span> Extract parental illness GWASs</h1>
+<p>In this document, we extract these summary statistics and have them organized.</p>
+<pre class="r"><code>match_df = get_map()
+cmd = &quot;cat /Users/yanyul/Downloads/UKBB\\ GWAS\\ Imputed\\ v3\\ -\\ File\\ Manifest\\ Release\\ 20180731\\ -\\ Manifest\\ 201807.csv |grep Illness | grep &#39;father\\|mother&#39;|grep &#39;both_sexes&#39; |grep -v adopted | grep -v &#39;None of the above&#39;|cut -f 2,5 -d ,&quot;
+df = fread(cmd = cmd, sep = &#39;,&#39;, header = FALSE, col.names = c(&#39;phenotype_long&#39;, &#39;filename&#39;))
+df = df %&gt;% mutate(id = get_code(filename), phenotype = get_trait(phenotype_long), parent = get_parent(phenotype_long)) %&gt;% left_join(match_df, by = &#39;phenotype&#39;) %&gt;% filter(!is.na(phenotype_id))
+df %&gt;% write.csv(&#39;../analysis_output/parent_illness_in_neale_lab_ukbb_gwas.csv&#39;, quote = FALSE, row.names = FALSE)</code></pre>
+</div>
+<div id="per-chromosome-ldsc-regression-results" class="section level1">
+<h1><span class="header-section-number">3</span> Per chromosome LDSC regression results</h1>
+<pre class="r"><code>df = read.csv(&#39;../analysis_output/parent_illness_in_neale_lab_ukbb_gwas.csv&#39;) # %&gt;% filter(phenotype_id != &#39;high_blood_pressure&#39;)
+df_h2 = list()
+for(r_idx in 1 : nrow(df)) {
+  for(chr_idx in c(paste0(&#39;chr&#39;, 1 : 22), &#39;gw&#39;)) {
+    filename = paste0(&#39;/Users/yanyul/Desktop/tmp/haplotype-po/per_chr_ldsc_output/h2.&#39;, df$parent[r_idx], &#39;_&#39;, df$phenotype_id[r_idx], &#39;.&#39;, chr_idx, &#39;.log&#39;)
+    tmp = parse_ldsc_log(filename) %&gt;% mutate(chromosome = chr_idx, parent = df$parent[r_idx], phenotype = df$phenotype_id[r_idx])
+    df_h2[[length(df_h2) + 1]] = tmp
+  }
+}
+df_h2 = do.call(rbind, df_h2)
+df_h2 = df_h2 %&gt;% mutate(from_per_chromosome = sapply(chromosome, function(x) {if(x != &#39;gw&#39;) &#39;per_chr&#39; else &#39;gw&#39;}))
+df_snp = get_nsnp_per_chr()</code></pre>
+<div id="per-chromosome-sum-vs-genome-wide-ldsr" class="section level2">
+<h2><span class="header-section-number">3.1</span> Per chromosome sum vs genome-wide LDSR</h2>
+<pre class="r"><code>df_h2 %&gt;% group_by(from_per_chromosome, phenotype, parent) %&gt;% summarize(h2 = sum(h2)) %&gt;% ungroup() %&gt;% 
+  reshape2::dcast(phenotype + parent ~ from_per_chromosome, value.var = &#39;h2&#39;) %&gt;%
+  ggplot() + geom_point(aes(x = per_chr, y = gw, color = parent))</code></pre>
+<p><img src="parental_illness_ldsc_files/figure-html/unnamed-chunk-19-1.png" width="672" /></p>
+</div>
+<div id="per-snp-heritability" class="section level2">
+<h2><span class="header-section-number">3.2</span> Per SNP heritability</h2>
+<pre class="r"><code>df_h2 %&gt;% inner_join(df_snp, by = c(&#39;chromosome&#39; = &#39;chr&#39;)) %&gt;% mutate(per_snp_h2 = h2 / nsnp_5_50) %&gt;% 
+  ggplot() + geom_point(aes(x = nsnp, per_snp_h2, color = phenotype))</code></pre>
+<pre><code>## Warning: Column `chromosome`/`chr` joining character vector and factor, coercing into character vector</code></pre>
+<p><img src="parental_illness_ldsc_files/figure-html/unnamed-chunk-20-1.png" width="672" /></p>
+<p><strong>Conclusion</strong>: even thought I got warning saying that there are too few SNPs in regression, the per SNP heritabiltiy does not strongly depend on the number of SNPs in the regression. So, I tend to consider the estimate as reliable.</p>
+</div>
+<div id="per-chromosome-heritability" class="section level2">
+<h2><span class="header-section-number">3.3</span> Per-chromosome heritability</h2>
+<pre class="r"><code>power_df = read.csv(&#39;../analysis_output/gw_check.power.csv&#39;) %&gt;% filter(chr &lt;= 20) %&gt;% mutate(chr = paste0(&#39;chr&#39;, chr)) %&gt;% mutate(chr = factor(chr, levels = paste0(&#39;chr&#39;, 1 : 22)))
+tmp_ = df_h2 %&gt;% filter(from_per_chromosome != &#39;gw&#39;, !phenotype %in% c(&#39;alzheimer&#39;, &#39;high_blood_pressure&#39;)) %&gt;% mutate(chromosome = factor(chromosome, levels = paste0(&#39;chr&#39;, 1 : 22))) %&gt;% group_by(chromosome) %&gt;% summarize(mean_h2 = mean(h2)) %&gt;% inner_join(power_df, by = c(&#39;chromosome&#39; = &#39;chr&#39;)) 
+tmp_ %&gt;% ggplot() + geom_point(aes(x = chromosome, y = mean_h2)) + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))</code></pre>
+<p><img src="parental_illness_ldsc_files/figure-html/unnamed-chunk-21-1.png" width="672" /></p>
+<pre class="r"><code>tmp_ %&gt;% ggplot() + geom_text(aes(x = mean_h2, y = mean_ratio_logp, label = chromosome)) + ylab(&#39;mean_power&#39;) + geom_hline(yintercept = 1, linetype = 2)</code></pre>
+<p><img src="parental_illness_ldsc_files/figure-html/unnamed-chunk-21-2.png" width="672" /></p>
+<pre class="r"><code>tmp_ %&gt;% ggplot() + geom_text(aes(x = nsnp, y = mean_ratio_logp, label = chromosome))</code></pre>
+<p><img src="parental_illness_ldsc_files/figure-html/unnamed-chunk-21-3.png" width="672" /></p>
+</div>
+</div>
+<div id="plot-gamma" class="section level1">
+<h1><span class="header-section-number">4</span> Plot <span class="math inline">\(\gamma\)</span></h1>
+<p>Per-chromosome imputation.</p>
+<pre class="r"><code>df_gamma = list()
+df_gamma_var = list()
+breaks = 0 : 100 / 100
+qbins = 1 : 100 / 100
+for(i in 1 : 22) {
+  tt = fread(cmd = paste0(&#39;zcat &lt; ~/Desktop/tmp/haplotype-po/haplotype_impute_otf/chr&#39;, i, &#39;.tsv.gz&#39;), header = T)
+  gamma = tt$prob_z
+  df_gamma[[length(df_gamma) + 1]] = data.frame(breaks = breaks[-1], density = hist(gamma, breaks = breaks, plot = FALSE)$density, chr_str = paste0(&#39;chr&#39;, i), chr = i, qbin = qbins, quantile = as.vector(quantile(gamma, probs = qbins)))
+  df_gamma_var[[length(df_gamma_var) + 1]] = data.frame(chr_str = paste0(&#39;chr&#39;, i), var_gamma = var(gamma), S = mean(gamma ^ 2 + (1 - gamma)^2), Z = mean(pmax(gamma, 1 - gamma)), chr = i)
+}
+df_gamma = do.call(rbind, df_gamma)
+df_gamma_var = do.call(rbind, df_gamma_var)
+df_gamma_var = df_gamma_var %&gt;% mutate(power_upper_bound = Z / sqrt(S))</code></pre>
+<p>All-chromosome imputation.</p>
+<pre class="r"><code>df_gamma_all = list()
+df_gamma_all_var = list()
+breaks = 0 : 100 / 100
+qbins = 1 : 100 / 100
+for(i in 1 : 22) {
+  tt = fread(cmd = paste0(&#39;zcat &lt; ~/Desktop/tmp/haplotype-po/haplotype_impute_otf_multi_chr/results/no_hypertension.chr&#39;, i, &#39;.tsv.gz&#39;), header = T)
+  gamma = tt$prob_z
+  df_gamma_all[[length(df_gamma_all) + 1]] = data.frame(breaks = breaks[-1], density = hist(gamma, breaks = breaks, plot = FALSE)$density, chr_str = paste0(&#39;chr&#39;, i), chr = i, qbin = qbins, quantile = as.vector(quantile(gamma, probs = qbins)))
+  df_gamma_all_var[[length(df_gamma_all_var) + 1]] = data.frame(chr_str = paste0(&#39;chr&#39;, i), var_gamma = var(gamma), S = mean(gamma ^ 2 + (1 - gamma)^2), Z = mean(pmax(gamma, 1 - gamma)), chr = i)
+}
+df_gamma_all = do.call(rbind, df_gamma_all)
+df_gamma_all_var = do.call(rbind, df_gamma_all_var)
+df_gamma_all_var = df_gamma_all_var %&gt;% mutate(power_upper_bound = Z / sqrt(S))</code></pre>
+<!-- ```{r} -->
+<!-- df_gamma %>% filter(chr <= 20) %>% ggplot() + geom_path(aes(x = breaks, y = density, color = chr)) -->
+<!-- df_gamma_all %>% filter(chr <= 20) %>% ggplot() + geom_path(aes(x = breaks, y = density, color = chr)) -->
+<!-- ``` -->
+<pre class="r"><code>rbind(
+  df_gamma %&gt;% mutate(impute_scheme = &#39;per_chr&#39;),
+  df_gamma_all %&gt;% mutate(impute_scheme = &#39;all_chr&#39;)
+) %&gt;% reshape2::dcast(chr + qbin ~ impute_scheme, value.var = &#39;quantile&#39;) %&gt;%
+  filter(chr &lt; 21) %&gt;%
+  ggplot() + geom_point(aes(x = per_chr, y = all_chr, color = chr)) + 
+  geom_abline(slope = 1, intercept = 0, color = &#39;red&#39;) # + facet_wrap(~chr)</code></pre>
+<p><img src="parental_illness_ldsc_files/figure-html/unnamed-chunk-24-1.png" width="672" /></p>
+<pre class="r"><code>rbind(
+  df_gamma %&gt;% mutate(impute_scheme = &#39;per_chr&#39;),
+  df_gamma_all %&gt;% mutate(impute_scheme = &#39;all_chr&#39;)
+) %&gt;% filter(chr &lt; 21) %&gt;%
+  ggplot() + geom_path(aes(x = breaks, y = density, color = chr)) + facet_wrap(~impute_scheme)</code></pre>
+<p><img src="parental_illness_ldsc_files/figure-html/unnamed-chunk-24-2.png" width="672" /></p>
+<pre class="r"><code>tmp = df_gamma_var %&gt;% filter(chr &lt;= 20) %&gt;% inner_join(tmp_, by = c(&#39;chr_str&#39; = &#39;chromosome&#39;)) 
+p1 = tmp %&gt;% ggplot() + geom_text(aes(x = mean_h2, y = var_gamma, label = chr_str))
+p2 = tmp %&gt;% ggplot() + geom_text(aes(x = mean_h2, y = power_upper_bound, label = chr_str))
+p3 = tmp %&gt;% ggplot() + geom_text(aes(x = var_gamma, y = power_upper_bound, label = chr_str))
+p4 = tmp %&gt;% ggplot() + geom_text(aes(x = power_upper_bound * sqrt(2), y = mean_ratio_z, label = chr_str)) + geom_abline(slope = 1, intercept = 0)
+p5 = tmp %&gt;% ggplot() + geom_text(aes(x = power_upper_bound * sqrt(2), y = median_ratio_z, label = chr_str)) + geom_abline(slope = 1, intercept = 0)
+p6 = tmp %&gt;% ggplot() + geom_text(aes(x = mean_ratio_logp, y = mean_ratio_z, label = chr_str))
+p1 + p2 + p3 + p4 + p5 + p6</code></pre>
+<p><img src="parental_illness_ldsc_files/figure-html/unnamed-chunk-25-1.png" width="1248" /></p>
+<pre class="r"><code>tmp = df_gamma_all_var %&gt;% filter(chr &lt;= 20) %&gt;% inner_join(tmp_, by = c(&#39;chr_str&#39; = &#39;chromosome&#39;)) 
+p1 = tmp %&gt;% ggplot() + geom_text(aes(x = mean_h2, y = var_gamma, label = chr_str))
+p2 = tmp %&gt;% ggplot() + geom_text(aes(x = mean_h2, y = power_upper_bound, label = chr_str))
+p3 = tmp %&gt;% ggplot() + geom_text(aes(x = var_gamma, y = power_upper_bound, label = chr_str))
+p4 = tmp %&gt;% ggplot() + geom_text(aes(x = power_upper_bound * sqrt(2), y = mean_ratio_z, label = chr_str)) + geom_abline(slope = 1, intercept = 0)
+p5 = tmp %&gt;% ggplot() + geom_text(aes(x = power_upper_bound * sqrt(2), y = median_ratio_z, label = chr_str)) + geom_abline(slope = 1, intercept = 0)
+p6 = tmp %&gt;% ggplot() + geom_text(aes(x = mean_ratio_logp, y = mean_ratio_z, label = chr_str))
+p1 + p2 + p3 + p4 + p5 + p6</code></pre>
+<p><img src="parental_illness_ldsc_files/figure-html/unnamed-chunk-26-1.png" width="1248" /></p>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("hide" === "show");
+});
+</script>
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
