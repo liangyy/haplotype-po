@@ -7,6 +7,11 @@ def get_genotypes(pattern):
 
 genotype_files = get_genotypes(config['genotype_vcf_pattern'])
 
+rule all:
+    input:
+        '{outdir}/{prefix}.pred_expr.txt'.format(**config),
+        '{outdir}/{prefix}.summary.txt'.format(**config)
+
 rule predict:
     input:
         genotypes = genotype_files,
@@ -24,7 +29,7 @@ rule predict:
           --vcf_genotypes {config[genotype_vcf_pattern]} \
           --vcf_mode {config[predict_mode]} \
           --liftover {input.liftover_chain} \
-          --on_the_fly_mapping METADATA "chr{}_{}_{}_{}_b38" \
+          --on_the_fly_mapping METADATA "chr{{}}_{{}}_{{}}_{{}}_b38" \
           --prediction_output {output[0]} \
           --prediction_summary_output {output[1]} \
           --verbosity 9 \
