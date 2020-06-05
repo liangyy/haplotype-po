@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+
+
+<title>Initial idea: a re-visit</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<link href="site_libs/font-awesome-5.1.0/css/all.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-5.1.0/css/v4-shims.css" rel="stylesheet" />
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+</style>
+
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 51px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h2 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h3 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h4 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h5 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h6 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #ffffff;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row-fluid">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Imputing parent of origin of haplotype</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="https://github.com/liangyy/haplotype-po">
+    <span class="fa fa-github"></span>
+     
+  </a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+<div class="btn-group pull-right">
+<button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">Initial idea: a re-visit</h1>
+<h4 class="date">Last update: Jun 05, 2020</h4>
+
+</div>
+
+
+<p><span class="math display">\[
+\newcommand{\E}{\text{E}}
+\newcommand{\diag}{\text{diag}}
+\]</span></p>
+<pre class="r"><code>library(dplyr)
+library(ggplot2)</code></pre>
+<div id="about" class="section level1">
+<h1><span class="header-section-number">1</span> About</h1>
+<p>As tested on real data, the imputation scheme proposed <a href="init_idea_outline.html">here</a> do not get good-quality imputation on real data. Going forward, the second thought, fit PRS on the fly (OTF), does not give observable power improvement in subsequent GWAS. Now that we switch to Framingham data where parental phenotypes are gene expression. In this context, the PRS-based approach starts to be more intriguing since to fit the whole transcriptome PRS on the fly is too much computation. More subtly, another drawback of OTF approach is that it relies on least squares estimator which requires large sample size to avoid over-fitting and degeneracy. Because of these reasons, we want to go back to the PRS approach.</p>
+<p>As I was reviewing PRS-based EM code, I realized that it was fitting <span class="math inline">\(y = \mu_0 + \hat{G} + \epsilon\)</span>, which is a bit off in the context of continuous trait. The bad thing of this is that it does not tolerate the potentially different scaling between the observed phenotype in training PRS and the observed phenotype in the test phase. To account for this, we can fit <span class="math inline">\(y = \beta \hat{G} + \beta_0 + C + \epsilon\)</span> instead. But there needs one more fix which is to constraint <span class="math inline">\(\beta\)</span> to be non-negative. The intuition for this constraint is that <span class="math inline">\(\hat{G}\)</span> should at least predict the direction and if the current model does not suggest this property, it can be considered as over-fitting. So, taking together, we have <span class="math inline">\(y = \beta \hat{G} + \beta_0 + C + \epsilon, \beta \ge 0\)</span>. Luckily, this corresponds to a simple update rule, which is <span class="math display">\[\begin{aligned}
+  \hat\beta_i &amp;= \begin{cases}
+    \beta_i^{\text{LS}} &amp; \text{, if $\beta_i^{\text{LS}}$ &gt; 0} \\
+    0 &amp; \text{, otherwise}
+  \end{cases}
+\end{aligned}\]</span></p>
+<p>With this variation in mind, I sketch the EM updates in below.</p>
+</div>
+<div id="em-sketch" class="section level1">
+<h1><span class="header-section-number">2</span> EM sketch</h1>
+<p>For simplicity, <span class="math inline">\(G\)</span> is the shorthand of <span class="math inline">\(\hat{G}\)</span>. For book keeping, here is the complete log-likelihood and Q function.</p>
+<p><span class="math display">\[\begin{aligned}
+  \log \Pr(y^f, y^m, Z | G^1, G^2, C, \beta^f, \beta^m, \sigma^2_f, \sigma^2_m) &amp;= Z \log \Pr(Z = 1) + (1 - Z) \log \Pr(Z = 0) \\
+  &amp;- \frac{1}{2} Z (\log \sigma^2_f + \frac{r_{f, 1}^2}{\sigma^2_f} + \log \sigma^2_m + \frac{r_{m, 2}^2}{\sigma^2_m}) \\
+  &amp;-\frac{1}{2} (1 - Z) (\log \sigma^2_f + \frac{r_{f, 2}^2}{\sigma^2_f} + \log \sigma^2_m + \frac{r_{m, 1}^2}{\sigma^2_m}) \\
+  Q(\theta, \theta^{(t)}) &amp;= - \frac{1}{2} \gamma (\log \sigma^2_f + \frac{r_{f, 1}^2}{\sigma^2_f} + \log \sigma^2_m + \frac{r_{m, 2}^2}{\sigma^2_m}) \\
+  &amp;-\frac{1}{2} (1 - \gamma) (\log \sigma^2_f + \frac{r_{f, 2}^2}{\sigma^2_f} + \log \sigma^2_m + \frac{r_{m, 1}^2}{\sigma^2_m})
+\end{aligned}\]</span></p>
+<div id="e-step" class="section level2">
+<h2><span class="header-section-number">2.1</span> E step</h2>
+<p><span class="math display">\[\begin{aligned}
+  l_1 &amp;= \frac{r_{f, 1}^2}{\sigma^2_f} + \frac{r_{m, 2}^2}{\sigma^2_m} \\
+  l_0 &amp;= \frac{r_{f, 2}^2}{\sigma^2_f} + \frac{r_{m, 1}^2}{\sigma^2_m} \\
+  \gamma &amp;= \frac{e^{-l_1}}{e^{-l_1} + e^{-l_0}} = \frac{1}{1 + e^{l_1 - l_0}}
+\end{aligned}\]</span></p>
+</div>
+<div id="m-step" class="section level2">
+<h2><span class="header-section-number">2.2</span> M step</h2>
+<p>Let’s define <span class="math display">\[(x)_+ = \begin{cases} x &amp; x \ge 0 \\ 0 &amp; x &lt; 0 \end{cases}\]</span>. And let <span class="math display">\[\begin{aligned}
+  Y^p &amp;= \begin{bmatrix}
+    y^p \\
+    y^p
+  \end{bmatrix} \\
+  X^f &amp;= \begin{bmatrix}
+    G^1 &amp; C \\
+    G^2 &amp; C
+  \end{bmatrix}, ~ X^m = \begin{bmatrix}
+    G^2 &amp; C \\
+    G^1 &amp; C
+  \end{bmatrix} \\
+  \omega &amp;= \begin{bmatrix}
+    \gamma \\
+    1 - \gamma
+  \end{bmatrix} \\
+  W &amp;= \diag(\omega) \\
+  \widetilde{Y}^p &amp;= W^{1/2} Y^p \\
+  \widetilde{X}^p &amp;= W^{1/2} X^p
+\end{aligned}\]</span></p>
+<p><span class="math display">\[\begin{aligned}
+  \hat\beta_p &amp;= [~((\widetilde{X}^p)&#39; \widetilde{X}^p)^{-1} (\widetilde{X}^p)&#39; \widetilde{Y}^p~]_+ \\
+  \widetilde{r}_p &amp;= \widetilde{Y}^p - \widetilde{X}^p \hat\beta_p \\
+  \hat\sigma_p^2 &amp;= \frac{(\widetilde{r}_p)&#39;\widetilde{r}_p}{(\sqrt{\omega})&#39;\sqrt{\omega}}
+\end{aligned}\]</span></p>
+</div>
+</div>
+<div id="prototype" class="section level1">
+<h1><span class="header-section-number">3</span> Prototype</h1>
+<p>Here I prototype the sketched algorithm in R as a reference. See code script at <code>../code/rlib_em_a_variation.R</code>.</p>
+<pre class="r"><code>source(&#39;../code/rlib_em_a_variation.R&#39;)</code></pre>
+</div>
+<div id="simulation" class="section level1">
+<h1><span class="header-section-number">4</span> Simulation</h1>
+<p><span class="math display">\[\begin{aligned}
+  y^p &amp;= G^p \beta + C \beta_0 + \epsilon \\
+  \beta &amp;\ge 0 \\
+  \epsilon &amp;\sim N(0, \sigma^2)
+\end{aligned}\]</span></p>
+<pre class="r"><code>npheno = 4000
+nindiv = 300
+ncovar = 4
+betas = c(-0.1, 0.1)
+h2s = c(0.0001, 0.001, 0.01, 0.05)</code></pre>
+<ul>
+<li>Number of individuals: <span class="math inline">\(300\)</span></li>
+<li>Number of phenotypes: <span class="math inline">\(4000\)</span></li>
+<li>Number of covariates: <span class="math inline">\(4\)</span></li>
+<li>Choices of <span class="math inline">\(\beta\)</span>: -0.1, 0.1 or random standard normal or truncated standard normal (truncate negative to zero)</li>
+<li>Choices of heritability <span class="math inline">\(\frac{\sigma_e^2}{\sigma_e^2 + \sigma_g^2}\)</span>: 10^{-4}, 0.001, 0.01, 0.05</li>
+<li>Fix <span class="math inline">\(G^{f,1}, G^{f, 2}, G^{m,1}, G^{m,2}\)</span> and covariate matrix (suppose father and mother share the same covariate matrix) but varying the parameters above</li>
+</ul>
+<pre class="r"><code>get_error_var = function(var_g, h2) {
+  var_g / h2 * (1 - h2)
+} 
+sim_error = function(yy, h2) {
+  rnorm(length(yy), sd = sqrt(get_error_var(var(yy), h2)))
+}
+
+covar_mat = matrix(rnorm(nindiv * ncovar), nrow = nindiv, ncol = ncovar)
+Gf1_mat = matrix(rnorm(nindiv * npheno), nrow = nindiv, ncol = npheno)
+Gf2_mat = matrix(rnorm(nindiv * npheno), nrow = nindiv, ncol = npheno)
+Gm1_mat = matrix(rnorm(nindiv * npheno), nrow = nindiv, ncol = npheno)
+Gm2_mat = matrix(rnorm(nindiv * npheno), nrow = nindiv, ncol = npheno)
+
+beta0 = matrix(rnorm(npheno * ncovar), nrow = ncovar, ncol = npheno)
+ycovar = covar_mat %*% beta0
+
+
+data_list = list()
+for(beta in betas) {
+  data_list[[as.character(beta)]] = list()
+  for(h2 in h2s) {
+    yf = (Gf1_mat + Gf2_mat) * beta 
+    ym = (Gm1_mat + Gm2_mat) * beta 
+    error_f = apply(yf, 2, sim_error, h2 = h2)
+    error_m = apply(ym, 2, sim_error, h2 = h2)
+    yf = yf + error_f + ycovar
+    ym = ym + error_m + ycovar
+    data_list[[as.character(beta)]][[as.character(h2)]] = list(yf = yf, ym = ym)
+  }
+}
+
+beta_rand = rnorm(npheno)
+data_list[[&#39;random&#39;]] = list()
+for(h2 in h2s) {
+  yf = .mat_vec_by_row(Gf1_mat + Gf2_mat, beta_rand, &#39;*&#39;) 
+  ym = .mat_vec_by_row(Gm1_mat + Gm2_mat, beta_rand, &#39;*&#39;) 
+  error_f = apply(yf, 2, sim_error, h2 = h2)
+  error_m = apply(ym, 2, sim_error, h2 = h2)
+  yf = yf + error_f + ycovar
+  ym = ym + error_m + ycovar
+  data_list[[&#39;random&#39;]][[as.character(h2)]] = list(yf = yf, ym = ym)
+}
+
+beta_truncated = rnorm(npheno)
+beta_truncated[beta_truncated &lt; 0] = 0
+data_list[[&#39;truncated&#39;]] = list()
+for(h2 in h2s) {
+  yf = .mat_vec_by_row(Gf1_mat + Gf2_mat, beta_truncated, &#39;*&#39;) 
+  ym = .mat_vec_by_row(Gm1_mat + Gm2_mat, beta_truncated, &#39;*&#39;) 
+  error_f = apply(yf, 2, sim_error, h2 = h2)
+  error_m = apply(ym, 2, sim_error, h2 = h2)
+  yf = yf + error_f + ycovar
+  ym = ym + error_m + ycovar
+  data_list[[&#39;truncated&#39;]][[as.character(h2)]] = list(yf = yf, ym = ym)
+}</code></pre>
+</div>
+<div id="run-em-prototype" class="section level1">
+<h1><span class="header-section-number">5</span> Run EM prototype</h1>
+<pre class="r"><code>probz_list = list()
+for(beta in names(data_list)) {
+  message(&#39;Working on beta = &#39;, beta)
+  for(h2 in h2s) {
+    for(ng in c(TRUE, FALSE)) {
+      o = em_algorithm_a_variation(
+        data_list[[as.character(beta)]][[as.character(h2)]]$yf,
+        data_list[[as.character(beta)]][[as.character(h2)]]$ym, 
+        Gf1_mat, Gm1_mat, covar = covar_mat, maxiter = 100, 
+        non_negative = ng
+      )
+      probz_list[[length(probz_list) + 1]] = data.frame(prob_z = o$z_prob_n, h2 = h2, beta = beta, non_negative = ng)
+    }
+  }
+}</code></pre>
+<pre><code>## Working on beta = -0.1</code></pre>
+<pre><code>## Working on beta = 0.1</code></pre>
+<pre><code>## Working on beta = random</code></pre>
+<pre><code>## Working on beta = truncated</code></pre>
+<pre class="r"><code>df_z = do.call(rbind, probz_list)</code></pre>
+<pre class="r"><code>bin_to_binary = function(x, cutoff = 0.01) {
+  o = rep(&#39;other&#39;, length(x))
+  o[x &lt; cutoff] = &#39;z ~ 0&#39;
+  o[x &gt; 1 - cutoff] = &#39;z ~ 1&#39;
+  o
+}
+df_z %&gt;% mutate(bin_z = bin_to_binary(prob_z)) %&gt;% ggplot() + geom_bar(aes(x = bin_z, fill = non_negative), position = &#39;dodge&#39;) + facet_grid(h2~beta) + theme(legend.position = &#39;bottom&#39;)</code></pre>
+<p><img src="init_idea_a_variation_files/figure-html/unnamed-chunk-106-1.png" width="672" /></p>
+<p>Non-negative <span class="math inline">\(\beta\)</span> works better if the true model has non-negative coefficient for <span class="math inline">\(G\)</span> term. Otherwise, the vanilla approach works better.</p>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("hide" === "show");
+});
+</script>
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

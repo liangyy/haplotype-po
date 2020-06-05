@@ -730,6 +730,164 @@ class HaploImputer:
         
         return beta, sigma2, out_df, lld
     
+    def __call_em_py(self, father, mother, h1, h2, em_func, df_covar=None, debug_cache=None, **kwargs):
+        df_all = pd.DataFrame({
+            'individual_id': h1['individual_id'].tolist()
+        })
+        
+        # filter out individuals with missing observations
+        non_miss_in_father = self._missing_checker(
+            father.drop('individual_id', axis=1),
+            desired_values=[0, 1]
+        )
+        non_miss_in_mother = self._missing_checker(
+            mother.drop('individual_id', axis=1),
+            desired_values=[0, 1]
+        )
+        
+        to_keep_ind = np.logical_and(non_miss_in_father, non_miss_in_mother)
+        
+        if df_covar is None:
+            ff, mm, hh1, hh2 = self._extract_by_rows_binary(
+                [father, mother, h1, h2],
+                to_keep_ind 
+            )
+            cc = None
+        else:
+            ff, mm, hh1, hh2, cc = self._extract_by_rows_binary(
+                [father, mother, h1, h2, df_covar],
+                to_keep_ind 
+            )
+        
+        # drop eid
+        if cc is None:
+            fmat, mmat, h1mat, h2mat = self._drop_individual_id(
+                  [ff, mm, hh1, hh2]
+            )
+            cmat = None
+        else:
+            fmat, mmat, h1mat, h2mat, cmat = self._drop_individual_id(
+                  [ff, mm, hh1, hh2, cc]
+            )
+            
+        # solve EM
+        if debug_cache is not None:
+        # breakpoint()
+            np.save(f'{debug_cache}_fmat.npy', fmat.values)
+            np.save(f'{debug_cache}_mmat.npy', mmat.values)
+            np.save(f'{debug_cache}_h1mat.npy', h1mat.values)
+            np.save(f'{debug_cache}_h2mat.npy', h2mat.values)
+            np.save(f'{debug_cache}_cmat.npy', cmat.values)
+        
+        return em_func(fmat.values, mmat.values, h1mat.values, h2mat.values, covar=cmat, **kwargs), ff['individual_id']
+        
+    def _em_py(self, yf, ym, h1, h2, covar=None, device='cpu', tol=1e-5, maxiter=100, non_negative=True):
+        # add intercept as part of covariate matrix
+        covar_mat = np.ones((h1.shape[0], 1))
+        # add covariate if there is any
+        if covar is not None:
+            covar_mat = np.concatenate(
+                (covar_mat, covar),
+                axis=1
+            )
+        # push everything to torch Tensor
+        h1 = self._to_torch_tensor(h1, device)
+        h2 = self._to_torch_tensor(h2, device)
+        yf = self._to_torch_tensor(yf, device)
+        ym = self._to_torch_tensor(ym, device)
+        covar_mat = self._to_torch_tensor(covar_mat, device)
+        
+        # dimensions
+        p = yf.shape[1]
+        n = yf.shape[0]
+        k = h1.shape[1]
+        ncovar = covar_mat.shape[1]
+        self._check_dim(h1, n, k)
+        self._check_dim(h2, n, k)
+        self._check_dim(yf, n, p)
+        self._check_dim(ym, n, p)
+        self._check_dim(covar_mat, n, ncovar) 
+        
+        # initilization
+        ## beta: PRS coefficient goes first
+        beta = [
+            torch.zeros((1 + ncovar, p)),  # father
+            torch.zeros((1 + ncovar, p)),  # mother
+        ]
+        sigma2 = [
+            torch.ones((p,)),  # father
+            torch.ones((p,)),  # mother
+        ]
+        
+        diff = tol + 1
+        niter = 0
+        lld = []
+        
+        while diff > tol and niter < maxiter:
+            
+            # E step
+            l1 = self._avar_nlog_prob_y_given_z(
+                yf, ym, 
+                h1, h2, covar_mat,
+                beta, sigma2
+            )
+            l0 = self._avar_nlog_prob_y_given_z(
+                yf, ym, 
+                h2, h1, covar_mat,
+                beta, sigma2
+            )
+            lld = c(lld, self._avar_lld(l1, l0))
+            gamma = 1 / (1 + torch.exp(l1 - l0))
+            
+            # M step
+            beta_old = deepcopy(beta)
+            sigma2_old = deepcopy(sigma2)
+            beta[0] = self._avar_update_beta(
+                yf, h1, h2, covar_mat, 
+                omega=torch.cat((gamma, 1 - gamma)), 
+                non_negative=non_negative
+            )
+            beta[1] = self._avar_update_beta(
+                ym h2, h1, covar_mat, 
+                omega = torch.cat((gamma, 1 - gamma)),
+                non_negative=non_negative
+            )
+            sigma2[0] = self._avar_update_sigma(
+                yf, h1, h2, beta[0], covar_mat, 
+                omega=torch.cat((gamma, 1 - gamma))
+            )
+            sigma2[1] = self._avar_update_sigma(
+                ym, h2, h1, beta[1], covar_mat, 
+                omega=torch.cat((gamma, 1 - gamma))
+            )
+            
+            # calc diff
+            diff_b = self._calc_diff_in_list(beta_old, beta)
+            diff_s = self._calc_diff_in_list(sigma2_old, sigma2)
+            
+            diff = diff_b + diff_s
+            
+            # niter
+            niter += 1
+            
+        return (beta[0, :], beta[1:, :]), sigma2, gamma, lld
+        
+    def _basic_em_py(self, father, mother, h1, h2, covar=None, debug_cache=None, **kwargs):
+        '''
+        Only work with individuals has non-missing
+        (either 0 or 1) in all columns
+        phenotypes in both father and mother.
+        Must be called from self.impute. 
+        Otherwise the tables may not have the expected properties.
+        '''
+        (beta, sigma2, out, lld), indiv_id = self.__call_em_py(father, mother, h1, h2, em_func=self._em_py, covar=covar, debug_cache=debug_cache, **kwargs)
+        # output
+        out_df = pd.DataFrame({ 'prob_z': out })
+        # breakpoint()
+        out_df['individual_id'] = indiv_id
+        
+        return beta, sigma2, out_df, lld
+    
     def _basic_em(self, father, mother, h1, h2, return_all=False):
         '''
         Only work with individuals has non-missing
@@ -1039,7 +1197,7 @@ class HaploImputer:
             
         return impute_method(df_f, df_m, h1, h2, df_indiv, df_pos, df_covar=df_c, **kwargs)
     
-    def impute(self, df_father, df_mother, df_h1, df_h2, mode, kwargs={}):
+    def impute(self, df_father, df_mother, df_h1, df_h2, mode, df_covar=None, kwargs={}):
         '''
         wrapper for approaches.
         Individual ID is under individual_id column.
@@ -1065,12 +1223,19 @@ class HaploImputer:
         individuals_prs = self._get_common_individuals(
             [df_1, df_2]
         )
-        df_f, df_m, df_1, df_2 = self._extract_and_arrange_rows(
-            [df_f, df_m, df_1, df_2],
-            individuals_prs
-        )
+        if df_covar is None:
+            df_f, df_m, df_1, df_2 = self._extract_and_arrange_rows(
+                [df_f, df_m, df_1, df_2],
+                individuals_prs
+            )
+            df_c = None
+        else:
+            df_f, df_m, df_1, df_2, df_c = self._extract_and_arrange_rows(
+                [df_f, df_m, df_1, df_2, df_covar],
+                individuals_prs
+            )
         
-        return impute_method(df_f, df_m, df_1, df_2, **kwargs)
+        return impute_method(df_f, df_m, df_1, df_2, df_covar=df_c, **kwargs)
     
     @staticmethod
     def _get_match_idx(indiv_df, individual_ids):
