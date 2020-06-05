@@ -848,7 +848,7 @@ class HaploImputer:
                 non_negative=non_negative
             )
             beta[1] = self._avar_update_beta(
-                ym h2, h1, covar_mat, 
+                ym, h2, h1, covar_mat, 
                 omega = torch.cat((gamma, 1 - gamma)),
                 non_negative=non_negative
             )
