@@ -99,13 +99,29 @@ class HaploImputer:
         return - torch.sum( self._mat_vec_div_by_row(torch.pow(r, 2) / 2, s2), axis=1 )
     
     @staticmethod
+    def _mat_vec_add_by_row(mat, vec):
+        '''
+        Add vec to each row of mat: mat_i + vec for all row i
+        vec: 1 x p
+        '''
+        return mat + vec.expand_as(mat)
+    
+    @staticmethod
     def _mat_vec_div_by_row(mat, vec):
         '''
         Divide vec to each row of mat: mat_i / vec for all row i
         vec: 1 x p
         '''
         return mat / vec.expand_as(mat)
-        
+    
+    @staticmethod
+    def _mat_vec_mul_by_row(mat, vec):
+        '''
+        Add vec to each row of mat: mat_i + vec for all row i
+        vec: 1 x p
+        '''
+        return mat * vec.expand_as(mat)
+    
     def _calc_l_cond_z(self, yf, ym, h1, h2, beta, sigma2, z):
         s2f_ = sigma2[0]
         s2m_ = sigma2[1]
@@ -780,7 +796,66 @@ class HaploImputer:
             np.save(f'{debug_cache}_cmat.npy', cmat.values)
         
         return em_func(fmat.values, mmat.values, h1mat.values, h2mat.values, covar=cmat, **kwargs), ff['individual_id']
-        
+    
+    def _avar_update_sigma(y, g_1, g_2, beta, cc, omega):
+        r1 = self._avar_get_residual(y, g_1, cc, beta)
+        r2 = self._avar_get_residual(y, g_2, cc, beta)
+        r_tilde = self._mat_vec_mul_by_col(torch.cat((r1, r2), axis=0), torch.sqrt(omega))
+        denom = torch.sum(omega)
+        sigma2 = torch.sum(torch.pow(r_tilde, 2), axis=0) / denom
+        return sigma2
+    
+    def _avar_update_beta(y, g_1, g_2, cc, omega, non_negative):
+        # update all phenotypes simultaneously
+        # Equation:
+        #   Y: n x p
+        #   X: n x p
+        #   C: n x Nc
+        #   A = (CtC)^-1 CtY  # Nc x p
+        #   B = (CtC)^-1 CtX  # Nc x p
+        #   D = CtY  # Nc x p
+        #   E = XtY  # p x 1 (take diag)
+        #   S = XtX - XtC B  # p x 1 (take diag)  
+        #   BtD = Bt D  # p x 1 (take diag)
+        #   beta = - S^-1 (BtD - E)  # p x 1
+        #   beta_c = A - B beta (by row)  # Nc x p
+        CtC = torch.matmul(cc.T, cc)
+        CtY = torch.matmul(cc.T, y)
+        Y = self._mat_vec_mul_by_col(torch.cat((y, y), axis=0), torch.sqrt(omega))
+        X = self._mat_vec_mul_by_col(torch.cat((g_1, g_2), axis=0), torch.sqrt(omega))
+        C = self._mat_vec_mul_by_col(torch.cat((cc, cc), axis=0), torch.sqrt(omega))
+        CtX = torch.matmul(C.T, X)
+        A = torch.solve(CtY, CtC)
+        B = torch.solve(CtX, CtC)
+        D = CtY
+        E = torch.sum(X * Y, axis=0)
+        S = torch.sum(X * X, axis=0) - torch.sum(CtX * B, axis=0)
+        BtD = torch.sum(B * D, axis=0)
+        beta = - (BtD - E) / S
+        # the extra constraint on beta so that beta is non negative
+        if(non_negative is True) {
+            beta[beta < 0] = 0
+        }
+        beta_c = A - self._mat_vec_mul_by_row(B, beta)
+        return torch.cat((beta, beta_c), axis=0)
+    
+    def _avar_get_lld(l1, l0):
+        return torch.sum(self._logsum(-l1, -l0))
+    
+    def _avar_get_residual(self, y, g, cc, beta):
+        yg = self._mat_vec_mul_by_row(g, beta[0, :])
+        ycovar = torch.matmul(cc, beta[1:, :])
+        return y - yg - ycovar
+    
+    def _avar_nlog_prob_y_given_z(self, yf, ym, h1, h2, covar_mat, beta, sigma2):
+        res_f = self._avar_get_residual(yf, gf, covar, beta[0])
+        res_m = self._avar_get_residual(ym, gm, covar, beta[1])
+        ratio_f = self._mat_vec_div_by_row(res_f ^ 2, 2 * sigma2[0])
+        ratio_m = self._mat_vec_div_by_row(res_m ^ 2, 2 * sigma2[0])
+        lf_n_by_p = self._mat_vec_add_by_row(ratio_f, 1 / 2 * torch.log(sigma2[0]))
+        lm_n_by_p = self._mat_vec_add_by_row(ratio_m, 1 / 2 * torch.log(sigma2[0]))
+        return torch.sum(lf_n_by_p, axis=1) + torch.sum(lm_n_by_p, axis=1)
+    
     def _em_py(self, yf, ym, h1, h2, covar=None, device='cpu', tol=1e-5, maxiter=100, non_negative=True):
         # add intercept as part of covariate matrix
         covar_mat = np.ones((h1.shape[0], 1))
@@ -836,7 +911,7 @@ class HaploImputer:
                 h2, h1, covar_mat,
                 beta, sigma2
             )
-            lld = c(lld, self._avar_lld(l1, l0))
+            lld = c(lld, self._avar_get_lld(l1, l0))
             gamma = 1 / (1 + torch.exp(l1 - l0))
             
             # M step

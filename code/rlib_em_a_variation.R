@@ -119,7 +119,7 @@ nlog_prob_y_given_z = function(
   lmax + log(exp(lx_) + exp(ly_))
 }
 
-get_lld = function(l1, l0, s2f, s2m) {
+get_lld = function(l1, l0) {
   # sum(l1, l0)
   # sum(.logsum(-l1, -l0)) - length(l1) / 2 * sum(log(s2f) + log(s2m))
   sum(.logsum(-l1, -l0))
