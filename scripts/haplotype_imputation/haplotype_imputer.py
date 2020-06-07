@@ -797,7 +797,7 @@ class HaploImputer:
         
         return em_func(fmat.values, mmat.values, h1mat.values, h2mat.values, covar=cmat, **kwargs), ff['individual_id']
     
-    def _avar_update_sigma(y, g_1, g_2, beta, cc, omega):
+    def _avar_update_sigma(self, y, g_1, g_2, beta, cc, omega):
         r1 = self._avar_get_residual(y, g_1, cc, beta)
         r2 = self._avar_get_residual(y, g_2, cc, beta)
         r_tilde = self._mat_vec_mul_by_col(torch.cat((r1, r2), axis=0), torch.sqrt(omega))
@@ -805,7 +805,7 @@ class HaploImputer:
         sigma2 = torch.sum(torch.pow(r_tilde, 2), axis=0) / denom
         return sigma2
     
-    def _avar_update_beta(y, g_1, g_2, cc, omega, non_negative):
+    def _avar_update_beta(self, y, g_1, g_2, cc, omega, non_negative):
         # update all phenotypes simultaneously
         # Equation:
         #   Y: n x p
@@ -825,21 +825,23 @@ class HaploImputer:
         X = self._mat_vec_mul_by_col(torch.cat((g_1, g_2), axis=0), torch.sqrt(omega))
         C = self._mat_vec_mul_by_col(torch.cat((cc, cc), axis=0), torch.sqrt(omega))
         CtX = torch.matmul(C.T, X)
-        A = torch.solve(CtY, CtC)
-        B = torch.solve(CtX, CtC)
+        A, _ = torch.solve(CtY, CtC)
+        B, _ = torch.solve(CtX, CtC)
         D = CtY
         E = torch.sum(X * Y, axis=0)
+        # breakpoint()
         S = torch.sum(X * X, axis=0) - torch.sum(CtX * B, axis=0)
         BtD = torch.sum(B * D, axis=0)
         beta = - (BtD - E) / S
         # the extra constraint on beta so that beta is non negative
-        if(non_negative is True) {
+        if non_negative is True:
             beta[beta < 0] = 0
-        }
+        
         beta_c = A - self._mat_vec_mul_by_row(B, beta)
-        return torch.cat((beta, beta_c), axis=0)
+        # breakpoint()
+        return torch.cat((torch.unsqueeze(beta, axis=0), beta_c), axis=0)
     
-    def _avar_get_lld(l1, l0):
+    def _avar_get_lld(self, l1, l0):
         return torch.sum(self._logsum(-l1, -l0))
     
     def _avar_get_residual(self, y, g, cc, beta):
@@ -847,13 +849,13 @@ class HaploImputer:
         ycovar = torch.matmul(cc, beta[1:, :])
         return y - yg - ycovar
     
-    def _avar_nlog_prob_y_given_z(self, yf, ym, h1, h2, covar_mat, beta, sigma2):
+    def _avar_nlog_prob_y_given_z(self, yf, ym, gf, gm, covar, beta, sigma2):
         res_f = self._avar_get_residual(yf, gf, covar, beta[0])
         res_m = self._avar_get_residual(ym, gm, covar, beta[1])
-        ratio_f = self._mat_vec_div_by_row(res_f ^ 2, 2 * sigma2[0])
-        ratio_m = self._mat_vec_div_by_row(res_m ^ 2, 2 * sigma2[0])
+        ratio_f = self._mat_vec_div_by_row(res_f ** 2, 2 * sigma2[0])
+        ratio_m = self._mat_vec_div_by_row(res_m ** 2, 2 * sigma2[1])
         lf_n_by_p = self._mat_vec_add_by_row(ratio_f, 1 / 2 * torch.log(sigma2[0]))
-        lm_n_by_p = self._mat_vec_add_by_row(ratio_m, 1 / 2 * torch.log(sigma2[0]))
+        lm_n_by_p = self._mat_vec_add_by_row(ratio_m, 1 / 2 * torch.log(sigma2[1]))
         return torch.sum(lf_n_by_p, axis=1) + torch.sum(lm_n_by_p, axis=1)
     
     def _em_py(self, yf, ym, h1, h2, covar=None, device='cpu', tol=1e-5, maxiter=100, non_negative=True):
@@ -911,9 +913,10 @@ class HaploImputer:
                 h2, h1, covar_mat,
                 beta, sigma2
             )
-            lld = c(lld, self._avar_get_lld(l1, l0))
+            # breakpoint()
+            lld.append(self._avar_get_lld(l1, l0))
             gamma = 1 / (1 + torch.exp(l1 - l0))
-            
+
             # M step
             beta_old = deepcopy(beta)
             sigma2_old = deepcopy(sigma2)
@@ -945,7 +948,7 @@ class HaploImputer:
             # niter
             niter += 1
             
-        return (beta[0, :], beta[1:, :]), sigma2, gamma, lld
+        return beta, sigma2, gamma, lld
         
     def _basic_em_py(self, father, mother, h1, h2, covar=None, debug_cache=None, **kwargs):
         '''

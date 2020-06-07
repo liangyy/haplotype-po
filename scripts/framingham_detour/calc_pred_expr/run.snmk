@@ -7,7 +7,7 @@ def get_genotype_chr(pattern, i):
 
 rule all:
     input:
-        '{outdir}/{prefix}.pred_expr.txt'.format(**config),
+        '{outdir}/{prefix}.pred_expr.txt.gz'.format(**config),
         # '{outdir}/{prefix}.summary.txt'.format(**config)
 
 rule predict_chr:
@@ -37,6 +37,6 @@ rule merge:
     input:
         [ f'{{outdir}}/{{prefix}}.pred_expr_{chr_num}.txt' for chr_num in range(1, 23) ]
     output:
-        '{outdir}/{prefix}.pred_expr.txt'
+        '{outdir}/{prefix}.pred_expr.txt.gz'
     shell:
         'python merge_pred_expr.py --input-pattern {wildcards.outdir}/{wildcards.prefix}.pred_expr_{{chr_num}}.txt --output {output[0]}'
