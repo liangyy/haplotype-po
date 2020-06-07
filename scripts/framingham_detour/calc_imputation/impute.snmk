@@ -1,0 +1,22 @@
+if 'outdir' not in config:
+    config['outdir'] = 'output'
+
+rule all:
+    [ '{outdir}/haplo_impute.{name_tag}.chr{chr_num}.tsv.gz'.format(chr_num=i, **config) for i in config['chromosomes'] ]
+
+rule impute:
+    input:
+        obs_expr = config['obs_expr'],
+        pred_expr = config['pred_expr'],
+        pedigree = config['pedigree'],
+        covar = config['covariate']
+    output:
+        '{outdir}/haplo_impute.{name_tag}.chr{chr_num}.tsv.gz'
+    shell:
+        'python prs_based_transcriptome_wide_imputation.py \
+            --obs_expr {input.obs_expr} \
+            --pred_expr {input.pred_expr} \
+            --pedigree {input.pedigree} \
+            --covar {input.covariate} \
+            --output {output[0]}'
+            
