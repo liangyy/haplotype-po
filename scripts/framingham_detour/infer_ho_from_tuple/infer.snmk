@@ -6,6 +6,10 @@ rule all:
         [ '{outdir}/{name_tag}.subset.chr{chr_num}.h1.parquet'.format(**config, chr_num=i) for i in config['chromosomes'] ],
         [ '{outdir}/{name_tag}.subset.chr{chr_num}.h2.parquet'.format(**config, chr_num=i) for i in config['chromosomes'] ]
 
+rule all_infer:
+    input:
+        [ '{outdir}/{name_tag}.subset.chr{chr_num}.ho_from_genotype.tsv.gz'.format(**config, chr_num=i) for i in config['chromosomes'] ]
+
 rule get_samples:
     input:
         config['pedigree']['path']
@@ -42,4 +46,22 @@ rule txt2parquet:
     shell:
         'python phased_genotype_to_parquet.py --genotype {input[0]} --samples {input[1]} --output_prefix {params[0]}'
         
-        
+rule impute_from_geno:
+    input:
+        h1 = '{outdir}/{name_tag}.subset.chr{chr_num}.h1.parquet',
+        h2 = '{outdir}/{name_tag}.subset.chr{chr_num}.h2.parquet',
+        pedigree = config['pedigree']['path']
+    params:
+        child_col = config['pedigree']['child_col'],
+        father_col = config['pedigree']['father_col'],
+        mother_col = config['pedigree']['mother_col']
+    output:
+        '{outdir}/{name_tag}.subset.chr{chr_num}.ho_from_genotype.tsv.gz'
+    shell:
+        'python infer_ho_from_haplotype_in_family.py \
+            --h1 {input.h1} --h2 {input.h2} \
+            --pedigree {input.pedigree} \
+            --child_col {params.child_col} \
+            --father_col {params.father_col} \
+            --mother_col {params.mother_col} \
+            --output {output[0]}'
