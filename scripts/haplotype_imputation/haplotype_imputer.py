@@ -24,6 +24,17 @@ class HaploImputer:
         )
         return o
     
+    def _nan_checker(self, df):
+        o = df.apply(
+            lambda x: self.__is_all_non_nan(x),
+            axis=1
+        )
+        return o
+
+    @staticmethod
+    def __is_all_non_nan(x):
+        return x.isnull().sum() == 0
+
     @staticmethod
     def __is_all_non_missing(x, val):
         # breakpoint()
@@ -746,21 +757,19 @@ class HaploImputer:
         
         return beta, sigma2, out_df, lld
     
-    def __call_em_py(self, father, mother, h1, h2, em_func, df_covar=None, debug_cache=None, **kwargs):
+    def __call_em_py(self, father, mother, h1, h2, em_func, df_covar=None, debug_cache=None):
         df_all = pd.DataFrame({
             'individual_id': h1['individual_id'].tolist()
         })
         
         # filter out individuals with missing observations
-        non_miss_in_father = self._missing_checker(
-            father.drop('individual_id', axis=1),
-            desired_values=[0, 1]
+        non_miss_in_father = self._nan_checker(
+            father.drop('individual_id', axis=1)
         )
-        non_miss_in_mother = self._missing_checker(
-            mother.drop('individual_id', axis=1),
-            desired_values=[0, 1]
+        non_miss_in_mother = self._nan_checker(
+            mother.drop('individual_id', axis=1)
         )
-        
+        # breakpoint() 
         to_keep_ind = np.logical_and(non_miss_in_father, non_miss_in_mother)
         
         if df_covar is None:
@@ -794,8 +803,9 @@ class HaploImputer:
             np.save(f'{debug_cache}_h1mat.npy', h1mat.values)
             np.save(f'{debug_cache}_h2mat.npy', h2mat.values)
             np.save(f'{debug_cache}_cmat.npy', cmat.values)
-        
-        return em_func(fmat.values, mmat.values, h1mat.values, h2mat.values, covar=cmat, **kwargs), ff['individual_id']
+       
+        # breakpoint()
+        return em_func(fmat.values, mmat.values, h1mat.values, h2mat.values, covar=cmat), ff['individual_id']
     
     def _avar_update_sigma(self, y, g_1, g_2, beta, cc, omega):
         r1 = self._avar_get_residual(y, g_1, cc, beta)
@@ -859,6 +869,7 @@ class HaploImputer:
         return torch.sum(lf_n_by_p, axis=1) + torch.sum(lm_n_by_p, axis=1)
     
     def _em_py(self, yf, ym, h1, h2, covar=None, device='cpu', tol=1e-5, maxiter=100, non_negative=True):
+        # breakpoint()
         # add intercept as part of covariate matrix
         covar_mat = np.ones((h1.shape[0], 1))
         # add covariate if there is any
@@ -950,7 +961,7 @@ class HaploImputer:
             
         return beta, sigma2, gamma, lld
         
-    def _basic_em_py(self, father, mother, h1, h2, covar=None, debug_cache=None, **kwargs):
+    def _basic_em_py(self, father, mother, h1, h2, covar=None, debug_cache=None):
         '''
         Only work with individuals has non-missing
         (either 0 or 1) in all columns
@@ -958,7 +969,7 @@ class HaploImputer:
         Must be called from self.impute. 
         Otherwise the tables may not have the expected properties.
         '''
-        (beta, sigma2, out, lld), indiv_id = self.__call_em_py(father, mother, h1, h2, em_func=self._em_py, covar=covar, debug_cache=debug_cache, **kwargs)
+        (beta, sigma2, out, lld), indiv_id = self.__call_em_py(father, mother, h1, h2, em_func=self._em_py, df_covar=covar, debug_cache=debug_cache)
         # output
         out_df = pd.DataFrame({ 'prob_z': out })
         # breakpoint()
@@ -1313,7 +1324,7 @@ class HaploImputer:
                 individuals_prs
             )
         
-        return impute_method(df_f, df_m, df_1, df_2, df_covar=df_c, **kwargs)
+        return impute_method(df_f, df_m, df_1, df_2, covar=df_c, **kwargs)
     
     @staticmethod
     def _get_match_idx(indiv_df, individual_ids):

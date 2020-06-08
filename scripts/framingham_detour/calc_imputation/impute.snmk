@@ -2,21 +2,33 @@ if 'outdir' not in config:
     config['outdir'] = 'output'
 
 rule all:
-    [ '{outdir}/haplo_impute.{name_tag}.chr{chr_num}.tsv.gz'.format(chr_num=i, **config) for i in config['chromosomes'] ]
+    input:
+        [ '{outdir}/haplo_impute.{name_tag}.chr{chr_num}.tsv.gz'.format(chr_num=i, **config) for i in config['chromosomes'] ]
 
 rule impute:
     input:
-        obs_expr = config['obs_expr'],
-        pred_expr = config['pred_expr'],
-        pedigree = config['pedigree'],
-        covar = config['covariate']
+        obs_expr = config['obs_expr']['path'],
+        pred_expr = config['pred_expr']['path'],
+        pedigree = config['pedigree']['path'],
+        covar = config['covariate']['path']
     output:
-        '{outdir}/haplo_impute.{name_tag}.chr{chr_num}.tsv.gz'
+        '{outdir}/haplo_impute.{name_tag}.chr{chr_num}.tsv.gz',
+        '{outdir}/haplo_impute.{name_tag}.chr{chr_num}.pkl.gz'
+    params:
+        obs_expr_sample_col = config['obs_expr']['sample_col'],
+        pred_expr_sample_col = config['pred_expr']['sample_col'],
+        pred_expr_exclude_cols = config['pred_expr']['remove_cols'],
+        covar_sample_col = config['covariate']['sample_col'],
+        pedigree_child_col = config['pedigree']['child_col'],
+        pedigree_father_col = config['pedigree']['father_col'],
+        pedigree_mother_col = config['pedigree']['mother_col']
     shell:
         'python prs_based_transcriptome_wide_imputation.py \
-            --obs_expr {input.obs_expr} \
-            --pred_expr {input.pred_expr} \
-            --pedigree {input.pedigree} \
-            --covar {input.covariate} \
-            --output {output[0]}'
+            --obs_expr {input.obs_expr}:{params.obs_expr_sample_col} \
+            --pred_expr {input.pred_expr}:{params.pred_expr_sample_col}:{params.pred_expr_exclude_cols} \
+            --pedigree {input.pedigree}:{params.pedigree_child_col},{params.pedigree_father_col},{params.pedigree_mother_col} \
+            --covar {input.covar}:{params.covar_sample_col} \
+            --output {output[0]} \
+            --imputer-output {output[1]}'
+
             

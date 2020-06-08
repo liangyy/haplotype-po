@@ -23,6 +23,9 @@ parser.add_argument('--covar', help='''
 parser.add_argument('--output', help='''
     Output in TSV.GZ format.
 ''')
+parser.add_argument('--imputer-output', type=str, help='''
+    Pickle GZ imputer output
+''')
 parser.add_argument('--nthread', default=None, type=int, help='''
     Number of threads to use.
 ''')
@@ -36,6 +39,7 @@ import logging, sys
 import torch
 import pandas as pd
 import sys, os
+import gzip, pickle
 sys.path.insert(0, '../../haplotype_imputation')
 import haplotype_imputer
 
@@ -51,7 +55,8 @@ def load_table_from_str(filestr, keep_only=False):
     df = read_table(filename)
     if keep_only is False:
         indiv_col = filestr.split(':')[1]
-        df = df.rename({indiv_col : 'individual_id'})
+        df = df.rename(columns={indiv_col: 'individual_id'})
+        df['individual_id'] = df['individual_id'].astype(str)
     elif keep_only is True:
         keep_cols = filestr.split(':')[1].split(',')
         df = df[keep_cols]
@@ -63,7 +68,8 @@ def remove_dot(str_):
 def load_pred_expr_from_str(filestr):
     filestr_to_read = ':'.join(filestr.split(':')[:2])
     df = load_table_from_str(filestr_to_read)
-    df = df.rename(columns={'hap_indiv_id' : 'individual_id'})
+    df = df.rename(columns={'individual_id' : 'hap_indiv_id'})
+    # breakpoint()
     
     to_drop_cols = filestr.split(':')[-1].split(',')
     for i in to_drop_cols:
@@ -88,19 +94,20 @@ def get_elements_in_common(alist, blist):
 def extract_by_cols(df_list, cols_to_extract):
     out = []
     for df in df_list:
-        out.append(out[cols_to_extract])
+        out.append(df[cols_to_extract])
     return out
 
 def get_rows(df, rows, by_col):
     df_ref = pd.DataFrame({'row': rows})
+    # breakpoint()
     df_ref = pd.merge(df_ref, df, left_on='row', right_on=by_col, how='inner')
     del df_ref['row']
     return df_ref
 
 def extract_by_rows(df_, rows_to_extract, by_col, is_list=True):
-    if is_list is True:
+    if is_list is False:
         return get_rows(df_, rows_to_extract, by_col)
-    elif is_list is False:
+    elif is_list is True:
         out = []
         for df in df_:
             out.append(get_rows(df, rows_to_extract, by_col))
@@ -127,7 +134,7 @@ df_ped = load_table_from_str(args.pedigree, keep_only=True)
 df_ped.columns = ['individual_id', 'father', 'mother']
 
 logging.info('Loading predicted expression')
-df_h1, df_h2 = load_pred_expr_from_str(args.pedigree)
+df_h1, df_h2 = load_pred_expr_from_str(args.pred_expr)
 
 logging.info('Getting genes in common')
 genes_in_common = get_elements_in_common(
@@ -138,17 +145,30 @@ logging.info('--> There are {} genes in common'.format(len(genes_in_common)))
 df_obs_expr, df_h1, df_h2 = extract_by_cols([ df_obs_expr, df_h1, df_h2 ], [ 'individual_id' ] + genes_in_common)
 
 logging.info('Extracting individuals in pedigree')
-df_obs_expr_father = extract_by_rows(df_obs_expr, df_ped['father'].tolist(), is_list=False)
-df_obs_expr_mother = extract_by_rows(df_obs_expr, df_ped['mother'].tolist(), is_list=False)
-df_h1, df_h2, df_covar = extract_by_rows([ df_h1, df_h2, df_covar ], df_ped['individual_id'].tolist())
+# breakpoint()
+df_obs_expr_father = extract_by_rows(df_obs_expr, df_ped['father'].astype(str).tolist(), 'individual_id', is_list=False)
+df_obs_expr_mother = extract_by_rows(df_obs_expr, df_ped['mother'].astype(str).tolist(), 'individual_id', is_list=False)
+df_obs_expr_father['individual_id'] = df_ped['individual_id'].astype(str).tolist()
+df_obs_expr_mother['individual_id'] = df_ped['individual_id'].astype(str).tolist()
+df_h1, df_h2, df_covar = extract_by_rows([ df_h1, df_h2, df_covar ], df_ped['individual_id'].astype(str).tolist(), 'individual_id')
 
 mode = 'basic_em_py'
 logging.info(f'Run imputation: mode = {mode}')
 imputer = haplotype_imputer.HaploImputer()
+# breakpoint()
 beta, sigma2, out, lld = imputer.impute(
-    df_father, df_mother, 
-    h1, h2, hap_indiv_df, hap_pos_df,
+    df_obs_expr_father, df_obs_expr_mother, 
+    df_h1, df_h2,
     mode=mode,
     df_covar=df_covar,
-    kwargs={'debug_cache': args.debug_cache_prefix}
+    # kwargs={'debug_cache': args.debug_cache_prefix}
 )
+
+logging.info('Save imputer output')
+with gzip.open(args.imputer_output, 'w') as f:
+    pickle.dump((beta, sigma2, lld), f)
+
+
+logging.info('Output')
+out.to_csv(args.output, compression='gzip', sep='\t', index=False)
+

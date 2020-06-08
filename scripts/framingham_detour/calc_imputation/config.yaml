@@ -1,31 +1,41 @@
-obs_expr: '/lambda_stor/data/yanyul/Framingham/haplotype_po_framingham/prepare_for_imputation/obs_expr.tsv.gz'
-covariate: '/lambda_stor/data/yanyul/Framingham/haplotype_po_framingham/prepare_for_imputation/covariate.tsv.gz'
-pedigree: '/lambda_stor/data/yanyul/Framingham/haplotype_po_framingham/preprocess/extracted_pedigree.tsv.gz'
-
-pred_expr: '/lambda_stor/data/yanyul/Framingham/haplotype_po_framingham/pred_expr/gtex_v8_Whole_Blood_{name_tag}.pred_expr_{chr_num}.txt'
-
+obs_expr: 
+  path: '/lambda_stor/data/yanyul/Framingham/haplotype_po_framingham/prepare_for_imputation/obs_expr.tsv.gz'
+  sample_col: 'SampleID'
+covariate: 
+  path: '/lambda_stor/data/yanyul/Framingham/haplotype_po_framingham/prepare_for_imputation/covariate.tsv.gz'
+  sample_col: 'SampleID'
+pedigree: 
+  path: '/lambda_stor/data/yanyul/Framingham/haplotype_po_framingham/preprocess/extracted_pedigree.tsv.gz'
+  child_col: 'shareid'
+  father_col: 'fshare'
+  mother_col: 'mshare'
+pred_expr: 
+  path: '/lambda_stor/data/yanyul/Framingham/haplotype_po_framingham/pred_expr/gtex_v8_Whole_Blood_{name_tag}.pred_expr_{chr_num}.txt'
+  sample_col: 'FID'
+  remove_cols: 'IID'
 chromosomes: 
   - 1
   - 2
-  # - 3
-  # - 4
-  # - 5
-  # - 6
-  # - 7
-  # - 8
-  # - 9
-  # - 10
-  # - 11
-  # - 12
-  # - 13
-  # - 14
-  # - 15
-  # - 16
-  # - 17
-  # - 18
-  # - 19
-  # - 20
-  # - 21
-  # - 22
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+  - 15
+  - 16
+  - 17
+  - 18
+  - 19
+  - 20
+  - 21
+  - 22
 
+outdir: '/lambda_stor/data/yanyul/Framingham/haplotype_po_framingham/imputation'
 # name_tag: 'en'
