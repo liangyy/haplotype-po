@@ -1,0 +1,7 @@
+pedigree:
+  path: '/lambda_stor/data/yanyul/Framingham/haplotype_po_framingham/preprocess/extracted_pedigree.tsv.gz'
+  child_col: 'shareid'
+  father_col: 'fshare'
+  mother_col: 'mshare'
+vcf: '/lambda_stor/data/yanyul/Framingham/imputed_hrc1.1/chr{chr_num}.dose.vcf.gz'
+name_tag: 'test'

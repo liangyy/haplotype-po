@@ -1,0 +1,45 @@
+if 'outdir' in config:
+    config['outdir'] = 'output'
+
+rule all:
+    input:
+        [ '{outdir}/{name_tag}.subset.chr{chr_num}.h1.parquet'.format(**config, chr_num=i) for i in config['chromosomes'] ],
+        [ '{outdir}/{name_tag}.subset.chr{chr_num}.h2.parquet'.format(**config, chr_num=i) for i in config['chromosomes'] ]
+
+rule get_samples:
+    input:
+        config['pedigree']['path']
+    params:
+        child_col = config['pedigree']['child_col'],
+        father_col = config['pedigree']['father_col'],
+        mother_col = config['pedigree']['mother_col']
+    output:
+        '{outdir}/{name_tag}.samples.txt'
+    shell:
+        'python get_sample_list.py \
+          --input {input[0]} \
+          --cols {params.child_col} {params.father_col} {params.mother_col} \
+          --output {output[0]}'
+
+rule extract:
+    input:
+        samples = '{outdir}/{name_tag}.samples.txt',
+        vcf = config['vcf']
+    output:
+        '{outdir}/{name_tag}.subset.chr{chr_num}.tsv.gz'
+    shell:
+        '{config[bvftools_path]} query -f "[%GT\t]\n" -S {input.samples} {input.vcf} | gzip > {output[0]}'
+    
+rule txt2parquet:
+    input:
+        '{outdir}/{name_tag}.subset.chr{chr_num}.tsv.gz',
+        '{outdir}/{name_tag}.samples.txt'
+    output:
+        '{outdir}/{name_tag}.subset.chr{chr_num}.h1.parquet',
+        '{outdir}/{name_tag}.subset.chr{chr_num}.h2.parquet'
+    params: 
+        '{outdir}/{name_tag}.subset.chr{chr_num}'
+    shell:
+        'python phased_genotype_to_parquet.py --genotype {input[0]} --samples {input[1]} --output_prefix {params[0]}'
+        
+        
