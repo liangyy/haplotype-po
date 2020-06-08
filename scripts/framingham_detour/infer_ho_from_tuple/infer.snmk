@@ -1,4 +1,4 @@
-if 'outdir' in config:
+if 'outdir' not in config:
     config['outdir'] = 'output'
 
 rule all:

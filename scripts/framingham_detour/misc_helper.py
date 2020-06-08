@@ -1,3 +1,6 @@
+import os
+import pandas as pd
+
 def read_table(fname):
     if os.path.splitext(fname) == 'gz':
         kw = {'compression' : 'gzip'}

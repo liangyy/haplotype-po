@@ -31,7 +31,7 @@ logging.basicConfig(
 df = misc_helper.read_table(args.input)
 sample_list = []
 for col in args.cols:
-    tmp_ = df[col].tolist()
+    tmp_ = df[col].astype(str).tolist()
     sample_list += tmp_
 with open(args.output, 'w') as f:
     for i in sample_list:

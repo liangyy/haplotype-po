@@ -58,6 +58,6 @@ df_h1.columns = sample_list
 df_h2 = pd.DataFrame(h2_mat)
 df_h2.columns = sample_list
 
-df_h1.to_parqeut(args.output_prefix + '.h1.parquet')
-df_h2.to_parqeut(args.output_prefix + '.h2.parquet')
+df_h1.to_parquet(args.output_prefix + '.h1.parquet')
+df_h2.to_parquet(args.output_prefix + '.h2.parquet')
 
