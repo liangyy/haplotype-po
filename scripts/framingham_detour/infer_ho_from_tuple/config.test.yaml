@@ -5,6 +5,7 @@ pedigree:
   mother_col: 'mshare'
 vcf: '/lambda_stor/data/yanyul/Framingham/imputed_hrc1.1/chr{chr_num}.dose.vcf.gz'
 bvftools_path: '/lambda_stor/data/yanyul/softwares/bcftools-1.10.2/bcftools' 
+maf_filter: 0.05  # use for post analysis
 
 name_tag: 'test'
 chromosomes:

@@ -6,6 +6,7 @@ pedigree:
 vcf: '/lambda_stor/data/yanyul/Framingham/imputed_hrc1.1/chr{chr_num}.dose.vcf.gz'
 bvftools_path: '/lambda_stor/data/yanyul/softwares/bcftools-1.10.2/bcftools' 
 outdir: '/lambda_stor/data/yanyul/Framingham/haplotype_po_framingham/infer_ho_from_genotype'
+maf_filter: 0.05  # use for post analysis
 
 name_tag: 'from_extracted_pedigree'
 chromosomes:

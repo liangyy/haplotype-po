@@ -88,4 +88,5 @@ rule post_verification:
             --child_col {params.child_col} \
             --father_col {params.father_col} \
             --mother_col {params.mother_col} \
-            --output {output[0]}'
+            --output {output[0]} \
+            --maf-filter {config[maf_filter]}'

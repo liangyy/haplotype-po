@@ -19,6 +19,9 @@ parser.add_argument('--h2', default=None, help='''
 parser.add_argument('--pedigree', help='''
     pedigree file
 ''')
+parser.add_argument('--maf-filter', default=None, help='''
+    MAF filter to remove rare variants
+''')
 parser.add_argument('--child_col', help='''
     column name in pedigree file that indicates child
 ''')
@@ -66,6 +69,12 @@ logging.basicConfig(
 logging.info('Loading haplotypes')
 df_h1 = pd.read_parquet(args.h1)
 df_h2 = pd.read_parquet(args.h2)
+
+# apply maf filter
+if args.maf_filter is not None:
+    maf = (df_h1 + df_h2).apply(lambda x: x.mean() / 2, axis=1)
+    df_h1 = df_h1[ maf > args.maf_filter ].reset_index(drop=False)
+    df_h2 = df_h2[ maf > args.maf_filter ].reset_index(drop=False)
 
 # load pedigree data
 logging.info('Loading pedigree data')
