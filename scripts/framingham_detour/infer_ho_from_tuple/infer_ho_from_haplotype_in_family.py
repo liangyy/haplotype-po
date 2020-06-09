@@ -13,7 +13,7 @@ parser = argparse.ArgumentParser(prog='infer_ho_from_haplotype_in_family.py', de
 parser.add_argument('--h1', help='''
     haplotype 1
 ''')
-parser.add_argument('--h1', default=None, help='''
+parser.add_argument('--h2', default=None, help='''
     haplotype 2
 ''')
 parser.add_argument('--pedigree', help='''
@@ -71,7 +71,7 @@ logging.info('Loading pedigree data')
 df_ped = misc_helper.read_table(args.pedigree)
 df_ped = df_ped[ [ args.child_col, args.father_col, args.mother_col ] ]
 for i in df_ped.columns:
-    df[i] = df[i].astype(str)
+    df_ped[i] = df_ped[i].astype(str)
 df_ped.columns = [ 'child', 'father', 'mother' ]
 
 # naive infer haplotype origin
@@ -79,10 +79,10 @@ clabel = [ f'child{i}' for i in range(1, 3) ]
 flabel = [ f'father{i}' for i in range(1, 3) ]
 mlabel = [ f'mother{i}' for i in range(1, 3) ]
 all_configs_h1_from_father = [ 
-    [ f'child1_x_father{i}:child2_x_mother{j}' for j in range(1, 3) for i in range(1, 3) 
+    f'child1_x_father{i}:child2_x_mother{j}' for j in range(1, 3) for i in range(1, 3) 
 ]
 all_configs_h1_from_mother = [ 
-    [ f'child2_x_father{i}:child1_x_mother{j}' for j in range(1, 3) for i in range(1, 3) 
+    f'child2_x_father{i}:child1_x_mother{j}' for j in range(1, 3) for i in range(1, 3) 
 ]
 all_configs = all_configs_h1_from_father + all_configs_h1_from_mother
 df_list = []  # collect the resulting tables
@@ -106,16 +106,18 @@ for i in tqdm(range(df_ped.shape[0])):
         dist_ = pw_child_x_father[conf_f] + pw_child_x_mother[conf_m]
         config_dist.append(dist_)
         config_name.append(f'{conf_f}:{conf_m}')
-        if conf_str is in all_configs_h1_from_father:
+        if conf_str in all_configs_h1_from_father:
             config_prob_z.append(1)
-        elif conf_str is in all_configs_h1_from_mother:
+        elif conf_str in all_configs_h1_from_mother:
             config_prob_z.append(0)
         else:
             raise ValueError(f'conf_str = {conf_str} is not expected')
     df_ = pd.DataFrame({'dist': config_dist, 'name': config_name, 'prob_z': config_prob_z})
     min_dist = df_['dist'].min()
-    df_ = df_[ df_['dist'] == min_dist ].copy()
-    df_report = pd.concat([ pd.concat((pw_child_x_father, pw_child_x_mother), axis=1) ] * df_.shape[0])
+    # breakpoint()
+    df_ = df_[ df_['dist'] == min_dist ].reset_index(drop=True).copy()
+    # breakpoint()
+    df_report = pd.concat([ pd.concat((pd.DataFrame(pw_child_x_father, index=[0]), pd.DataFrame(pw_child_x_mother, index=[0])), axis=1) ] * df_.shape[0])
     df_report = pd.concat((df_report, df_), axis=1)
     df_report['individual_id'] = cid
     df_list.append(df_report)

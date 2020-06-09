@@ -3,12 +3,12 @@ if 'outdir' not in config:
 
 rule all:
     input:
+        [ '{outdir}/{name_tag}.subset.chr{chr_num}.ho_from_genotype.tsv.gz'.format(**config, chr_num=i) for i in config['chromosomes'] ]
+
+rule all_preprocess:
+    input:
         [ '{outdir}/{name_tag}.subset.chr{chr_num}.h1.parquet'.format(**config, chr_num=i) for i in config['chromosomes'] ],
         [ '{outdir}/{name_tag}.subset.chr{chr_num}.h2.parquet'.format(**config, chr_num=i) for i in config['chromosomes'] ]
-
-rule all_infer:
-    input:
-        [ '{outdir}/{name_tag}.subset.chr{chr_num}.ho_from_genotype.tsv.gz'.format(**config, chr_num=i) for i in config['chromosomes'] ]
 
 rule get_samples:
     input:
