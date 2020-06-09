@@ -5,6 +5,10 @@ rule all:
     input:
         [ '{outdir}/{name_tag}.subset.chr{chr_num}.ho_from_genotype.tsv.gz'.format(**config, chr_num=i) for i in config['chromosomes'] ]
 
+rule all_post:
+    input:
+        [ '{outdir}/{name_tag}.subset.chr{chr_num}.child_parents_cor.tsv.gz'.format(**config, chr_num=i) for i in config['chromosomes'] ]
+
 rule all_preprocess:
     input:
         [ '{outdir}/{name_tag}.subset.chr{chr_num}.h1.parquet'.format(**config, chr_num=i) for i in config['chromosomes'] ],
@@ -59,6 +63,26 @@ rule impute_from_geno:
         '{outdir}/{name_tag}.subset.chr{chr_num}.ho_from_genotype.tsv.gz'
     shell:
         'python infer_ho_from_haplotype_in_family.py \
+            --h1 {input.h1} --h2 {input.h2} \
+            --pedigree {input.pedigree} \
+            --child_col {params.child_col} \
+            --father_col {params.father_col} \
+            --mother_col {params.mother_col} \
+            --output {output[0]}'
+
+rule post_verification:
+    input:
+        h1 = '{outdir}/{name_tag}.subset.chr{chr_num}.h1.parquet',
+        h2 = '{outdir}/{name_tag}.subset.chr{chr_num}.h2.parquet',
+        pedigree = config['pedigree']['path']
+    params:
+        child_col = config['pedigree']['child_col'],
+        father_col = config['pedigree']['father_col'],
+        mother_col = config['pedigree']['mother_col']
+    output:
+        '{outdir}/{name_tag}.subset.chr{chr_num}.child_parents_cor.tsv.gz'
+    shell:
+        'python child_parent_correlation.py \
             --h1 {input.h1} --h2 {input.h2} \
             --pedigree {input.pedigree} \
             --child_col {params.child_col} \
