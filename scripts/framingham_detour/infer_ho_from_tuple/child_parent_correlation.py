@@ -51,6 +51,7 @@ def calc_pairwise_cor(vec_list1, vec_list2, label_list1, label_list2):
     out_dict = {}
     for vec1, name1 in zip(vec_list1, label_list1):
         for vec2, name2 in zip(vec_list2, label_list2):
+            # breakpoint()
             out_dict[f'{name1}_x_{name2}'] = cor_dist(vec1, vec2)
     return out_dict
 
@@ -64,8 +65,8 @@ logging.basicConfig(
 
 # load haplotypes
 logging.info('Loading haplotypes')
-df_h1 = pd.read_parquet(args.h1)
-df_h2 = pd.read_parquet(args.h2)
+df_h1 = pd.read_parquet(args.h1).astype(float)
+df_h2 = pd.read_parquet(args.h2).astype(float)
 
 # load pedigree data
 logging.info('Loading pedigree data')
@@ -88,7 +89,17 @@ for i in tqdm(range(df_ped.shape[0])):
         [ df_h1[fid] + df_h2[fid], df_h1[mid] + df_h2[mid] ],
         clabel, plabel
     )
-    pw_cor_child_x_parents['individual_id'] = cid
-    df_list.append(df_report)
+    pw_cor_father_x_mother = calc_pairwise_cor(
+        [ df_h1[fid] + df_h2[fid] ],
+        [ df_h1[mid] + df_h2[mid] ],
+        [ plabel[0] ], [ plabel[1] ]
+    )
+    df_ = pd.concat( 
+        [ pd.DataFrame(pw_cor_child_x_parents, index=[0]),
+          pd.DataFrame(pw_cor_father_x_mother, index=[0]) ],
+        axis=1
+    )
+    df_['individual_id'] = cid
+    df_list.append(df_)
 df_to_save = pd.concat(df_list, axis=0)
 df_to_save.to_csv(args.output, compression='gzip', sep='\t', index=False)
