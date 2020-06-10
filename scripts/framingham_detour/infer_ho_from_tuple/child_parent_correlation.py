@@ -52,6 +52,22 @@ def calc_pairwise_cor(vec_list1, vec_list2, label_list1, label_list2):
             out_dict[f'{name1}_x_{name2}'] = cor_dist(vec1, vec2)
     return out_dict
 
+def _standardize(mat):
+    mean = mat.mean()
+    std = mat.std()
+    return (mat - mean) / std
+
+def standardize_rows(df):
+    '''
+    df is pandas DataFrame
+    '''
+    mat = df.values()
+    mat = np.apply_along_axis(_standardize, mat, axis=1)
+    mat = pd.DataFrame(mat)
+    mat.columns = df.columns
+    return mat
+    
+
 # configing util
 logging.basicConfig(
     level = logging.INFO, 
@@ -71,6 +87,11 @@ if args.maf_filter is not None:
     maf = (df_h1 + df_h2).apply(lambda x: x.mean() / 2, axis=1)
     df_h1 = df_h1[ maf > args.maf_filter ].reset_index(drop=False)
     df_h2 = df_h2[ maf > args.maf_filter ].reset_index(drop=False)
+
+# standardizing genotype
+logging.info('Loading haplotypes')
+df_h1 = standardize_rows(df_h1)
+df_h2 = standardize_rows(df_h1)
 
 # load pedigree data
 logging.info('Loading pedigree data')
