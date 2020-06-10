@@ -1,13 +1,7 @@
 import argparse
-parser = argparse.ArgumentParser(prog='infer_ho_from_haplotype_in_family.py', description='''
-    Infer haplotype origin from haplotypes from child, father, and mother.
-    Output the most probable assignment in three main entries. 
-    1. if haplotype 1 in child comes from father.
-    2. the origin of haplotype 1 in child.
-    3. the origin of haplotype 2 in child.
-    And some other information about the matching:
-    pairwise distance between child 1/2 and father 1/2;
-    and pairwise distance between child 1/2 and mother 1/2
+parser = argparse.ArgumentParser(prog='child_parent_correlation.py', description='''
+    Compute correlation between child haplotypes and parent genotypes. 
+    Also, father genotype and mother genotype.
 ''')
 
 parser.add_argument('--h1', help='''
@@ -19,7 +13,7 @@ parser.add_argument('--h2', default=None, help='''
 parser.add_argument('--pedigree', help='''
     pedigree file
 ''')
-parser.add_argument('--maf-filter', default=None, help='''
+parser.add_argument('--maf-filter', default=None, type=float, help='''
     MAF filter to remove rare variants
 ''')
 parser.add_argument('--child_col', help='''
@@ -73,6 +67,7 @@ df_h2 = pd.read_parquet(args.h2).astype(float)
 
 # apply maf filter
 if args.maf_filter is not None:
+    logging.info('Applying maf filters')
     maf = (df_h1 + df_h2).apply(lambda x: x.mean() / 2, axis=1)
     df_h1 = df_h1[ maf > args.maf_filter ].reset_index(drop=False)
     df_h2 = df_h2[ maf > args.maf_filter ].reset_index(drop=False)
@@ -112,3 +107,4 @@ for i in tqdm(range(df_ped.shape[0])):
     df_list.append(df_)
 df_to_save = pd.concat(df_list, axis=0)
 df_to_save.to_csv(args.output, compression='gzip', sep='\t', index=False)
+
