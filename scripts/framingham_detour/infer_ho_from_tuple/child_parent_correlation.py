@@ -13,7 +13,7 @@ parser.add_argument('--h2', default=None, help='''
 parser.add_argument('--pedigree', help='''
     pedigree file
 ''')
-parser.add_argument('--maf-filter', default=None, type=float, help='''
+parser.add_argument('--maf-filter', default=0, type=float, help='''
     MAF filter to remove rare variants
 ''')
 parser.add_argument('--child_col', help='''
@@ -44,12 +44,15 @@ def cor_dist(vec1, vec2):
     '''
     return np.corrcoef(vec1, vec2)[0, 1]
 
-def calc_pairwise_cor(vec_list1, vec_list2, label_list1, label_list2):
+def inner_prod_dist(vec1, vec2):
+    return (vec1 * vec2).mean()
+
+def calc_pairwise_product(vec_list1, vec_list2, label_list1, label_list2):
     out_dict = {}
     for vec1, name1 in zip(vec_list1, label_list1):
         for vec2, name2 in zip(vec_list2, label_list2):
             # breakpoint()
-            out_dict[f'{name1}_x_{name2}'] = cor_dist(vec1, vec2)
+            out_dict[f'{name1}_x_{name2}'] = inner_prod_dist(vec1, vec2)
     return out_dict
 
 def _standardize(mat):
@@ -61,8 +64,8 @@ def standardize_rows(df):
     '''
     df is pandas DataFrame
     '''
-    mat = df.values()
-    mat = np.apply_along_axis(_standardize, mat, axis=1)
+    mat = df.values
+    mat = np.apply_along_axis(_standardize, 1, mat)
     mat = pd.DataFrame(mat)
     mat.columns = df.columns
     return mat
@@ -82,16 +85,17 @@ df_h1 = pd.read_parquet(args.h1).astype(float)
 df_h2 = pd.read_parquet(args.h2).astype(float)
 
 # apply maf filter
-if args.maf_filter is not None:
-    logging.info('Applying maf filters')
-    maf = (df_h1 + df_h2).apply(lambda x: x.mean() / 2, axis=1)
-    df_h1 = df_h1[ maf > args.maf_filter ].reset_index(drop=False)
-    df_h2 = df_h2[ maf > args.maf_filter ].reset_index(drop=False)
+logging.info('Applying maf filters: maf = {}'.format(args.maf_filter))
+maf = (df_h1 + df_h2).apply(lambda x: min(x.mean() / 2, (1 - x).mean() / 2), axis=1)
+df_h1 = df_h1[ maf > args.maf_filter ].reset_index(drop=True)
+df_h2 = df_h2[ maf > args.maf_filter ].reset_index(drop=True)
 
 # standardizing genotype
-logging.info('Loading haplotypes')
+logging.info('Standardizing haplotypes')
+# breakpoint()
 df_h1 = standardize_rows(df_h1)
-df_h2 = standardize_rows(df_h1)
+df_h2 = standardize_rows(df_h2)
+# breakpoint()
 
 # load pedigree data
 logging.info('Loading pedigree data')
@@ -109,15 +113,15 @@ for i in tqdm(range(df_ped.shape[0])):
     cid = df_ped.child[i]
     fid = df_ped.father[i]
     mid = df_ped.mother[i]
-    pw_cor_child_x_parents = calc_pairwise_cor(
+    pw_cor_child_x_parents = calc_pairwise_product(
         [ df_h1[cid], df_h2[cid] ], 
-        [ df_h1[fid] + df_h2[fid], df_h1[mid] + df_h2[mid] ],
+        [ (df_h1[fid] + df_h2[fid]) / np.sqrt(2), (df_h1[mid] + df_h2[mid]) / np.sqrt(2) ],
         clabel, plabel
     )
-    pw_cor_father_x_mother = calc_pairwise_cor(
-        [ df_h1[fid] + df_h2[fid] ],
-        [ df_h1[mid] + df_h2[mid] ],
-        [ plabel[0] ], [ plabel[1] ]
+    pw_cor_father_x_mother = calc_pairwise_product(
+        [ (df_h1[fid] + df_h2[fid]) / np.sqrt(2), (df_h1[mid] + df_h2[mid]) / np.sqrt(2) ],
+        [ (df_h1[fid] + df_h2[fid]) / np.sqrt(2), (df_h1[mid] + df_h2[mid]) / np.sqrt(2) ],
+        [ plabel[0], plabel[1] ], [ plabel[0], plabel[1] ]
     )
     df_ = pd.concat( 
         [ pd.DataFrame(pw_cor_child_x_parents, index=[0]),
