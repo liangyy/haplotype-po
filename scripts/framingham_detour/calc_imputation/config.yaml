@@ -13,6 +13,7 @@ pred_expr:
   path: '/lambda_stor/data/yanyul/Framingham/haplotype_po_framingham/pred_expr/gtex_v8_Whole_Blood_{name_tag}.pred_expr_{chr_num}.txt'
   sample_col: 'FID'
   remove_cols: 'IID'
+nthread_per_run: 1
 chromosomes: 
   - 1
   - 2
@@ -39,3 +40,14 @@ chromosomes:
 
 outdir: '/lambda_stor/data/yanyul/Framingham/haplotype_po_framingham/imputation'
 # name_tag: 'en'
+
+downsample:
+  - 0.9
+  - 0.8
+  - 0.7
+  - 0.6
+  - 0.5
+  - 0.4
+  - 0.3
+  - 0.2
+  - 0.1

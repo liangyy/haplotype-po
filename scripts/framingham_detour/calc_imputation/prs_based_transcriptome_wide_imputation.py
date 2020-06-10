@@ -29,6 +29,10 @@ parser.add_argument('--imputer-output', type=str, help='''
 parser.add_argument('--nthread', default=None, type=int, help='''
     Number of threads to use.
 ''')
+parser.add_argument('--downsample', default=None, type=float, help='''
+    Down-sample the genes. 
+    Take a fraction which will retain only the fraction of genes.
+''')
 
 args = parser.parse_args()
 
@@ -38,6 +42,7 @@ args = parser.parse_args()
 import logging, sys
 import torch
 import pandas as pd
+import numpy as np
 import sys, os
 import gzip, pickle
 sys.path.insert(0, '../../haplotype_imputation')
@@ -115,6 +120,15 @@ def extract_by_rows(df_, rows_to_extract, by_col, is_list=True):
     else:
         raise ValueError('Unexpected: is_list = ', is_list)
 
+def downsample(clist, fraction):
+    n = int(len(clist) * fraction)
+    selected_idx = np.random.choice(len(clist), n, replace=False)
+    return list(np.array(clist)[selected_idx])
+
+# set number of threads to use
+if args.nthread is not None:
+    torch.set_num_threads(args.nthread)
+
 # configing util
 logging.basicConfig(
     level = logging.INFO, 
@@ -143,6 +157,13 @@ genes_in_common = get_elements_in_common(
 )
 logging.info('--> There are {} genes in common'.format(len(genes_in_common)))
 df_obs_expr, df_h1, df_h2 = extract_by_cols([ df_obs_expr, df_h1, df_h2 ], [ 'individual_id' ] + genes_in_common)
+
+if args.downsample is not None:
+    info.logging('Downsample: fraction = {}'.format(args.downsample))
+    gene_subset = downsample(genes_in_common, args.downsample)
+    df_obs_expr, df_h1, df_h2 = extract_by_cols([ df_obs_expr, df_h1, df_h2 ], [ 'individual_id' ] + gene_subset)
+    genes_in_common = gene_subset
+logging.info('SUMMARY: {} genes are used'.format(len(genes_in_common)))
 
 logging.info('Extracting individuals in pedigree')
 # breakpoint()

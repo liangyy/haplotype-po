@@ -1,9 +1,16 @@
 if 'outdir' not in config:
     config['outdir'] = 'output'
 
+if 'downsample' not in config:
+    config['downsample'] = []
+
 rule all:
     input:
         [ '{outdir}/haplo_impute.{name_tag}.chr{chr_num}.tsv.gz'.format(chr_num=i, **config) for i in config['chromosomes'] ]
+
+rule all_downsample:
+    input:
+        [ '{outdir}/haplo_impute.downsample_{sample_fraction}.{name_tag}.chr{chr_num}.tsv.gz'.format(chr_num=i, sample_fraction=frac, **config) for frac in config['downsample'] for i in config['chromosomes'] ]
 
 rule impute:
     input:
@@ -11,6 +18,8 @@ rule impute:
         pred_expr = config['pred_expr']['path'],
         pedigree = config['pedigree']['path'],
         covar = config['covariate']['path']
+    threads:
+        config['nthread_per_run']
     output:
         '{outdir}/haplo_impute.{name_tag}.chr{chr_num}.tsv.gz',
         '{outdir}/haplo_impute.{name_tag}.chr{chr_num}.pkl.gz'
@@ -22,6 +31,8 @@ rule impute:
         pedigree_child_col = config['pedigree']['child_col'],
         pedigree_father_col = config['pedigree']['father_col'],
         pedigree_mother_col = config['pedigree']['mother_col']
+    log:
+        '{outdir}/haplo_impute.{name_tag}.chr{chr_num}.log'
     shell:
         'python prs_based_transcriptome_wide_imputation.py \
             --obs_expr {input.obs_expr}:{params.obs_expr_sample_col} \
@@ -29,6 +40,37 @@ rule impute:
             --pedigree {input.pedigree}:{params.pedigree_child_col},{params.pedigree_father_col},{params.pedigree_mother_col} \
             --covar {input.covar}:{params.covar_sample_col} \
             --output {output[0]} \
-            --imputer-output {output[1]}'
+            --nthread {config[nthread_per_run]} \
+            --imputer-output {output[1]} > {log} 2>&1'
 
-            
+rule impute_downsample:
+    input:
+        obs_expr = config['obs_expr']['path'],
+        pred_expr = config['pred_expr']['path'],
+        pedigree = config['pedigree']['path'],
+        covar = config['covariate']['path']
+    output:
+        '{outdir}/haplo_impute.downsample_{sample_fraction}.{name_tag}.chr{chr_num}.tsv.gz',
+        '{outdir}/haplo_impute.downsample_{sample_fraction}.{name_tag}.chr{chr_num}.pkl.gz'
+    params:
+        obs_expr_sample_col = config['obs_expr']['sample_col'],
+        pred_expr_sample_col = config['pred_expr']['sample_col'],
+        pred_expr_exclude_cols = config['pred_expr']['remove_cols'],
+        covar_sample_col = config['covariate']['sample_col'],
+        pedigree_child_col = config['pedigree']['child_col'],
+        pedigree_father_col = config['pedigree']['father_col'],
+        pedigree_mother_col = config['pedigree']['mother_col']
+    threads:
+        config['nthread_per_run']
+    log:
+        '{outdir}/haplo_impute.downsample_{sample_fraction}.{name_tag}.chr{chr_num}.log'
+    shell:
+        'python prs_based_transcriptome_wide_imputation.py \
+            --obs_expr {input.obs_expr}:{params.obs_expr_sample_col} \
+            --pred_expr {input.pred_expr}:{params.pred_expr_sample_col}:{params.pred_expr_exclude_cols} \
+            --pedigree {input.pedigree}:{params.pedigree_child_col},{params.pedigree_father_col},{params.pedigree_mother_col} \
+            --covar {input.covar}:{params.covar_sample_col} \
+            --output {output[0]} \
+            --imputer-output {output[1]} \
+            --nthread {config[nthread_per_run]} \
+            --downsample {wildcards.sample_fraction} > {log} 2>&1'            
