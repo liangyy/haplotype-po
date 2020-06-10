@@ -90,7 +90,13 @@ def load_pred_expr_from_str(filestr):
     # remove suffix in gene name 
     df_h1.columns = [ remove_dot(i) for i in df_h1.columns.tolist() ]
     df_h2.columns = [ remove_dot(i) for i in df_h2.columns.tolist() ]
-
+    
+    # deprecated since we want to filter gene std = 0 after subset on individuals
+    # # remove genes with std = 0
+    # # breakpoint()
+    # df_h1 = df_h1.loc[:, [True] + (df_h1.std() != 0).tolist() + [True] ]
+    # df_h2 = df_h2.loc[:, [True] + (df_h2.std() != 0).tolist() + [True] ]
+    
     return df_h1, df_h2
 
 def get_elements_in_common(alist, blist):
@@ -159,11 +165,10 @@ logging.info('--> There are {} genes in common'.format(len(genes_in_common)))
 df_obs_expr, df_h1, df_h2 = extract_by_cols([ df_obs_expr, df_h1, df_h2 ], [ 'individual_id' ] + genes_in_common)
 
 if args.downsample is not None:
-    info.logging('Downsample: fraction = {}'.format(args.downsample))
+    logging.info('Downsample: fraction = {}'.format(args.downsample))
     gene_subset = downsample(genes_in_common, args.downsample)
     df_obs_expr, df_h1, df_h2 = extract_by_cols([ df_obs_expr, df_h1, df_h2 ], [ 'individual_id' ] + gene_subset)
     genes_in_common = gene_subset
-logging.info('SUMMARY: {} genes are used'.format(len(genes_in_common)))
 
 logging.info('Extracting individuals in pedigree')
 # breakpoint()
@@ -172,6 +177,11 @@ df_obs_expr_mother = extract_by_rows(df_obs_expr, df_ped['mother'].astype(str).t
 df_obs_expr_father['individual_id'] = df_ped['individual_id'].astype(str).tolist()
 df_obs_expr_mother['individual_id'] = df_ped['individual_id'].astype(str).tolist()
 df_h1, df_h2, df_covar = extract_by_rows([ df_h1, df_h2, df_covar ], df_ped['individual_id'].astype(str).tolist(), 'individual_id')
+
+# filter gene with std = 0
+df_h1 = df_h1.iloc[:, [True] + (df_h1.std() != 0).tolist() ]
+df_h2 = df_h2.iloc[:, [True] + (df_h2.std() != 0).tolist() ]
+# logging.info('SUMMARY: {} genes are used'.format()
 
 mode = 'basic_em_py'
 logging.info(f'Run imputation: mode = {mode}')
