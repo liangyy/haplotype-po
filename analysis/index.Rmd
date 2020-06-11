@@ -16,3 +16,4 @@ date: "`r paste0('Last update: ', format(Sys.time(), '%b %d, %Y'))`"
 * [Second try at querying illness in UK Biobank](parent_illness_2nd.html): Include instance 0, 1, and 2 (instance 3 is not on Bionimbus).
 * [What GWAS to use?: Neale's lab UK Biobank GWAS](gwas_neale_lab_ukb.html)
 * [Sanity check runs](sanity_check.html)
+* Framingham data detour. [Modified imputation scheme from PRS-based initial try](init_idea_a_variation.html). [Imputation results compared to "ground truth"](framingham_results.html)
