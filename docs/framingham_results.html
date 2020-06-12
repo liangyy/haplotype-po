@@ -382,7 +382,7 @@ div.tocify {
 
 
 <h1 class="title toc-ignore">Imputation results of Framingham data</h1>
-<h4 class="date">Last update: Jun 10, 2020</h4>
+<h4 class="date">Last update: Jun 11, 2020</h4>
 
 </div>
 
@@ -404,15 +404,21 @@ bin_prob_z = function(x, cuts = c(0.1, 0.4, 0.6, 0.9)) {
   o = rep(&#39;&#39;, length(x))
   o[x &lt; left_most] = &#39;strong error&#39;
   o[x &gt;= left_most &amp; x &lt; left_mid] = &#39;mild error&#39;
-  o[x &gt;= left_mid &amp; x &lt;= right_mid] = &#39;mild correct&#39;
-  o[x &gt; right_mid] = &#39;strong correct&#39;
-  o = factor(o, levels = c(&#39;strong error&#39;, &#39;mild error&#39;, &#39;mild correct&#39;, &#39;strong correct&#39;))
+  o[x &gt;= left_mid &amp; x &lt;= right_mid] = &#39;not sure&#39;
+  o[x &gt; right_mid &amp; x &lt;= right_most] = &#39;mild correct&#39;
+  o[x &gt; right_most] = &#39;strong correct&#39;
+  o = factor(o, levels = c(&#39;strong error&#39;, &#39;mild error&#39;, &#39;not sure&#39;, &#39;mild correct&#39;, &#39;strong correct&#39;))
   o
 }
 get_ngene = function(logfile) {
   e = fread(cmd = paste0(&#39;cat &#39;, logfile, &#39; | grep SUMMARY&#39;), sep = &#39; &#39;, data.table = FALSE)
   e = e[length(e) - 3]
   as.numeric(e)
+}
+power_calc = function(gamma) {
+  mean_z = mean(gamma)
+  mean_s = mean( gamma ^ 2 + (1 - gamma) ^ 2)
+  mean_z / sqrt(mean_s)
 }</code></pre>
 <div id="about" class="section level1">
 <h1><span class="header-section-number">1</span> About</h1>
@@ -458,7 +464,7 @@ for(chrom in chroms) {
 }
 df_geno_cor = do.call(rbind, df_geno_cor)</code></pre>
 <pre class="r"><code>df_geno_cor %&gt;% reshape2::melt(id.vars = c(&#39;individual_id&#39;, &#39;chr&#39;)) %&gt;% ggplot() + geom_boxplot(aes(x = variable, y = value)) + facet_wrap(~chr) + theme(axis.text.x = element_text(angle = 90)) + geom_hline(yintercept = 1 / sqrt(2), linetype = 2, color = &#39;gray&#39;)</code></pre>
-<p><img src="framingham_results_files/figure-html/unnamed-chunk-4-1.png" width="960" /></p>
+<p><img src="framingham_results_files/figure-html/unnamed-chunk-27-1.png" width="960" /></p>
 <pre class="r"><code># ggsave(&#39;~/Desktop/temp.png&#39;, p, width = 10, height = 10)</code></pre>
 <p>So, we have high confidence to say that “haplotype 1 of child comes from father for all families”.</p>
 </div>
@@ -498,21 +504,28 @@ df_ngene = do.call(rbind, df_ngene) %&gt;% mutate(label = paste0(&#39;chr&#39;, 
 <pre class="r"><code>df_impute %&gt;% filter(fraction == 1) %&gt;% left_join(df_ngene %&gt;% filter(fraction == 1), by = c(&#39;chr&#39;, &#39;model&#39;, &#39;fraction&#39;)) %&gt;% filter(model == &#39;en&#39;, fraction == 1) %&gt;% ggplot() + geom_histogram(aes(prob_z)) + facet_wrap(~label) + ggtitle(&#39;EN: distribution of gamma&#39;)</code></pre>
 <pre><code>## Warning: Column `model` joining character vector and factor, coercing into character vector</code></pre>
 <pre><code>## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.</code></pre>
-<p><img src="framingham_results_files/figure-html/unnamed-chunk-7-1.png" width="960" /></p>
+<p><img src="framingham_results_files/figure-html/unnamed-chunk-30-1.png" width="960" /></p>
 <pre class="r"><code>df_impute %&gt;% filter(fraction == 1) %&gt;% left_join(df_ngene %&gt;% filter(fraction == 1), by = c(&#39;chr&#39;, &#39;model&#39;, &#39;fraction&#39;)) %&gt;% filter(model == &#39;dapgw&#39;, fraction == 1) %&gt;% ggplot() + geom_histogram(aes(prob_z)) + facet_wrap(~label) + ggtitle(&#39;DAPGW: distribution of gamma&#39;)</code></pre>
 <pre><code>## Warning: Column `model` joining character vector and factor, coercing into character vector</code></pre>
 <pre><code>## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.</code></pre>
-<p><img src="framingham_results_files/figure-html/unnamed-chunk-8-1.png" width="960" /></p>
+<p><img src="framingham_results_files/figure-html/unnamed-chunk-31-1.png" width="960" /></p>
 </div>
 <div id="downsample-analysis" class="section level2">
 <h2><span class="header-section-number">3.2</span> Downsample analysis</h2>
 <p>Downsample the number of genes by keeping a fraction of the total genes randomly.</p>
 <pre class="r"><code>df_impute %&gt;% filter(model == &#39;en&#39;) %&gt;% left_join(df_ngene %&gt;% filter(fraction == 1) %&gt;% select(-fraction), by = c(&#39;chr&#39;, &#39;model&#39;)) %&gt;% ggplot() + geom_bar(aes(binned, fill = fraction, group = fraction), position = &#39;dodge&#39;) + facet_wrap(~label) + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) + ggtitle(&#39;EN: Downsample&#39;)</code></pre>
 <pre><code>## Warning: Column `model` joining character vector and factor, coercing into character vector</code></pre>
-<p><img src="framingham_results_files/figure-html/unnamed-chunk-9-1.png" width="960" /></p>
+<p><img src="framingham_results_files/figure-html/unnamed-chunk-32-1.png" width="960" /></p>
 <pre class="r"><code>df_impute %&gt;% filter(model == &#39;dapgw&#39;) %&gt;% left_join(df_ngene %&gt;% filter(fraction == 1) %&gt;% select(-fraction), by = c(&#39;chr&#39;, &#39;model&#39;)) %&gt;% ggplot() + geom_bar(aes(binned, fill = fraction, group = fraction), position = &#39;dodge&#39;) + facet_wrap(~label) + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) + ggtitle(&#39;DAPGW: Downsample&#39;)</code></pre>
 <pre><code>## Warning: Column `model` joining character vector and factor, coercing into character vector</code></pre>
-<p><img src="framingham_results_files/figure-html/unnamed-chunk-10-1.png" width="960" /></p>
+<p><img src="framingham_results_files/figure-html/unnamed-chunk-33-1.png" width="960" /></p>
+</div>
+<div id="power-of-gwas-with-imputed-haplotype" class="section level2">
+<h2><span class="header-section-number">3.3</span> Power of GWAS with imputed haplotype</h2>
+<pre class="r"><code>df_impute %&gt;% group_by(model, chr, fraction) %&gt;% summarize(power = power_calc(prob_z)) %&gt;% ungroup() %&gt;% left_join(df_ngene, by = c(&#39;chr&#39;, &#39;model&#39;, &#39;fraction&#39;)) %&gt;% mutate(power_gain_relative_to_avg = power * sqrt(2)) %&gt;% ggplot() + geom_point(aes(x = ngene, y = power_gain_relative_to_avg, color = model)) + facet_wrap(~chr) + geom_hline(yintercept = 1, linetype = 2, color = &#39;gray&#39;) + geom_vline(xintercept = 8, linetype = 2, color = &#39;red&#39;) + scale_x_log10()</code></pre>
+<pre><code>## Warning: Column `model` joining character vector and factor, coercing into character vector</code></pre>
+<p><img src="framingham_results_files/figure-html/unnamed-chunk-34-1.png" width="960" /></p>
+<pre class="r"><code># ggsave(&#39;temp.png&#39;, p, width = 10, height = 10)</code></pre>
 </div>
 </div>
 

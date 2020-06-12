@@ -22,15 +22,21 @@ bin_prob_z = function(x, cuts = c(0.1, 0.4, 0.6, 0.9)) {
   o = rep('', length(x))
   o[x < left_most] = 'strong error'
   o[x >= left_most & x < left_mid] = 'mild error'
-  o[x >= left_mid & x <= right_mid] = 'mild correct'
-  o[x > right_mid] = 'strong correct'
-  o = factor(o, levels = c('strong error', 'mild error', 'mild correct', 'strong correct'))
+  o[x >= left_mid & x <= right_mid] = 'not sure'
+  o[x > right_mid & x <= right_most] = 'mild correct'
+  o[x > right_most] = 'strong correct'
+  o = factor(o, levels = c('strong error', 'mild error', 'not sure', 'mild correct', 'strong correct'))
   o
 }
 get_ngene = function(logfile) {
   e = fread(cmd = paste0('cat ', logfile, ' | grep SUMMARY'), sep = ' ', data.table = FALSE)
   e = e[length(e) - 3]
   as.numeric(e)
+}
+power_calc = function(gamma) {
+  mean_z = mean(gamma)
+  mean_s = mean( gamma ^ 2 + (1 - gamma) ^ 2)
+  mean_z / sqrt(mean_s)
 }
 ```
 
@@ -157,6 +163,10 @@ df_impute %>% filter(model == 'en') %>% left_join(df_ngene %>% filter(fraction =
 df_impute %>% filter(model == 'dapgw') %>% left_join(df_ngene %>% filter(fraction == 1) %>% select(-fraction), by = c('chr', 'model')) %>% ggplot() + geom_bar(aes(binned, fill = fraction, group = fraction), position = 'dodge') + facet_wrap(~label) + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) + ggtitle('DAPGW: Downsample')
 ```
 
+## Power of GWAS with imputed haplotype
 
-
+```{r, fig.width=10, fig.height=10}
+df_impute %>% group_by(model, chr, fraction) %>% summarize(power = power_calc(prob_z)) %>% ungroup() %>% left_join(df_ngene, by = c('chr', 'model', 'fraction')) %>% mutate(power_gain_relative_to_avg = power * sqrt(2)) %>% ggplot() + geom_point(aes(x = ngene, y = power_gain_relative_to_avg, color = model)) + facet_wrap(~chr) + geom_hline(yintercept = 1, linetype = 2, color = 'gray') + geom_vline(xintercept = 8, linetype = 2, color = 'red') + scale_x_log10()
+# ggsave('temp.png', p, width = 10, height = 10)
+```
 
