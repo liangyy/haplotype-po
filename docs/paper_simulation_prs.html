@@ -11,7 +11,7 @@
 
 
 
-<title>Home</title>
+<title>For paper: simulation for PRS-based approach</title>
 
 <script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -381,38 +381,150 @@ div.tocify {
 
 
 
-<h1 class="title toc-ignore">Home</h1>
-<h4 class="date">Last update: Jun 19, 2020</h4>
+<h1 class="title toc-ignore">For paper: simulation for PRS-based approach</h1>
+<h4 class="date">Last update: Jun 17, 2020</h4>
 
 </div>
 
 
-<div id="notes" class="section level1">
-<h1><span class="header-section-number">1</span> Notes</h1>
+<p><span class="math display">\[
+\newcommand{\E}{\text{E}}
+\newcommand{\diag}{\text{diag}}
+\]</span></p>
+<pre class="r"><code>rm(list = ls())
+library(ggplot2)
+library(dplyr)
+theme_set(theme_bw(base_size=15))
+set.seed(2020)
+
+# load some gists
+source(&#39;https://gist.githubusercontent.com/liangyy/43912b3ecab5d10c89f9d4b2669871c9/raw/3ca651cfa53ffccb8422f432561138a46e93710f/my_ggplot_theme.R&#39;)</code></pre>
+<div id="simulation-procedure" class="section level1">
+<h1><span class="header-section-number">1</span> Simulation procedure</h1>
+<ol style="list-style-type: decimal">
+<li>Simulate parental genetically determined gene expression <span class="math inline">\(G^{\pi, 1}\)</span> and <span class="math inline">\(G^{\pi, 2}\)</span>.</li>
+<li>Simulate the parameter <span class="math inline">\(b\)</span> from
 <ul>
-<li><a href="init_idea_outline.html">Initial thoughts</a>. The full pipeline <a href="impute_and_gwas.html">imputation + GWAS</a>.</li>
-<li><a href="haplo_gwas_power.html">Power comparison on haplotype-based GWAS</a>.</li>
-<li><a href="logistic_solver_single.html">Logistic solver (single SNP case)</a>.</li>
-<li><a href="second_idea_outline.html">Second thought on how to do haplotype imputation (on-the-fly OTF)</a>. Along this line, <a href="second_idea_outline_logistic.html">the variation with logistic model replacing linear model</a>. Also, <a href="second_idea_outline_per_snp.html">per-SNP likelihood replacing the PRS model</a>.</li>
-</ul>
+<li><span class="math inline">\(b = -0.1\)</span></li>
+<li><span class="math inline">\(b = 0.1\)</span></li>
+<li><span class="math inline">\(b \sim N(0, 1)\)</span></li>
+<li><span class="math inline">\(b \sim \max(0, N(0, 1))\)</span></li>
+</ul></li>
+<li>Simulate some covariates <span class="math inline">\(C_m \sim N(0, 1)\)</span> with effect size <span class="math inline">\(a_m \sim N(0, 1)\)</span>.</li>
+<li>Calculate <span class="math inline">\(y^\pi = (G^{\pi, 1} + G^{\pi, 2}) b + \sum_m a_m C_m + \epsilon^\pi\)</span> where the variance of <span class="math inline">\(\epsilon^\pi\)</span> is set such that <span class="math inline">\(h^2 = \frac{\sigma^2_g}{\sigma^2_g + \sigma^2_e} = 10^{-4}, 0.001, 0.01, 0.05\)</span>.</li>
+<li>For the child, haplotype 1 is <span class="math inline">\(G^{f, 1}\)</span> and haplotype 2 is <span class="math inline">\(G^{m, 1}\)</span>.</li>
+</ol>
+<p>Sample size is set to 300 and the number of phenotypes is set to 500 and the number of covariates is set to 4.</p>
 </div>
-<div id="real-data-analysis" class="section level1">
-<h1><span class="header-section-number">2</span> Real data analysis</h1>
-<ul>
-<li><a href="parent_illness_init.html">Initial look at parent illness in UK Biobank</a>.</li>
-<li><a href="parent_illness_2nd.html">Second try at querying illness in UK Biobank</a>: Include instance 0, 1, and 2 (instance 3 is not on Bionimbus).</li>
-<li><a href="gwas_neale_lab_ukb.html">What GWAS to use?: Neale’s lab UK Biobank GWAS</a></li>
-<li><a href="sanity_check.html">Sanity check runs</a></li>
-<li>Framingham data detour. <a href="init_idea_a_variation.html">Modified imputation scheme from PRS-based initial try</a>. <a href="framingham_results.html">Imputation results compared to “ground truth”</a></li>
-</ul>
+<div id="simulation" class="section level1">
+<h1><span class="header-section-number">2</span> Simulation</h1>
+<pre class="r"><code>npheno = 500
+nindiv = 300
+ncovar = 4
+beta_constants = c(-0.1, 0.1)
+h2s = c(0.0001, 0.001, 0.01, 0.05)</code></pre>
+<pre class="r"><code>get_error_var = function(var_g, h2) {
+  var_g / h2 * (1 - h2)
+} 
+sim_error = function(yy, h2) {
+  rnorm(length(yy), sd = sqrt(get_error_var(var(yy), h2)))
+}
+
+covar_mat = matrix(rnorm(nindiv * ncovar), nrow = nindiv, ncol = ncovar)
+Gf1_mat = matrix(rnorm(nindiv * npheno), nrow = nindiv, ncol = npheno)
+Gf2_mat = matrix(rnorm(nindiv * npheno), nrow = nindiv, ncol = npheno)
+Gm1_mat = matrix(rnorm(nindiv * npheno), nrow = nindiv, ncol = npheno)
+Gm2_mat = matrix(rnorm(nindiv * npheno), nrow = nindiv, ncol = npheno)
+
+beta0 = matrix(rnorm(npheno * ncovar), nrow = ncovar, ncol = npheno)
+ycovar = covar_mat %*% beta0
+
+
+data_list = list()
+for(beta in beta_constants) {
+  data_list[[as.character(beta)]] = list()
+  for(h2 in h2s) {
+    yf = (Gf1_mat + Gf2_mat) * beta 
+    ym = (Gm1_mat + Gm2_mat) * beta 
+    error_f = apply(yf, 2, sim_error, h2 = h2)
+    error_m = apply(ym, 2, sim_error, h2 = h2)
+    yf = yf + error_f + ycovar
+    ym = ym + error_m + ycovar
+    data_list[[as.character(beta)]][[as.character(h2)]] = list(yf = yf, ym = ym)
+  }
+}
+
+beta_rand = rnorm(npheno)
+data_list[[&#39;random&#39;]] = list()
+for(h2 in h2s) {
+  yf = .mat_vec_by_row(Gf1_mat + Gf2_mat, beta_rand, &#39;*&#39;) 
+  ym = .mat_vec_by_row(Gm1_mat + Gm2_mat, beta_rand, &#39;*&#39;) 
+  error_f = apply(yf, 2, sim_error, h2 = h2)
+  error_m = apply(ym, 2, sim_error, h2 = h2)
+  yf = yf + error_f + ycovar
+  ym = ym + error_m + ycovar
+  data_list[[&#39;random&#39;]][[as.character(h2)]] = list(yf = yf, ym = ym)
+}
+
+beta_truncated = rnorm(npheno)
+beta_truncated[beta_truncated &lt; 0] = 0
+data_list[[&#39;truncated&#39;]] = list()
+for(h2 in h2s) {
+  yf = .mat_vec_by_row(Gf1_mat + Gf2_mat, beta_truncated, &#39;*&#39;) 
+  ym = .mat_vec_by_row(Gm1_mat + Gm2_mat, beta_truncated, &#39;*&#39;) 
+  error_f = apply(yf, 2, sim_error, h2 = h2)
+  error_m = apply(ym, 2, sim_error, h2 = h2)
+  yf = yf + error_f + ycovar
+  ym = ym + error_m + ycovar
+  data_list[[&#39;truncated&#39;]][[as.character(h2)]] = list(yf = yf, ym = ym)
+}</code></pre>
 </div>
-<div id="wrap-up-for-paper" class="section level1">
-<h1><span class="header-section-number">3</span> Wrap-up for paper</h1>
-<ul>
-<li><a href="paper_simulation_all.html">Simulation for all settings</a></li>
-<li><a href="paper_simulation_prs.html">Simulation for PRS-based approach</a></li>
-<li><a href="paper_simulation_gwas.html">Simulation for proposed GWAS approaches</a></li>
-</ul>
+<div id="run-prs-based-imputation" class="section level1">
+<h1><span class="header-section-number">3</span> Run PRS-based imputation</h1>
+<pre class="r"><code>source(&#39;../code/rlib_em_a_variation.R&#39;)
+
+probz_list = list()
+for(beta in names(data_list)) {
+  message(&#39;Working on beta = &#39;, beta)
+  for(h2 in h2s) {
+    for(ng in c(TRUE, FALSE)) {
+      o = em_algorithm_a_variation(
+        data_list[[as.character(beta)]][[as.character(h2)]]$yf,
+        data_list[[as.character(beta)]][[as.character(h2)]]$ym, 
+        Gf1_mat, Gm1_mat, covar = covar_mat, maxiter = 100, 
+        non_negative = ng
+      )
+      probz_list[[length(probz_list) + 1]] = data.frame(prob_z = o$z_prob_n, h2 = h2, beta = beta, non_negative = ng)
+    }
+  }
+}</code></pre>
+<pre><code>## Working on beta = -0.1</code></pre>
+<pre><code>## Working on beta = 0.1</code></pre>
+<pre><code>## Working on beta = random</code></pre>
+<pre><code>## Working on beta = truncated</code></pre>
+<pre class="r"><code>df_z = do.call(rbind, probz_list)</code></pre>
+</div>
+<div id="visualization" class="section level1">
+<h1><span class="header-section-number">4</span> Visualization</h1>
+<pre class="r"><code>bin_prob_z = function(x, cuts = c(0.1, 0.4, 0.6, 0.9)) {
+  left_most = cuts[1]
+  left_mid = cuts[2]
+  right_mid = cuts[3]
+  right_most = cuts[4]
+  o = rep(&#39;&#39;, length(x))
+  o[x &lt; left_most] = &#39;strongly wrong&#39;
+  o[x &gt;= left_most &amp; x &lt; left_mid] = &#39;mildly wrong&#39;
+  o[x &gt;= left_mid &amp; x &lt;= right_mid] = &#39;not sure&#39;
+  o[x &gt; right_mid &amp; x &lt;= right_most] = &#39;mildly correct&#39;
+  o[x &gt; right_most] = &#39;strongly correct&#39;
+  o = factor(o, levels = c(&#39;strongly wrong&#39;, &#39;mildly wrong&#39;, &#39;not sure&#39;, &#39;mildly correct&#39;, &#39;strongly correct&#39;))
+  o
+}
+p = df_z %&gt;% mutate(gamma_category = bin_prob_z(prob_z)) %&gt;% ggplot() + geom_bar(aes(x = gamma_category, fill = non_negative), position = &#39;dodge&#39;) + facet_grid(h2~beta) + theme(legend.position = &#39;bottom&#39;) + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) + th2 + 
+  theme(axis.title.y = element_blank()) + 
+  xlab(expression(paste(&#39;Category of &#39;, gamma))) +
+  labs(fill = &#39;If b is non-negative&#39;)
+ggsave(&#39;../analysis_output/paper_simulation_prs.png&#39;, p, width = 6, height = 6)</code></pre>
 </div>
 
 

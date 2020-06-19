@@ -8,6 +8,17 @@
 # see note at ../analysis/init_idea_a_variation.R
 
 em_algorithm_a_variation = function(y_father, y_mother, g_1, g_2, covar = NULL, maxiter = 15, tol = 1e-10, random_init = FALSE, non_negative = TRUE) {
+  
+  # remove phenotypes with no variation in g1 or g2
+  no_var_g1_ind = apply(g_1, 2, var) == 0
+  no_var_g2_ind = apply(g_1, 2, var) == 0
+  to_keep_ind = (!no_var_g1_ind) & (!no_var_g2_ind)
+  y_father = y_father[, to_keep_ind, drop = FALSE]
+  y_mother = y_mother[, to_keep_ind, drop = FALSE]
+  g_1 = g_1[, to_keep_ind, drop = FALSE]
+  g_2 = g_2[, to_keep_ind, drop = FALSE]
+  # END
+  
   n = nrow(y_father)  # sample size
   p = ncol(y_father)  # number of phenotypes
   

@@ -1,0 +1,149 @@
+---
+title: "For paper: simulation for PRS-based approach"
+date: "`r paste0('Last update: ', format(Sys.time(), '%b %d, %Y'))`"    
+---
+
+$$
+\newcommand{\E}{\text{E}}
+\newcommand{\diag}{\text{diag}}
+$$
+
+```{r setup}
+rm(list = ls())
+library(ggplot2)
+library(dplyr)
+theme_set(theme_bw(base_size=15))
+set.seed(2020)
+
+# load some gists
+source('https://gist.githubusercontent.com/liangyy/43912b3ecab5d10c89f9d4b2669871c9/raw/3ca651cfa53ffccb8422f432561138a46e93710f/my_ggplot_theme.R')
+```
+
+# Simulation procedure
+
+1. Simulate parental genetically determined gene expression $G^{\pi, 1}$ and $G^{\pi, 2}$.
+2. Simulate the parameter $b$ from 
+    - $b = -0.1$
+    - $b = 0.1$
+    - $b \sim N(0, 1)$
+    - $b \sim \max(0, N(0, 1))$
+3. Simulate some covariates $C_m \sim N(0, 1)$ with effect size $a_m \sim N(0, 1)$.
+4. Calculate $y^\pi = (G^{\pi, 1} + G^{\pi, 2}) b + \sum_m a_m C_m + \epsilon^\pi$ where the variance of $\epsilon^\pi$ is set such that $h^2 = \frac{\sigma^2_g}{\sigma^2_g + \sigma^2_e} = 10^{-4}, 0.001, 0.01, 0.05$.
+5. For the child, haplotype 1 is $G^{f, 1}$ and haplotype 2 is $G^{m, 1}$.
+
+Sample size is set to 300 and the number of phenotypes is set to 500 and the number of covariates is set to 4.
+
+# Simulation
+
+```{r simulation parameter}
+npheno = 500
+nindiv = 300
+ncovar = 4
+beta_constants = c(-0.1, 0.1)
+h2s = c(0.0001, 0.001, 0.01, 0.05)
+```
+
+```{r simulation run}
+get_error_var = function(var_g, h2) {
+  var_g / h2 * (1 - h2)
+} 
+sim_error = function(yy, h2) {
+  rnorm(length(yy), sd = sqrt(get_error_var(var(yy), h2)))
+}
+
+covar_mat = matrix(rnorm(nindiv * ncovar), nrow = nindiv, ncol = ncovar)
+Gf1_mat = matrix(rnorm(nindiv * npheno), nrow = nindiv, ncol = npheno)
+Gf2_mat = matrix(rnorm(nindiv * npheno), nrow = nindiv, ncol = npheno)
+Gm1_mat = matrix(rnorm(nindiv * npheno), nrow = nindiv, ncol = npheno)
+Gm2_mat = matrix(rnorm(nindiv * npheno), nrow = nindiv, ncol = npheno)
+
+beta0 = matrix(rnorm(npheno * ncovar), nrow = ncovar, ncol = npheno)
+ycovar = covar_mat %*% beta0
+
+
+data_list = list()
+for(beta in beta_constants) {
+  data_list[[as.character(beta)]] = list()
+  for(h2 in h2s) {
+    yf = (Gf1_mat + Gf2_mat) * beta 
+    ym = (Gm1_mat + Gm2_mat) * beta 
+    error_f = apply(yf, 2, sim_error, h2 = h2)
+    error_m = apply(ym, 2, sim_error, h2 = h2)
+    yf = yf + error_f + ycovar
+    ym = ym + error_m + ycovar
+    data_list[[as.character(beta)]][[as.character(h2)]] = list(yf = yf, ym = ym)
+  }
+}
+
+beta_rand = rnorm(npheno)
+data_list[['random']] = list()
+for(h2 in h2s) {
+  yf = .mat_vec_by_row(Gf1_mat + Gf2_mat, beta_rand, '*') 
+  ym = .mat_vec_by_row(Gm1_mat + Gm2_mat, beta_rand, '*') 
+  error_f = apply(yf, 2, sim_error, h2 = h2)
+  error_m = apply(ym, 2, sim_error, h2 = h2)
+  yf = yf + error_f + ycovar
+  ym = ym + error_m + ycovar
+  data_list[['random']][[as.character(h2)]] = list(yf = yf, ym = ym)
+}
+
+beta_truncated = rnorm(npheno)
+beta_truncated[beta_truncated < 0] = 0
+data_list[['truncated']] = list()
+for(h2 in h2s) {
+  yf = .mat_vec_by_row(Gf1_mat + Gf2_mat, beta_truncated, '*') 
+  ym = .mat_vec_by_row(Gm1_mat + Gm2_mat, beta_truncated, '*') 
+  error_f = apply(yf, 2, sim_error, h2 = h2)
+  error_m = apply(ym, 2, sim_error, h2 = h2)
+  yf = yf + error_f + ycovar
+  ym = ym + error_m + ycovar
+  data_list[['truncated']][[as.character(h2)]] = list(yf = yf, ym = ym)
+}
+```
+
+# Run PRS-based imputation
+
+```{r imputation}
+source('../code/rlib_em_a_variation.R')
+
+probz_list = list()
+for(beta in names(data_list)) {
+  message('Working on beta = ', beta)
+  for(h2 in h2s) {
+    for(ng in c(TRUE, FALSE)) {
+      o = em_algorithm_a_variation(
+        data_list[[as.character(beta)]][[as.character(h2)]]$yf,
+        data_list[[as.character(beta)]][[as.character(h2)]]$ym, 
+        Gf1_mat, Gm1_mat, covar = covar_mat, maxiter = 100, 
+        non_negative = ng
+      )
+      probz_list[[length(probz_list) + 1]] = data.frame(prob_z = o$z_prob_n, h2 = h2, beta = beta, non_negative = ng)
+    }
+  }
+}
+df_z = do.call(rbind, probz_list)
+```
+
+# Visualization
+
+```{r vis, fig.width=6, fig.height=6}
+bin_prob_z = function(x, cuts = c(0.1, 0.4, 0.6, 0.9)) {
+  left_most = cuts[1]
+  left_mid = cuts[2]
+  right_mid = cuts[3]
+  right_most = cuts[4]
+  o = rep('', length(x))
+  o[x < left_most] = 'strongly wrong'
+  o[x >= left_most & x < left_mid] = 'mildly wrong'
+  o[x >= left_mid & x <= right_mid] = 'not sure'
+  o[x > right_mid & x <= right_most] = 'mildly correct'
+  o[x > right_most] = 'strongly correct'
+  o = factor(o, levels = c('strongly wrong', 'mildly wrong', 'not sure', 'mildly correct', 'strongly correct'))
+  o
+}
+p = df_z %>% mutate(gamma_category = bin_prob_z(prob_z)) %>% ggplot() + geom_bar(aes(x = gamma_category, fill = non_negative), position = 'dodge') + facet_grid(h2~beta) + theme(legend.position = 'bottom') + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) + th2 + 
+  theme(axis.title.y = element_blank()) + 
+  xlab(expression(paste('Category of ', gamma))) +
+  labs(fill = 'If b is non-negative')
+ggsave('../analysis_output/paper_simulation_prs.png', p, width = 6, height = 6)
+```

@@ -17,3 +17,9 @@ date: "`r paste0('Last update: ', format(Sys.time(), '%b %d, %Y'))`"
 * [What GWAS to use?: Neale's lab UK Biobank GWAS](gwas_neale_lab_ukb.html)
 * [Sanity check runs](sanity_check.html)
 * Framingham data detour. [Modified imputation scheme from PRS-based initial try](init_idea_a_variation.html). [Imputation results compared to "ground truth"](framingham_results.html)
+
+# Wrap-up for paper
+
+* [Simulation for all settings](paper_simulation_all.html)
+* [Simulation for PRS-based approach](paper_simulation_prs.html)
+* [Simulation for proposed GWAS approaches](paper_simulation_gwas.html)

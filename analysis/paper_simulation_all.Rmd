@@ -1,0 +1,261 @@
+---
+title: "For paper: simulation for all settings"
+date: "`r paste0('Last update: ', format(Sys.time(), '%b %d, %Y'))`"    
+---
+
+$$
+\newcommand{\E}{\text{E}}
+$$
+
+```{r setup}
+rm(list = ls())
+library(ggplot2)
+library(dplyr)
+theme_set(theme_bw(base_size=15))
+set.seed(2020)
+
+# load some gists
+source('https://gist.githubusercontent.com/liangyy/43912b3ecab5d10c89f9d4b2669871c9/raw/3ca651cfa53ffccb8422f432561138a46e93710f/my_ggplot_theme.R')
+```
+
+# Simulation procedure
+
+1. Simulate parental half-genotypes, $H^{\pi, 1}$ and $H^{\pi, 2}$ for each individual's parentts. Variants are binary variables sampled independently. Minor allele frequency is $U[0.05, 0.25]$
+2. Simulate effecet size $\beta \sim (1 - \pi_0) \delta_0 + \pi_0 N(0, 1)$ with $\pi_0 = 0.5$
+3. Calculate parental genetic effect $G^{\pi, j} = H^{\pi, j} \beta$
+4. Simulate environmental effect such that heritability $h^2$ is as desired value
+5. Calculate observed parental phenotype $y^\pi = G^{\pi, 1} + G^{\pi, 2} + \epsilon^\pi$
+6. Transmit $H^{f, 1}$ and $H^{m, 1}$ to child $H^1$ and $H^2$
+
+# Simulation code
+
+```{r simulation}
+# parameters
+heritabilities = c(0.01, 0.05, 0.1, 0.25, 0.5)  # c(1e-4, 1e-3, 0.01, 0.05, 0.1, 0.2, 0.5)
+maf_range = c(0.05, 0.45)
+prior_non_zero = 0.5
+nsample = 1000
+npheno = 100
+nsnp = 50
+ngwas = 20000
+
+# functions
+.sim_one_snp = function(maf, nindiv) {
+  as.numeric(runif(nindiv) < maf)
+}
+simulate_half_genotype = function(maf, nsnp, nindiv) {
+  h1 = sapply(maf, .sim_one_snp, nindiv = nindiv)
+  h2 = sapply(maf, .sim_one_snp, nindiv = nindiv)
+  return(list(h1 = h1, h2 = h2))
+}
+y_from_g = function(g_mat, h2) {
+  var_g = apply(g_mat, 2, var)
+  var_e = (1 - h2) / h2 * var_g
+  error = sapply(var_e, function(x) {
+    rnorm(nrow(g_mat), sd = sqrt(x))
+  })
+  return(list(y = g_mat + error, var_e = var_e))
+}
+
+# simulation for imputation
+maf = runif(nsnp, maf_range[1], maf_range[2])
+h_father = simulate_half_genotype(maf, nsnp, nsample)
+h_mother = simulate_half_genotype(maf, nsnp, nsample)
+beta = matrix(rnorm(npheno * nsnp), ncol = npheno, nrow = nsnp)
+g1_father = h_father$h1 %*% beta
+g2_father = h_father$h2 %*% beta
+g1_mother = h_mother$h1 %*% beta
+g2_mother = h_mother$h2 %*% beta
+y_father = list()
+y_mother = list()
+var_e_father = list()
+var_e_mother = list()
+for(h2 in heritabilities) {
+  tmp_f = y_from_g(g1_father + g2_father, h2)
+  tmp_m = y_from_g(g1_mother + g2_mother, h2)
+  y_father[[as.character(h2)]] = tmp_f$y
+  y_mother[[as.character(h2)]] = tmp_m$y
+  var_e_father[[as.character(h2)]] = tmp_f$var_e
+  var_e_mother[[as.character(h2)]] = tmp_m$var_e
+}
+hh1 = h_father$h1
+hh2 = h_mother$h1
+g1 = g1_father
+g2 = g1_mother
+
+# simulation for PRS training
+h_gwas = simulate_half_genotype(maf, nsnp, ngwas)
+x_gwas = h_gwas$h1 + h_gwas$h2
+g_gwas = x_gwas %*% beta
+y_gwas = list()
+for(h2 in heritabilities) {
+  y_gwas[[as.character(h2)]] = y_from_g(g_gwas, h2)$y
+}
+```
+
+# PRS fitting
+
+```{r prs fitting}
+source('../code/rlib_gwas.R')
+
+# function
+build_prs = function(geno, pheno, prs_p_cutoff = 0.05) {
+  n_snp = ncol(geno)
+  n_pheno = ncol(pheno)
+  effect_size_prs = matrix(0, nrow = n_snp, ncol = n_pheno)
+  prs_p_cutoff = 0.01
+  prs_z_cutoff = abs(qnorm(prs_p_cutoff / 2))
+  for(pp in 1 : n_pheno) {
+    # message('Building phenotype ', pp)
+    gwas = run_gwas(geno, pheno[, pp])
+    pass_ind = abs(gwas$bhat / gwas$bhat_se) > prs_z_cutoff
+    effect_size_prs[, pp][pass_ind] = gwas$bhat[pass_ind]
+  }
+  return(effect_size_prs)
+}
+
+# code
+ngwas_to_use = c(0.25, 0.5, 1) * ngwas
+prs_model = list()
+for(h2 in names(y_gwas)) {
+  message('Working on h2 = ', h2)
+  yy = y_gwas[[h2]]
+  prs_model[[as.character(h2)]] = list()
+  for(nn in ngwas_to_use) {
+    message('Working on nn = ', nn)
+    effect_size_prs = build_prs(x_gwas[1:nn, ], yy[1:nn, ])
+    prs_model[[as.character(h2)]][[as.character(nn)]] = effect_size_prs
+  }
+}
+
+```
+
+# Imputation
+
+```{r imputation}
+# number of phenotypes to test
+npheno_to_use = c(2, 5, 10, seq(20, 50, by = 10), seq(60, 100, by = 20))
+
+# ideal
+slice_m = function(mat, p) {
+  mat[, 1 : p, drop = FALSE]
+}
+
+sq_diff = function(y, g, s2) {
+  rowSums((g - y) ^ 2 / s2 / 2)
+}
+eval_gamma = function(yf, ym, g1, g2, sigma2f, sigma2m) {
+  L1 = sq_diff(yf, g1, sigma2f) + sq_diff(ym, g2, sigma2m)
+  L0 = sq_diff(yf, g2, sigma2f) + sq_diff(ym, g1, sigma2m)
+  1 / (1 + exp(- (L0 - L1)))
+}
+df_ideal = list()
+for(h2 in names(y_father)) {
+  message('ideal: h2 = ', h2)
+  Yf = y_father[[h2]]
+  Ym = y_mother[[h2]]
+  var_e_f = var_e_father[[h2]]
+  var_e_m = var_e_mother[[h2]]
+  G1 = g1
+  G2 = g2
+  # loop over the number of phenotypes
+  for(pp in npheno_to_use) {
+    # message(pp)
+    df_ideal[[length(df_ideal) + 1]] = data.frame(
+      gamma = eval_gamma(slice_m(Yf, pp), slice_m(Ym, pp), slice_m(G1, pp), slice_m(G2, pp), var_e_f[1:pp], var_e_m[1:pp]),
+      npheno = pp,
+      heritability = h2,
+      ngwas = NA
+    )
+  }
+}
+df_ideal = do.call(rbind, df_ideal)
+
+# on-the-fly
+source('../code/rlib_em_otf.R')
+df_otf = list()
+for(h2 in names(y_father)) {
+  message('on-the-fly: h2 = ', h2)
+  Yf = y_father[[h2]]
+  Ym = y_mother[[h2]]
+  H1 = hh1
+  H2 = hh2
+  # loop over the number of phenotypes
+  for(pp in npheno_to_use) {
+    # message(pp)
+    df_otf[[length(df_otf) + 1]] = data.frame(
+      gamma = em_algorithm_otf(slice_m(Yf, pp), slice_m(Ym, pp), H1, H2, maxiter = 50)$gamma,
+      npheno = pp,
+      heritability = h2,
+      ngwas = NA
+    )
+  }
+}
+df_otf = do.call(rbind, df_otf)
+
+# prs-based
+source('../code/rlib_em_a_variation.R')
+df_prs = list()
+for(h2 in names(y_father)) {
+  message('prs-based: h2 = ', h2)
+  Yf = y_father[[h2]]
+  Ym = y_mother[[h2]]
+  H1 = hh1
+  H2 = hh2
+  # loop over prs models
+  for(nn in names(prs_model[[h2]])) {
+    beta_now = prs_model[[h2]][[nn]]
+    prs1 = H1 %*% beta_now
+    prs2 = H2 %*% beta_now
+    # loop over the number of phenotypes
+    for(pp in npheno_to_use) {
+      # message(pp)
+      df_prs[[length(df_prs) + 1]] = data.frame(
+        gamma = em_algorithm_a_variation(slice_m(Yf, pp), slice_m(Ym, pp), slice_m(prs1, pp), slice_m(prs2, pp), maxiter = 50)$z_prob_n,
+        npheno = pp,
+        heritability = h2,
+      ngwas = nn
+      )
+    }
+  }
+}
+df_prs = do.call(rbind, df_prs)
+```
+
+# Visualization
+
+## Within PRS-based approach
+
+```{r vis prs, fig.height=7, fig.width=10} 
+p = df_prs %>% ggplot() + 
+  geom_violin(aes(x = factor(npheno), y = gamma, color = ngwas), scale = 'width', position = position_dodge(width = 0.8)) + 
+  geom_boxplot(aes(x = factor(npheno), y = gamma, color = ngwas), position = position_dodge(width = 0.8), width = 0.3) + 
+  facet_wrap(~heritability, ncol = 2) + 
+  th2 + 
+  geom_hline(yintercept = 0.5, color = 'black', linetype = 2) +
+  xlab('Number of phenotypes') +
+  ylab(expression(paste(gamma, ' obtained from imputation'))) +
+  labs(color = 'Number of samples for PRS training') +
+  theme(legend.position = 'bottom')
+ggsave('../analysis_output/paper_simulation_all_within_prs.png', p, height = 7, width = 10)
+```
+
+## Among all approaches
+
+```{r vis all, fig.height=7, fig.width=10}
+p = rbind(
+  df_ideal %>% mutate(type = 'ideal'),
+  df_otf %>% mutate(type = 'on-the-fly'),
+  df_prs %>% filter(ngwas == 10000) %>% mutate(type = 'PRS-based')
+) %>% ggplot() + 
+  geom_violin(aes(x = factor(npheno), y = gamma, color = type), scale = 'width', position = position_dodge(width = 0.8)) + 
+  geom_boxplot(aes(x = factor(npheno), y = gamma, color = type), position = position_dodge(width = 0.8), width = 0.3) + 
+  facet_wrap(~heritability, ncol = 2) + 
+  th2 +
+  geom_hline(yintercept = 0.5, color = 'black', linetype = 2) +
+  theme(legend.position = 'bottom') +
+  labs(color = 'Genetic models used in imputation') +
+  xlab('Number of phenotypes') +
+  ylab(expression(paste(gamma, ' obtained from imputation')))
+ggsave('../analysis_output/paper_simulation_all_all_approaches.png', p, height = 7, width = 10)
+```
