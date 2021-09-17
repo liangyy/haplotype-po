@@ -23,3 +23,5 @@ date: "`r paste0('Last update: ', format(Sys.time(), '%b %d, %Y'))`"
 * [Simulation for all settings](paper_simulation_all.html)
 * [Simulation for PRS-based approach](paper_simulation_prs.html)
 * [Simulation for proposed GWAS approaches](paper_simulation_gwas.html)
+* [Results on Framingham data](paper_framingham.html)
+
